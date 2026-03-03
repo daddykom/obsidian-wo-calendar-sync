@@ -1,7 +1,7 @@
 # WO Calendar Sync
 
 An [Obsidian](https://obsidian.md) plugin that synchronises weekly note files
-in the **WO format** with [Full Calendar](https://github.com/davish/obsidian-full-calendar),
+in the **WO format** with a CalDav Calendar,
 which in turn syncs your events to iCloud Calendar via CalDAV.
 
 Works on **iOS and macOS** – no external scripts or servers required.
@@ -11,12 +11,12 @@ Works on **iOS and macOS** – no external scripts or servers required.
 ## How it works
 
 ```
-WO09.md  →  [this plugin]  →  calendar/events/*.md  →  [Full Calendar]  →  iCloud
+WO09.md  →  [this plugin]  → tsdav → iCloud
 ```
 
 1. You write your appointments in weekly note files (`WO01` … `WO52`).
 2. This plugin converts them into Full Calendar-compatible markdown files.
-3. Full Calendar handles the CalDAV sync with iCloud.
+3. With tsdav we handle the CalDAV sync to iCloud.
 4. Feiertage and Geburtstage calendars are imported read-only into your WO files.
 
 ---
@@ -28,16 +28,16 @@ Files are named `WO{nn}.md` (e.g. `WO09.md`) and live in your configured WO fold
 ```markdown
 # Montag
 
-Termin: Susanne Altherr
+Termin: John Doe
 Zeit: 11:00
-Ort: Talstrasse 11, 4104 Oberwil
+Ort: Foo Street 11, 12345 Bar
 Erinnerung: 20min, 1tg
 
 Termin: Workshop
 Zeit: 08:00 - 12:00
 Erinnerung: 30min
 
-Termin: Schulferien Basel
+Termin: Schulferien FooBar
 (no Zeit line = all-day event)
 
 # Dienstag
@@ -73,8 +73,7 @@ Erinnerung: 0min
 ## Requirements
 
 - [Obsidian](https://obsidian.md) 1.0.0 or later
-- [Full Calendar](https://github.com/davish/obsidian-full-calendar) plugin installed and configured with your iCloud CalDAV account
-
+- tsdav: https://github.com/natelindev/tsdav
 ---
 
 ## Installation
