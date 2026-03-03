@@ -15,7 +15,7 @@ WO09.md  →  [this plugin]  → tsdav → iCloud
 ```
 
 1. You write your appointments in weekly note files (`WO01` … `WO52`).
-2. This plugin converts them into Full Calendar-compatible markdown files.
+2. This plugin converts them into a calendar folder with markdown files.
 3. With tsdav we handle the CalDAV sync to iCloud.
 4. Feiertage and Geburtstage calendars are imported read-only into your WO files.
 
