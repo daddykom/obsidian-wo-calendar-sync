@@ -1,132 +1,173 @@
-# WO Calendar Sync
+# Obsidian WO → CalDAV Sync
 
-An [Obsidian](https://obsidian.md) plugin that synchronises weekly note files
-in the **WO format** with a CalDav Calendar,
-which in turn syncs your events to iCloud Calendar via CalDAV.
+A deterministic and fault-tolerant CalDAV sync plugin for weekly WO files.
 
-Works on **iOS and macOS** – no external scripts or servers required.
+## Concept
 
----
+You write your appointments in weekly note files (`WO01 … WO52`).
 
-## How it works
+This plugin:
 
-```
-WO09.md  →  [this plugin]  → tsdav → iCloud
-```
+1. Parses your WO files  
+2. Generates one event file per appointment  
+3. Creates upload jobs in an outbox  
+4. Syncs them to your CalDAV calendar (iCloud) using `tsdav`  
+5. Imports Feiertage and Geburtstage calendars read-only into WO files  
 
-1. You write your appointments in weekly note files (`WO01` … `WO52`).
-2. This plugin converts them into a calendar folder with markdown files.
-3. With tsdav we handle the CalDAV sync to iCloud.
-4. Feiertage and Geburtstage calendars are imported read-only into your WO files.
+WO files are the **single source of truth**.
 
 ---
 
-## WO File Format
+## Architecture
 
-Files are named `WO{nn}.md` (e.g. `WO09.md`) and live in your configured WO folder (default: `2026/`).
-
-```markdown
-# Montag
-
-Termin: John Doe
-Zeit: 11:00
-Ort: Foo Street 11, 12345 Bar
-Erinnerung: 20min, 1tg
-
-Termin: Workshop
-Zeit: 08:00 - 12:00
-Erinnerung: 30min
-
-Termin: Schulferien FooBar
-(no Zeit line = all-day event)
-
-# Dienstag
-
-Termin: Fritz anrufen
-Zeit: 18:30
-Bemerkung: +41792047818
-Erinnerung: 0min
-
-# Mittwoch
-
-# Donnerstag
-
-# Freitag
-
-# Samstag
-
-# Sonntag
+```
+WO Files → Event Files → Outbox → CalDAV
 ```
 
-### Supported fields
+### WO Files
 
-| Field | Required | Description |
-|---|---|---|
-| `Termin:` | yes | Event title |
-| `Zeit:` | no | `11:00` (1h default) or `08:00 - 12:00` (explicit end). Omit for all-day. |
-| `Ort:` | no | Location |
-| `Erinnerung:` | no | Comma-separated reminders: `0min`, `20min`, `30min`, `1tg` |
-| `Bemerkung:` | no | Description / notes |
+- Human-editable weekly notes
+- Contain appointment blocks
+- Missing `localId` markers are inserted automatically
+
+### Event Files
+
+Stored in:
+
+```
+calendar/events/
+```
+
+One Markdown file per appointment.
+
+Contain:
+
+- localId
+- CalDAV UID
+- Source WO file
+- Normalized event fields
+- Server mapping (resource URL + ETag)
+
+### Outbox
+
+Stored in:
+
+```
+calendar/outbox/
+```
+
+- Contains upload job files
+- Processed sequentially (by filename order)
+- Idempotent and retry-safe
+- Archived after success
 
 ---
 
-## Requirements
+## WO Appointment Format
 
-- [Obsidian](https://obsidian.md) 1.0.0 or later
-- tsdav: https://github.com/natelindev/tsdav
----
+### Required
 
-## Installation
-
-### Manual (while awaiting Community Plugin approval)
-
-1. Download the latest release from the [Releases page](../../releases).
-2. Extract the files into your vault's plugin folder:
-   `.obsidian/plugins/wo-calendar-sync/`
-3. Enable the plugin under **Settings → Community Plugins**.
-
-### Build from source
-
-```bash
-git clone https://github.com/YOUR-USERNAME/obsidian-wo-calendar-sync.git
-cd obsidian-wo-calendar-sync
-npm install
-npm run build
+```md
+- Termin: Title
+  ^woev-ABC123
 ```
 
-Copy `main.js` and `manifest.json` into `.obsidian/plugins/wo-calendar-sync/`.
+### Supported Fields
+
+```md
+- Termin: John Doe
+  Zeit: 11:00 - 12:00
+  Ort: Foo Street 11
+  Erinnerung: 1d, 3h
+  Bemerkung:
+    Multiline notes allowed.
+    Indented continuation.
+  ^woev-ABC123
+```
+
+### Time Rules
+
+- `Zeit: HH:MM`
+- `Zeit: HH:MM - HH:MM`
+- No time → all-day event (DTSTART as DATE, DTEND as DATE+1)
+
+### Reminders
+
+- 1d
+- 3h
+- 20m
+- Comma-separated list allowed: `1d, 3h, 20m`
+
+### Not Supported
+
+- No attendees
+- No recurrence rules in WO files (handled via a command later)
+
+---
+
+## Sync Model
+
+### Identity
+
+Each appointment has:
+
+- `localId` (stored in WO file)
+- `uid` (CalDAV UID)
+- server resource URL + ETag (stored in event file)
+
+### Change Detection
+
+On WO modification:
+
+1. Parse file
+2. Inject missing IDs (internal write)
+3. Re-parse the updated content in-memory
+4. Compare against event files
+5. Generate upsert/delete operations
+6. Write an outbox job
+
+Internal writes MUST NOT trigger another processing cycle (self-write suppression + debounce).
+
+---
+
+## Idempotent Upload
+
+Operations:
+
+- `upsert(uid)`
+- `delete(uid)`
+
+Safe to retry multiple times.
+
+ETag conflicts should trigger refetch + retry.
 
 ---
 
 ## Configuration
 
-Open **Settings → WO Calendar Sync**:
+Stored in a vault config file (v1):
 
-| Setting | Default | Description |
-|---|---|---|
-| WO folder | `2026` | Folder containing your WO weekly files |
-| Events folder | `calendar/events` | Output folder for event files |
-| Default duration | `60` | Duration in minutes when no end time is given |
-| Auto-sync on save | `on` | Sync automatically when a WO file is saved |
-| Read-only calendars | `Feiertage, Geburtstage` | Calendars imported read-only into WO files |
+```yaml
+version: 1
 
----
+wo:
+  folder: "2026"
+  filenamePattern: "^WO\\d{2}\\.md$"
+  timezone: "Europe/Zurich"
+  defaultDurationMinutes: 60
 
-## Commands
+storage:
+  eventsFolder: "calendar/events"
+  outboxFolder: "calendar/outbox"
+  archiveFolder: "calendar/archive"
 
-| Command | Description |
-|---|---|
-| `Aktuelle WO-Datei synchronisieren` | Syncs the currently open WO file |
-| `Alle WO-Dateien synchronisieren` | Syncs all WO files in the configured folder |
-
----
-
-## Roadmap
-
-- [ ] Read-only import of Feiertage / Geburtstage back into WO files
-- [ ] Recurring events support
-
----
+caldav:
+  enabled: true
+  url: "https://caldav.icloud.com/..."
+  username: "..."
+  appPassword: "..."
+  calendarName: "Obsidian"
+```
 
 ## License
 
