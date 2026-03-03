@@ -105,7 +105,7 @@ Open **Settings → WO Calendar Sync**:
 | Setting | Default | Description |
 |---|---|---|
 | WO folder | `2026` | Folder containing your WO weekly files |
-| Events folder | `calendar/events` | Output folder for Full Calendar event files |
+| Events folder | `calendar/events` | Output folder for event files |
 | Default duration | `60` | Duration in minutes when no end time is given |
 | Auto-sync on save | `on` | Sync automatically when a WO file is saved |
 | Read-only calendars | `Feiertage, Geburtstage` | Calendars imported read-only into WO files |
