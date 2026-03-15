@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/obsidian-wo-calendar-sync.iml" filepath="$PROJECT_DIR$/.idea/obsidian-wo-calendar-sync.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/week-calendart.iml" filepath="$PROJECT_DIR$/.idea/week-calendart.iml" />
     </modules>
   </component>
 </project>

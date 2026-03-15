@@ -1,0 +1,8 @@
+import { WoElement, woFileStructure, WoFileStructure } from './types';
+
+export function stringifyWo(elements: Record<WoFileStructure, WoElement[]>) {
+  const lines = woFileStructure.flatMap((key) => [
+    ...elements[key].map((element) => element.content.join('\n')),
+  ]);
+  return lines.join('\n');
+}

@@ -1,14 +1,39 @@
 {
-  "name": "obsidian-wo-calendar-sync",
-  "version": "1.0.0",
-  "description": "",
-  "main": "dist/index.js",
+  "name": "week-calendart",
+  "version": "0.1.0",
+  "description": "Sync WO weekly appointments to CalDAV via an outbox workflow.",
+  "main": "main.js",
   "scripts": {
-    "build": "tsc"
+    "dev": "node esbuild.config.mjs",
+    "build": "node esbuild.config.mjs production",
+    "lint": "eslint .",
+    "format": "prettier -w .",
+    "test": "jest"
   },
-  "dependencies": {},
+  "keywords": [
+    "obsidian",
+    "plugin",
+    "caldav",
+    "calendar"
+  ],
+  "author": "Charley Collins, CH-4104 Oberwil",
+  "license": "MIT",
   "devDependencies": {
-    "typescript": "^5.5.3"
-  },
-  "private": true
+    "@types/jest": "^29.5.14",
+    "@types/node": "^25.3.5",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
+    "@typescript-eslint/parser": "^8.56.1",
+    "builtin-modules": "^5.0.0",
+    "esbuild": "^0.27.3",
+    "eslint": "^10.0.2",
+    "jest": "^29.7.0",
+    "jest-cli": "^29.7.0",
+    "jest-util": "^29.7.0",
+    "obsidian": "^1.12.3",
+    "prettier": "^3.8.1",
+    "rxjs": "^7.8.2",
+    "ts-jest": "^29.4.6",
+    "tsdav": "^2.1.8",
+    "typescript": "^5.9.3"
+  }
 }
