@@ -1,87 +1,47 @@
-import { App, Notice, Plugin, PluginManifest, TAbstractFile, TFile, Vault } from 'obsidian';
-import { processAll, prozessActiveFile } from './commands';
-import {
-  catchError,
-  concatMap,
-  debounce,
-  debounceTime,
-  distinct,
-  filter,
-  from,
-  fromEvent,
-  groupBy,
-  map,
-  mergeMap,
-  Observable,
-  of,
-  race,
-  switchMap,
-  tap,
-  timer,
-  withLatestFrom,
-} from 'rxjs';
-import { parseWo } from './parse-wo';
-import { createHash } from 'crypto';
-import { JQueryStyleEventEmitter } from 'rxjs/internal/observable/fromEvent';
-import { setEventIds } from './set-event-ids';
-import { stringifyWo } from './stringify-wo';
-import { popNumber } from 'rxjs/internal/util/args';
-import { subscribe } from 'node:diagnostics_channel';
+import { Notice, Plugin } from 'obsidian';
+import { fromEvent, Subscription } from 'rxjs';
+import { processActiveFile } from './lib/commands/process-active-file';
+import { processAll } from './lib/commands/process-all';
+import { modifyWeekFileEvent } from './lib/event-handling/modify-week-file-event';
+import { DEFAULT_SETTINGS } from './lib/settings/constants';
+import { WeekCalendartSettingTab } from './lib/settings/week-calendar-settings-tab';
 
 export default class WeekCalendartPlugin extends Plugin {
   actualFileChanded$ = fromEvent(this.app.workspace, 'active-leaf-change');
-  fileChanged$ = fromEvent(this.app.vault, 'modify');
+  subscription = new Subscription();
+  settings = DEFAULT_SETTINGS;
 
   async onload(): Promise<void> {
-    console.log('WeekCalendartPlugin start load');
     this.addCommand({
-      id: 'week-calendart-sync-current-file',
-      name: 'Week Calendart: Sync current WO file',
-      callback: prozessActiveFile(this.app),
+      id: 'process-active-wo-file',
+      name: 'Aktives Wochenfile verarbeiten',
+      callback: processActiveFile(this.app),
     });
 
     this.addCommand({
-      id: 'week-calendart-sync-all',
-      name: 'Week Calendart: Sync all WO files',
+      id: 'process-all-wo-file',
+      name: 'Alle Wochenfile verarbeiten',
       callback: processAll(this.app),
     });
 
-    this.fileChanged$
-      .pipe(
-        filter((file): file is TFile => file instanceof TFile),
-        filter((file: TFile) => !!file.path.match(/^\/week-calendar\/.*\/WO/)),
-        filter((file: TFile) => file.extension === 'md'),
-        switchMap((file: TFile) =>
-          from(this.app.vault.read(file)).pipe(map((fileContent) => [file, fileContent] as const)),
-        ),
-        debounce(() => race(this.actualFileChanded$, timer(10_000))),
-        filter(([file, fileContent]) => {
-          const [, year, week] = file.path.match(/^\/week-calendar\/([0-9]+)\/WO([0-9])/) ?? [];
-          const structFile = parseWo(fileContent);
-          const before = stringifyWo(structFile).split(/\n/);
-          const after = stringifyWo(setEventIds(structFile, Number(year), Number(week))).split(
-            /\n/,
-          );
-          return after.length !== before.length;
-        }),
-        switchMap(([file, fileContent]) => {
-          const [, year, week] = file.path.match(/^\/week-calendar\/([0-9]+)\/WO([0-9])/) ?? [];
-          const structFile = parseWo(fileContent);
-          const changedFile = stringifyWo(setEventIds(structFile, Number(year), Number(week)));
-          return from(this.app.vault.modify(file, changedFile)).pipe(
-            map(() => new Notice(`File ${file.name} angepasst.`)),
-            catchError((err) =>
-              of(new Notice(`Fehler bei der Anpassung von ${file.name}: ` + JSON.stringify(err))),
-            ),
-          );
-        }),
-      )
-      .subscribe();
+    this.subscription.add(
+      modifyWeekFileEvent(this.app, fromEvent(this.app.vault, 'modify'), this.actualFileChanded$),
+    );
 
+    this.addSettingTab(new WeekCalendartSettingTab(this.app, this));
     new Notice('Week Calendart loaded.');
   }
 
+  async loadSettings() {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  }
+
+  async saveSettings() {
+    await this.saveData(this.settings);
+  }
+
   onunload(): void {
-    // no-opπ
+    new Notice('Week Calendart unload.');
+    this.subscription.unsubscribe();
   }
 }

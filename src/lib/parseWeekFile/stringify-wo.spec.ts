@@ -1,19 +1,19 @@
-import { stringifyWo } from './stringify-wo';
-import { ElementStructure } from './types';
+import { exampleFile } from '../test-helpers/test-data';
+import { ElementStructure } from '../types';
 import { parseWo } from './parse-wo';
-import { exampleFile } from './test-data';
+import { stringifyWo } from './stringify-wo';
 
 const elementStructure: ElementStructure = {
   key: 'start',
   elements: {
     start: [],
-    montag: [],
-    dienstag: [],
-    mittwoch: [],
-    donnerstag: [],
-    freitag: [],
-    samstag: [],
-    sonntag: [],
+    monday: [],
+    tuesday: [],
+    wednesday: [],
+    thursday: [],
+    friday: [],
+    saturday: [],
+    sunday: [],
     links: [],
   },
 };

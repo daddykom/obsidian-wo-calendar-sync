@@ -1,31 +1,11 @@
+import { DEFAULT_SETTINGS } from '../settings/constants';
 import {
   ElementStructure,
   LineMatcher,
   LineMatchResult,
+  WeekcalendarSettings,
   WoElement,
-  WoFileStructure,
-} from './types';
-
-const lineMatchers: LineMatcher[] = [
-  { matcher: /^#\s+([a-z,A-Z]+)/, type: 'key' },
-  { matcher: /^-\s+Termin/i, type: 'event' },
-  { matcher: /^\s{2}/, type: 'followUp' },
-];
-
-const elementStructure: ElementStructure = {
-  key: 'start',
-  elements: {
-    start: [],
-    montag: [],
-    dienstag: [],
-    mittwoch: [],
-    donnerstag: [],
-    freitag: [],
-    samstag: [],
-    sonntag: [],
-    links: [],
-  },
-};
+} from '../types';
 
 /**
  * parses WochenFile into blocks of text
@@ -33,17 +13,17 @@ const elementStructure: ElementStructure = {
  *
  * Bsp:
  *   {
- *     'montag': [
+ *     'monday': [
  *       { type: 'event', content: [ '- Termin 1', '  Zeit: 17:00' ] }
  *       { type: 'text', content: [ 'Irgend ein Text' ] }
  *       ]
  *   }
  */
-export function parseWo(wochenFile: string) {
+export function parseWo(wochenFile: string, settings = DEFAULT_SETTINGS) {
   const wo = wochenFile.split('\n');
   const isolateElements = wo.reduce((acc, line): ElementStructure => {
     const trimmedLine = line.trimEnd();
-    const [lineType, key] = getLineType(trimmedLine);
+    const [lineType, key] = getLineType(trimmedLine, settings);
     switch (lineType) {
       case 'key':
         return {
@@ -84,7 +64,7 @@ export function parseWo(wochenFile: string) {
         };
     }
     return acc;
-  }, elementStructure);
+  }, elementStructure(settings));
   return isolateElements.elements;
 }
 
@@ -92,11 +72,12 @@ export function parseWo(wochenFile: string) {
  * defines the line type
  * @param line
  */
-export function getLineType(line: string) {
+export function getLineType(line: string, settings = DEFAULT_SETTINGS) {
   const defaultValue: LineMatchResult = ['text', null];
-  return lineMatchers.reduce((acc, { matcher, type }): LineMatchResult => {
+  return lineMatchers(settings).reduce((acc, { matcher, type }): LineMatchResult => {
     const match = line.match(matcher);
-    const key = match && match[1] ? (match[1].toLowerCase() as WoFileStructure) : null;
+    const text = match && match[1] ? match[1].toLowerCase() : null;
+    const [key] = typedEntries(settings.weekdays).find(([, value]) => text === value) ?? [null];
     if (match) {
       return [type, key];
     }
@@ -114,3 +95,22 @@ function createElement(type: WoElement['type'], content: string, element?: WoEle
   const newContent = element ? [...element.content, content] : [content];
   return { ...element, type, content: newContent };
 }
+
+function elementStructure(settings: WeekcalendarSettings): ElementStructure {
+  return {
+    key: 'start',
+    elements: Object.entries(settings.weekdays).reduce(
+      (acc, [key, item]) => ({ ...acc, [key]: [] }),
+      {} as ElementStructure['elements'],
+    ),
+  };
+}
+
+const lineMatchers = (settings: WeekcalendarSettings): LineMatcher[] => [
+  { matcher: /^#\s+([a-z,A-Z]+)/, type: 'key' },
+  { matcher: new RegExp(`^-\\s+${settings.prefixes.event}`, 'i'), type: 'event' },
+  { matcher: /^\s{2}/, type: 'followUp' },
+];
+
+const typedEntries = <T extends Record<string, unknown>>(obj: T) =>
+  Object.entries(obj) as [keyof T, T[keyof T]][];

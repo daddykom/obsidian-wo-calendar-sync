@@ -1,22 +1,64 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="b000fec0-1dad-45c4-bd04-ec2a219502b3" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/obsidian-wo-calendar-sync.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/LICENSE" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/index.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/lib/dateUtils.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/lib/formatter.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/lib/parser.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/lib/reminderUtils.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/lib/syncer.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tsconfig.json" afterDir="false" />
+    <list default="true" id="b000fec0-1dad-45c4-bd04-ec2a219502b3" name="Changes" comment="First Version">
+      <change afterPath="$PROJECT_DIR$/src/__mocks__/obsidian.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/lib/commands/create-year.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/lib/commands/process-active-file.spec.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/lib/commands/process-active-file.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/lib/commands/process-all.spec.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/lib/commands/process-all.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/lib/commands/process-file.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/lib/event-handling/modify-week-file-event.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/lib/parseWeekFile/parse-wo.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/lib/parseWeekFile/parse-wo.spec.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/lib/parseWeekFile/parse-wo.spec.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/lib/parseWeekFile/set-event-ids.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/lib/parseWeekFile/set-event-ids.spec.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/lib/parseWeekFile/set-event-ids.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/lib/parseWeekFile/stringify-wo.spec.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/lib/settings/constants.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/lib/settings/week-calendar-settings-tab.spec.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/lib/settings/week-calendar-settings-tab.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/lib/utils/util.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/lib/utils/util.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.prettierrc" beforeDir="false" afterPath="$PROJECT_DIR$/.prettierrc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/jest.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/jest.config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/commands.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/commands.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/file-event-emitter.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/file-event-emitter.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/index.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/dateUtils.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/formatter.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/parser.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/reminderUtils.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/syncer.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/parse-wo-2.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/parse-wo-2.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/parse-wo.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/parse-wo.spec.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/parse-wo.spec.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/parse-wo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/parseWeekFile/parse-wo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/set-event-ids.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/set-event-ids.spec.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/set-event-ids.spec.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/parseWeekFile/set-event-ids.spec.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/set-event-ids.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/stringify-wo.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/parseWeekFile/stringify-wo.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/stringify-wo.spec.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/stringify-wo.spec.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/parseWeekFile/stringify-wo.spec.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/stringify-wo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/parseWeekFile/stringify-wo.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test-data.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/test-helpers/test-data.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test-data.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/test-helpers/test-data.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/types.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/util.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/util.ts" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -26,31 +68,65 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/daddykom/obsidian-wo-calendar-sync.git",
-    "accountId": "3a52b0ca-89d2-4690-9863-5911824f4155"
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "daddykom"
   }
 }]]></component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 4
-}]]></component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;git@github.com:daddykom/obsidian-wo-calendar-sync.git&quot;,
+    &quot;accountId&quot;: &quot;3a52b0ca-89d2-4690-9863-5911824f4155&quot;
+  },
+  &quot;recentNewPullRequestHead&quot;: {
+    &quot;server&quot;: {
+      &quot;useHttp&quot;: false,
+      &quot;host&quot;: &quot;github.com&quot;,
+      &quot;port&quot;: null,
+      &quot;suffix&quot;: null
+    },
+    &quot;owner&quot;: &quot;daddykom&quot;,
+    &quot;repository&quot;: &quot;obsidian-wo-calendar-sync&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 4
+}</component>
   <component name="ProjectId" id="3AML0PI8H8mAGFPqzC3fA1Dp7XD" />
   <component name="ProjectViewState">
+    <option name="autoscrollFromSource" value="true" />
+    <option name="autoscrollToSource" value="true" />
     <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="openDirectoriesWithSingleClick" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Jest.Set Event Ids (1).executor": "Run",
+    "Jest.Set Event Ids.executor": "Run",
+    "Jest.Test parse Wochenfile (1).executor": "Run",
+    "Jest.Test parse Wochenfile.executor": "Run",
+    "Jest.Test stringify Wochenfile (1).executor": "Run",
+    "Jest.Test stringify Wochenfile.executor": "Run",
+    "Jest.WeekCalendartSettingTab.executor": "Run",
+    "Jest.processActiveFile.executor": "Run",
+    "Jest.processAll (1).executor": "Run",
+    "Jest.processAll.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "#1 on feature/start",
     "javascript.preferred.runtime.type.id": "node",
-    "last_opened_file_path": "/Users/daddykom/WebstormProjects/obsidian-wo-calendar-sync",
+    "last_opened_file_path": "/Users/daddykom/Documents/Vaults/Obsidian-Test/.obsidian/plugins/week-calendart",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "nodejs.jest.jest_package": "/Users/daddykom/Documents/Vaults/Obsidian-Test/.obsidian/plugins/week-calendart/node_modules/jest",
     "nodejs_package_manager_path": "npm",
-    "ts.external.directory.path": "/Users/daddykom/Applications/WebStorm.app/Contents/plugins/javascript-plugin/jsLanguageServicesImpl/external",
+    "prettierjs.PrettierConfiguration.Package": "/Users/daddykom/Documents/Vaults/Obsidian-Test/.obsidian/plugins/week-calendart/node_modules/prettier",
+    "ts.external.directory.path": "/Users/daddykom/Documents/Vaults/Obsidian-Test/.obsidian/plugins/week-calendart/node_modules/typescript/lib",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -59,6 +135,84 @@
       <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/src/lib" />
     </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/lib/commands" />
+      <recent name="$PROJECT_DIR$/src/lib/settings" />
+      <recent name="$PROJECT_DIR$/src/lib/utils" />
+      <recent name="$PROJECT_DIR$/src/lib/test-helpers" />
+      <recent name="$PROJECT_DIR$/src/lib/parseWeekFile" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Jest.processActiveFile">
+    <configuration name="Test parse Wochenfile (1)" type="JavaScriptTestRunnerJest" temporary="true" nameIsGenerated="true">
+      <node-interpreter value="project" />
+      <jest-package value="$PROJECT_DIR$/node_modules/jest" />
+      <working-dir value="$PROJECT_DIR$" />
+      <envs />
+      <scope-kind value="SUITE" />
+      <test-file value="$PROJECT_DIR$/src/lib/parseWeekFile/parse-wo.spec.ts" />
+      <test-names>
+        <test-name value="Test parse Wochenfile" />
+      </test-names>
+      <method v="2" />
+    </configuration>
+    <configuration name="Test stringify Wochenfile (1)" type="JavaScriptTestRunnerJest" temporary="true" nameIsGenerated="true">
+      <node-interpreter value="project" />
+      <jest-package value="$PROJECT_DIR$/node_modules/jest" />
+      <working-dir value="$PROJECT_DIR$" />
+      <envs />
+      <scope-kind value="SUITE" />
+      <test-file value="$PROJECT_DIR$/src/lib/parseWeekFile/stringify-wo.spec.ts" />
+      <test-names>
+        <test-name value="Test stringify Wochenfile" />
+      </test-names>
+      <method v="2" />
+    </configuration>
+    <configuration name="processActiveFile" type="JavaScriptTestRunnerJest" temporary="true" nameIsGenerated="true">
+      <node-interpreter value="project" />
+      <jest-package value="$PROJECT_DIR$/node_modules/jest" />
+      <working-dir value="$PROJECT_DIR$" />
+      <envs />
+      <scope-kind value="SUITE" />
+      <test-file value="$PROJECT_DIR$/src/lib/commands/process-active-file.spec.ts" />
+      <test-names>
+        <test-name value="processActiveFile" />
+      </test-names>
+      <method v="2" />
+    </configuration>
+    <configuration name="processAll (1)" type="JavaScriptTestRunnerJest" temporary="true" nameIsGenerated="true">
+      <node-interpreter value="project" />
+      <jest-package value="$PROJECT_DIR$/node_modules/jest" />
+      <working-dir value="$PROJECT_DIR$" />
+      <envs />
+      <scope-kind value="SUITE" />
+      <test-file value="$PROJECT_DIR$/src/lib/commands/process-all.spec.ts" />
+      <test-names>
+        <test-name value="processAll" />
+      </test-names>
+      <method v="2" />
+    </configuration>
+    <configuration name="processAll" type="JavaScriptTestRunnerJest" temporary="true" nameIsGenerated="true">
+      <node-interpreter value="project" />
+      <jest-package value="$PROJECT_DIR$/node_modules/jest" />
+      <working-dir value="$PROJECT_DIR$" />
+      <envs />
+      <scope-kind value="SUITE" />
+      <test-file value="$PROJECT_DIR$/src/lib/commands/prozess-all.spec.ts" />
+      <test-names>
+        <test-name value="processAll" />
+      </test-names>
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Jest.processActiveFile" />
+        <item itemvalue="Jest.processAll (1)" />
+        <item itemvalue="Jest.processAll" />
+        <item itemvalue="Jest.Test stringify Wochenfile (1)" />
+        <item itemvalue="Jest.Test parse Wochenfile (1)" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
@@ -75,11 +229,22 @@
       <option name="presentableId" value="Default" />
       <updated>1772397269236</updated>
       <workItem from="1772397270209" duration="1258000" />
+      <workItem from="1773692825286" duration="29128000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+    <option name="exactExcludedFiles">
+      <list>
+        <option value="$PROJECT_DIR$/src/lib/commands/create-year.js" />
+        <option value="$PROJECT_DIR$/src/lib/event-handling/modify-week-file-event.js" />
+        <option value="$PROJECT_DIR$/src/lib/settings/week-calendar-settings-tab.spec.js" />
+        <option value="$PROJECT_DIR$/src/lib/commands/process-active-file.js" />
+        <option value="$PROJECT_DIR$/src/__mocks__/obsidian.js" />
+        <option value="$PROJECT_DIR$/src/lib/commands/process-active-file.spec.js" />
+      </list>
+    </option>
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
@@ -91,5 +256,17 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/src/lib/commands/process-all.spec.ts</url>
+          <line>23</line>
+          <properties lambdaOrdinal="-1" />
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

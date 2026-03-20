@@ -6,13 +6,13 @@ export interface ElementStructure {
 
 export const woFileStructure = [
   'start',
-  'montag',
-  'dienstag',
-  'mittwoch',
-  'donnerstag',
-  'freitag',
-  'samstag',
-  'sonntag',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
   'links',
 ] as const;
 
@@ -38,3 +38,21 @@ export interface LineMatcher {
 }
 
 export type LineMatchResult = [LineMatchertype, WoFileStructure | null];
+
+export interface WeekcalendarSettings {
+  paths: { weekFolder: string; eventFolder: string };
+  weekdays: Record<WoFileStructure, string>;
+  prefixes: {
+    event: string;
+    time: string;
+    location: string;
+    reminder: string;
+    repeat: string;
+  };
+  caldav: {
+    url: string;
+    username: string;
+    password: string;
+    calendar: string;
+  };
+}
