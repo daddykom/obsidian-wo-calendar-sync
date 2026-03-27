@@ -5,4 +5,7 @@ module.exports = {
   roots: ['<rootDir>/src'],
   moduleFileExtensions: ['ts', 'js'],
   testMatch: ['**/*.spec.ts'],
+  moduleNameMapper: {
+    '^obsidian$': '<rootDir>/src/__mocks__/obsidian.ts',
+  },
 };

@@ -1,0 +1,12 @@
+import { woFileTitleStructure } from '../types';
+/**
+ * make flat string from structure
+ * @param elements
+ */
+export function stringifyWo(elements) {
+    const lines = woFileTitleStructure.flatMap((key) => [
+        ...elements[key].map((element) => element.content.join('\n')),
+    ]);
+    return lines.join('\n');
+}
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoic3RyaW5naWZ5LXdvLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsic3RyaW5naWZ5LXdvLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJBQUFBLE9BQU8sRUFBcUIsb0JBQW9CLEVBQUUsTUFBTSxVQUFVLENBQUM7QUFFbkU7OztHQUdHO0FBQ0gsTUFBTSxVQUFVLFdBQVcsQ0FBQyxRQUEyQjtJQUNyRCxNQUFNLEtBQUssR0FBRyxvQkFBb0IsQ0FBQyxPQUFPLENBQUMsQ0FBQyxHQUFHLEVBQUUsRUFBRSxDQUFDO1FBQ2xELEdBQUcsUUFBUSxDQUFDLEdBQUcsQ0FBQyxDQUFDLEdBQUcsQ0FBQyxDQUFDLE9BQU8sRUFBRSxFQUFFLENBQUMsT0FBTyxDQUFDLE9BQU8sQ0FBQyxJQUFJLENBQUMsSUFBSSxDQUFDLENBQUM7S0FDOUQsQ0FBQyxDQUFDO0lBQ0gsT0FBTyxLQUFLLENBQUMsSUFBSSxDQUFDLElBQUksQ0FBQyxDQUFDO0FBQzFCLENBQUMiLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBFbGVtZW50c1N0cnVjdHVyZSwgd29GaWxlVGl0bGVTdHJ1Y3R1cmUgfSBmcm9tICcuLi90eXBlcyc7XG5cbi8qKlxuICogbWFrZSBmbGF0IHN0cmluZyBmcm9tIHN0cnVjdHVyZVxuICogQHBhcmFtIGVsZW1lbnRzXG4gKi9cbmV4cG9ydCBmdW5jdGlvbiBzdHJpbmdpZnlXbyhlbGVtZW50czogRWxlbWVudHNTdHJ1Y3R1cmUpIHtcbiAgY29uc3QgbGluZXMgPSB3b0ZpbGVUaXRsZVN0cnVjdHVyZS5mbGF0TWFwKChrZXkpID0+IFtcbiAgICAuLi5lbGVtZW50c1trZXldLm1hcCgoZWxlbWVudCkgPT4gZWxlbWVudC5jb250ZW50LmpvaW4oJ1xcbicpKSxcbiAgXSk7XG4gIHJldHVybiBsaW5lcy5qb2luKCdcXG4nKTtcbn1cbiJdfQ==

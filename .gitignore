@@ -1,5 +1,8 @@
 node_modules/
 dist/
-main.js
 *.map
 .DS_Store
+/src/**/*.js
+/src/*.js
+!/main.js
+/src/__mocks__/obsidian.js
