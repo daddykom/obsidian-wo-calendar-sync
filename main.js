@@ -23,7 +23,7 @@ __export(main_exports, {
   default: () => WeekCalendartPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian7 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 
 // node_modules/tslib/tslib.es6.mjs
 var extendStatics = function(d, b) {
@@ -1778,6 +1778,46 @@ function switchMap(project, resultSelector) {
   });
 }
 
+// src/lib/commands/create-year/create-year.ts
+var import_obsidian3 = require("obsidian");
+
+// src/lib/ui/create-year-prompt.ts
+var import_obsidian = require("obsidian");
+var CreateYearPrompt = class extends import_obsidian.Modal {
+  #value = "";
+  #onSubmit;
+  #isValid = false;
+  constructor(app, onSubmit) {
+    super(app);
+    this.#onSubmit = onSubmit;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    let submitButton = null;
+    new import_obsidian.Setting(contentEl).setName("Jahr (4-stellig)").addText((text) => {
+      text.onChange((value) => {
+        this.#value = value;
+        this.#isValid = /^\d{4}$/.test(value);
+        submitButton?.setDisabled(!this.#isValid);
+      });
+      text.inputEl.focus();
+    });
+    new import_obsidian.Setting(contentEl).addButton((btn) => {
+      submitButton = btn;
+      btn.setButtonText("OK").setCta().setDisabled(true).onClick(() => {
+        if (!this.#isValid) {
+          return;
+        }
+        this.#onSubmit(this.#value);
+        this.close();
+      });
+    });
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
+
 // node_modules/date-fns/locale/en-US/_lib/formatDistance.js
 var formatDistanceLocale = {
   lessThanXSeconds: {
@@ -3347,65 +3387,72 @@ function cleanEscapedString(input) {
   return matched[1].replace(doubleQuoteRegExp, "'");
 }
 
-// src/lib/commands/create-year.ts
+// src/lib/commands/create-year/create-year-file.ts
 var import_obsidian2 = require("obsidian");
 
-// src/lib/types.ts
-var woFileTitleStructure = [
-  "start",
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-  "links"
-];
-
-// src/lib/parseWeekFile/stringify-wo.ts
-function stringifyWo(elements) {
-  const lines = woFileTitleStructure.flatMap((key) => [
-    ...elements[key].map((element) => element.content.join("\n"))
-  ]);
-  return lines.join("\n");
+// src/lib/utils/create-folder-if-not-exist.ts
+async function createFolderIfNotExist(path, app) {
+  const segments = path.split("/");
+  const paths = segments.reduce((acc, item) => {
+    if (acc.length) {
+      return [...acc, `${acc[acc.length - 1]}/${item}`];
+    }
+    return [item];
+  }, []);
+  for (const folderPath of paths) {
+    if (!app.vault.getAbstractFileByPath(folderPath)) {
+      await app.vault.createFolder(folderPath);
+    }
+  }
 }
 
-// src/lib/ui/create-year-prompt.ts
-var import_obsidian = require("obsidian");
-var CreateYearPrompt = class extends import_obsidian.Modal {
-  #value = "";
-  #onSubmit;
-  #isValid = false;
-  constructor(app, onSubmit) {
-    super(app);
-    this.#onSubmit = onSubmit;
+// src/lib/commands/create-year/create-year-file.ts
+async function createYearFile(yyyy, weeks, settings, app) {
+  const path = settings.paths.weekFolder;
+  const yearPath = `${path}/${yyyy.toString()}`;
+  const weekPath = `${yearPath}/weeks`;
+  const weekStrings = weeks.map((week) => {
+    const weekNo = week.week.toString().padStart(2, "0");
+    const monday = format(week.monday, "dd.MM.yy");
+    const fileName = `W${weekNo} ${monday}`;
+    return `<b>[[${weekPath}/${fileName}\\|W${weekNo}]]</b><br>${monday.substring(0, 5)}`;
+  });
+  const weekArray = weekStrings.reduce((acc, week, i) => {
+    const x = i % 7;
+    const row = x ? acc[acc.length - 1] ?? [] : [];
+    const newRow = [...row, week];
+    if (x === 0) {
+      return [...acc, newRow];
+    } else {
+      return [...acc.toSpliced(-1), newRow];
+    }
+  }, []).reverse();
+  const header = makeRow(Array(7).fill(" "));
+  const headerLine = makeRow(Array(7).fill("---"));
+  const body = weekArray.map((week) => makeRow(week)).join("\n");
+  const fileContent = `# ${yyyy.toString()}
+
+${header}
+${headerLine}
+${body}`;
+  const filePath = `${yearPath}/${settings.paths.overviewFileName}.md`;
+  await createFolderIfNotExist(weekPath, app);
+  const file = app.vault.getAbstractFileByPath(filePath);
+  if (file instanceof import_obsidian2.TFile) {
+    await app.vault.modify(file, fileContent);
+    new import_obsidian2.Notice(`${filePath} wurde angepasst`);
+    return;
   }
-  onOpen() {
-    const { contentEl } = this;
-    let submitButton = null;
-    new import_obsidian.Setting(contentEl).setName("Jahr (4-stellig)").addText((text) => {
-      text.onChange((value) => {
-        this.#value = value;
-        this.#isValid = /^\d{4}$/.test(value);
-        submitButton?.setDisabled(!this.#isValid);
-      });
-      text.inputEl.focus();
-    });
-    new import_obsidian.Setting(contentEl).addButton((btn) => {
-      submitButton = btn;
-      btn.setButtonText("OK").setCta().setDisabled(true).onClick(() => {
-        if (!this.#isValid) {
-          return;
-        }
-        this.#onSubmit(this.#value);
-        this.close();
-      });
-    });
+  if (file) {
+    new import_obsidian2.Notice(`Der Pfad ${filePath} ist ein Ordner und keine Datei`);
+    return;
   }
-  onClose() {
-    this.contentEl.empty();
-  }
+  await app.vault.create(filePath, fileContent);
+  new import_obsidian2.Notice(`${filePath} wurde erstellt`);
+}
+var makeRow = (line) => {
+  const strLine = line.join("|");
+  return `|${strLine}|`;
 };
 
 // src/lib/utils/util.ts
@@ -3435,21 +3482,7 @@ var beforeAWeek = (date) => {
   return result;
 };
 
-// src/lib/commands/create-year.ts
-var createYear = (app, settings) => async () => {
-  new CreateYearPrompt(app, (year) => {
-    const yyyy = Number.parseInt(year, 10);
-    const lastYear = prepareData(yyyy - 1);
-    const nextYear = prepareData(yyyy + 1);
-    const weeks = prepareData(yyyy);
-    const expandedWeeks = [lastYear[lastYear.length - 1], ...weeks, nextYear[0]];
-    const preparedWeeks = prepareWeeks(yyyy, expandedWeeks, settings);
-    const numbFiles = writeWeekFiles(yyyy, preparedWeeks, settings, app);
-    new import_obsidian2.Notice(
-      `Total ${weeks.length} Wochen, davon ${weeks.length - numbFiles} erstellt, ${numbFiles} existierten schon`
-    );
-  }).open();
-};
+// src/lib/commands/create-year/prepare-data.ts
 function prepareData(yyyy) {
   const firstDay = getIsoWeek1Monday(yyyy);
   const firstDayNextYear = getIsoWeek1Monday(yyyy + 1);
@@ -3466,6 +3499,22 @@ function prepareData(yyyy) {
   }
   return weeks;
 }
+
+// src/lib/commands/create-year/prepare-element-structure.ts
+function prepareElementStructure(settings) {
+  return Object.entries(settings.weekdays).reduce(
+    (acc, [key, name]) => {
+      const text = key !== "start" ? `# ${name}` : "";
+      return {
+        ...acc,
+        [key]: key !== "start" ? [{ type: "text", content: [text, ""] }] : []
+      };
+    },
+    {}
+  );
+}
+
+// src/lib/commands/create-year/prepare-weeks.ts
 function prepareWeeks(yyyy, weeks, settings) {
   const dirPath = settings.paths.weekFolder;
   const weekPath = `${dirPath}/${yyyy.toString()}/weeks`;
@@ -3485,66 +3534,86 @@ function prepareWeeks(yyyy, weeks, settings) {
   });
   return preparedWeeks;
 }
-function prepareElementStructure(settings) {
-  return Object.entries(settings.weekdays).reduce(
-    (acc, [key, name]) => {
-      const text = key !== "start" ? `# ${name}` : "";
-      return {
-        ...acc,
-        [key]: key !== "start" ? [{ type: "text", content: [text, ""] }] : []
-      };
-    },
-    {}
-  );
+
+// src/lib/types.ts
+var woFileTitleStructure = [
+  "start",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+  "links"
+];
+
+// src/lib/parseWeekFile/stringify-wo.ts
+function stringifyWo(elements) {
+  const lines = woFileTitleStructure.flatMap((key) => [
+    ...elements[key].map((element) => element.content.join("\n"))
+  ]);
+  return lines.join("\n");
 }
-function writeWeekFiles(yyyy, weeks, settings, app) {
+
+// src/lib/commands/create-year/write-week-files.ts
+async function writeWeekFiles(yyyy, weeks, settings, app) {
   const path = settings.paths.weekFolder;
   const yearPath = `${path}/${yyyy.toString()}`;
   const weekPath = `${yearPath}/weeks`;
   if (!app.vault.getAbstractFileByPath(path)) {
-    app.vault.createFolder(path);
+    await app.vault.createFolder(path);
   }
-  createFolderIfNotExist(weekPath, app);
+  await createFolderIfNotExist(weekPath, app);
   let numbExists = 0;
-  weeks.forEach((item) => {
+  for (const item of weeks) {
     if (!item) {
-      return;
+      continue;
     }
     const [fileName, week] = item;
-    const path2 = `${weekPath}/${fileName}`;
-    if (app.vault.getAbstractFileByPath(path2)) {
+    const filePath = `${weekPath}/${fileName}`;
+    if (app.vault.getAbstractFileByPath(filePath)) {
       numbExists++;
-      return;
+      continue;
     }
-    console.log("create", path2, stringifyWo(week));
-    app.vault.create(path2, stringifyWo(week));
-  });
+    console.log("create", filePath, stringifyWo(week));
+    await app.vault.create(filePath, stringifyWo(week));
+  }
   return numbExists;
 }
-function createFolderIfNotExist(path, app) {
-  const segments = path.split("/");
-  const paths = segments.reduce((acc, item) => {
-    if (acc.length) {
-      return [...acc, `${acc[acc.length - 1]}/${item}`];
+
+// src/lib/commands/create-year/create-year.ts
+var createYear = (app, settings) => async () => {
+  new CreateYearPrompt(app, async (year) => {
+    try {
+      const yyyy = Number.parseInt(year, 10);
+      const lastYear = prepareData(yyyy - 1);
+      const nextYear = prepareData(yyyy + 1);
+      const weeks = prepareData(yyyy);
+      const expandedWeeks = [lastYear[lastYear.length - 1], ...weeks, nextYear[0]];
+      const preparedWeeks = prepareWeeks(yyyy, expandedWeeks, settings);
+      const numbFiles = await writeWeekFiles(yyyy, preparedWeeks, settings, app);
+      createYearFile(yyyy, weeks, settings, app);
+      new import_obsidian3.Notice(
+        `Total ${weeks.length} Wochen, davon ${weeks.length - numbFiles} erstellt, ${numbFiles} existierten schon`
+      );
+    } catch (error) {
+      console.error(error);
+      new import_obsidian3.Notice("Fehler beim Erstellen der Wochen-Dateien");
     }
-    return [item];
-  }, []);
-  paths.forEach((path2) => {
-    if (!app.vault.getAbstractFileByPath(path2)) {
-      app.vault.createFolder(path2);
-    }
-  });
-}
+  }).open();
+};
 
 // src/lib/commands/process-active-file.ts
-var import_obsidian3 = require("obsidian");
+var import_obsidian4 = require("obsidian");
 
 // src/lib/settings/constants.ts
 var WO_FILE_REGEX = /^week-calendar\/.*\/WO/;
 var DEFAULT_SETTINGS = {
   paths: {
     weekFolder: "week-calendar",
-    eventFolder: "week-calendar/events"
+    eventFolder: "week-calendar/events",
+    overviewFileName: "\xDCbersicht"
   },
   weekdays: {
     start: "start",
@@ -3685,21 +3754,21 @@ function processFile(fileContent, file) {
 var processActiveFile = (app) => async () => {
   const file = app.workspace.getActiveFile();
   if (!file) {
-    new import_obsidian3.Notice("No active file.");
+    new import_obsidian4.Notice("No active file.");
     return;
   }
   const fileContent = await app.vault.read(file);
   const changedFile = processFile(fileContent, file);
   if (changedFile) {
     await app.vault.modify(file, changedFile);
-    new import_obsidian3.Notice("Processed current file.  Filename: " + file.name);
+    new import_obsidian4.Notice("Processed current file.  Filename: " + file.name);
   } else {
-    new import_obsidian3.Notice("Es hat keine \xC4nderungen gegeben!");
+    new import_obsidian4.Notice("Es hat keine \xC4nderungen gegeben!");
   }
 };
 
 // src/lib/commands/process-all.ts
-var import_obsidian4 = require("obsidian");
+var import_obsidian5 = require("obsidian");
 var processAll = (app) => async () => {
   let numb = 0;
   const files = app.vault.getMarkdownFiles();
@@ -3714,13 +3783,13 @@ var processAll = (app) => async () => {
       }
     })
   );
-  new import_obsidian4.Notice(`Es wurden ${woFiles.length} WochenFiles verarbeitet und davon ${numb} angepasst.`);
+  new import_obsidian5.Notice(`Es wurden ${woFiles.length} WochenFiles verarbeitet und davon ${numb} angepasst.`);
 };
 
 // src/lib/event-handling/modify-week-file-event.ts
-var import_obsidian5 = require("obsidian");
+var import_obsidian6 = require("obsidian");
 var modifyWeekFileEvent = (app, modifyEvents, actualFileChanded$) => modifyEvents.pipe(
-  filter((file) => file instanceof import_obsidian5.TFile),
+  filter((file) => file instanceof import_obsidian6.TFile),
   filter((file) => WO_FILE_REGEX.test(file.path)),
   filter((file) => file.extension === "md"),
   switchMap(
@@ -3731,9 +3800,9 @@ var modifyWeekFileEvent = (app, modifyEvents, actualFileChanded$) => modifyEvent
     const changedFile = processFile(fileContent, file);
     if (changedFile) {
       return from(app.vault.modify(file, changedFile)).pipe(
-        map(() => new import_obsidian5.Notice(`File ${file.name} angepasst.`)),
+        map(() => new import_obsidian6.Notice(`File ${file.name} angepasst.`)),
         catchError(
-          (err) => of(new import_obsidian5.Notice(`Fehler bei der Anpassung von ${file.name}: ` + JSON.stringify(err)))
+          (err) => of(new import_obsidian6.Notice(`Fehler bei der Anpassung von ${file.name}: ` + JSON.stringify(err)))
         )
       );
     }
@@ -3742,8 +3811,8 @@ var modifyWeekFileEvent = (app, modifyEvents, actualFileChanded$) => modifyEvent
 ).subscribe();
 
 // src/lib/settings/week-calendar-settings-tab.ts
-var import_obsidian6 = require("obsidian");
-var WeekCalendartSettingTab = class extends import_obsidian6.PluginSettingTab {
+var import_obsidian7 = require("obsidian");
+var WeekCalendartSettingTab = class extends import_obsidian7.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -3752,21 +3821,27 @@ var WeekCalendartSettingTab = class extends import_obsidian6.PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     containerEl.createEl("h2", { text: "Folders" });
-    new import_obsidian6.Setting(containerEl).setName("Week Folder").setDesc("Folder for all Week Files").addText(
+    new import_obsidian7.Setting(containerEl).setName("Week Folder").setDesc("Folder for all Week Files").addText(
       (text) => text.setPlaceholder("wochen").setValue(this.plugin.settings.paths.weekFolder).onChange(async (value) => {
         this.plugin.settings.paths.weekFolder = value;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian6.Setting(containerEl).setName("Event Folder").setDesc("Folder for CalDav Events").addText(
+    new import_obsidian7.Setting(containerEl).setName("Event Folder").setDesc("Folder for CalDav Events").addText(
       (text) => text.setPlaceholder("events").setValue(this.plugin.settings.paths.eventFolder).onChange(async (value) => {
         this.plugin.settings.paths.eventFolder = value;
         await this.plugin.saveSettings();
       })
     );
+    new import_obsidian7.Setting(containerEl).setName("Overview File Name").setDesc("Name of the File, where the Links to all Week Files are.").addText(
+      (text) => text.setPlaceholder("\xDCbersicht").setValue(this.plugin.settings.paths.overviewFileName).onChange(async (value) => {
+        this.plugin.settings.paths.overviewFileName = value;
+        await this.plugin.saveSettings();
+      })
+    );
     containerEl.createEl("h2", { text: "Week File Titles" });
     Object.entries(this.plugin.settings.weekdays).filter(([key]) => key !== "start").forEach(([key, value]) => {
-      new import_obsidian6.Setting(containerEl).setName(key).addText(
+      new import_obsidian7.Setting(containerEl).setName(key).addText(
         (text) => text.setValue(value).onChange(async (val) => {
           this.plugin.settings.weekdays[key] = val;
           await this.plugin.saveSettings();
@@ -3775,7 +3850,7 @@ var WeekCalendartSettingTab = class extends import_obsidian6.PluginSettingTab {
     });
     containerEl.createEl("h2", { text: "Event Fields" });
     Object.entries(this.plugin.settings.prefixes).forEach(([key, value]) => {
-      new import_obsidian6.Setting(containerEl).setName(key).addText(
+      new import_obsidian7.Setting(containerEl).setName(key).addText(
         (text) => text.setValue(value).onChange(async (val) => {
           this.plugin.settings.prefixes[key] = val;
           await this.plugin.saveSettings();
@@ -3783,19 +3858,19 @@ var WeekCalendartSettingTab = class extends import_obsidian6.PluginSettingTab {
       );
     });
     containerEl.createEl("h2", { text: "CalDAV" });
-    new import_obsidian6.Setting(containerEl).setName("URL").addText(
+    new import_obsidian7.Setting(containerEl).setName("URL").addText(
       (text) => text.setValue(this.plugin.settings.caldav.url).onChange(async (val) => {
         this.plugin.settings.caldav.url = val;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian6.Setting(containerEl).setName("Benutzername").addText(
+    new import_obsidian7.Setting(containerEl).setName("Benutzername").addText(
       (text) => text.setValue(this.plugin.settings.caldav.username).onChange(async (val) => {
         this.plugin.settings.caldav.username = val;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian6.Setting(containerEl).setName("Passwort").addText(
+    new import_obsidian7.Setting(containerEl).setName("Passwort").addText(
       (text) => text.setValue(this.plugin.settings.caldav.password).onChange(async (val) => {
         this.plugin.settings.caldav.password = val;
         await this.plugin.saveSettings();
@@ -3804,8 +3879,17 @@ var WeekCalendartSettingTab = class extends import_obsidian6.PluginSettingTab {
   }
 };
 
+// src/lib/utils/check-toSpliced-compatibility.ts
+function checkToSplicedCompatibility() {
+  if (!("toSpliced" in Array.prototype)) {
+    return `Deine Obsidian-Version ist zu alt f\xFCr dieses Plugin.
+Fehlende Features: toSpliced verlangs ES2023}`;
+  }
+  return null;
+}
+
 // src/main.ts
-var WeekCalendartPlugin = class extends import_obsidian7.Plugin {
+var WeekCalendartPlugin = class extends import_obsidian8.Plugin {
   constructor() {
     super(...arguments);
     this.actualFileChanded$ = fromEvent(this.app.workspace, "active-leaf-change");
@@ -3813,6 +3897,11 @@ var WeekCalendartPlugin = class extends import_obsidian7.Plugin {
     this.settings = DEFAULT_SETTINGS;
   }
   async onload() {
+    const versionCheck = checkToSplicedCompatibility();
+    if (versionCheck) {
+      new import_obsidian8.Notice(versionCheck, 1e4);
+      return;
+    }
     this.addCommand({
       id: "process-active-wo-file",
       name: "Aktives Wochenfile verarbeiten",
@@ -3832,7 +3921,7 @@ var WeekCalendartPlugin = class extends import_obsidian7.Plugin {
       modifyWeekFileEvent(this.app, fromEvent(this.app.vault, "modify"), this.actualFileChanded$)
     );
     this.addSettingTab(new WeekCalendartSettingTab(this.app, this));
-    new import_obsidian7.Notice("Week Calendart loaded.");
+    new import_obsidian8.Notice("Week Calendart loaded.");
   }
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
@@ -3841,7 +3930,7 @@ var WeekCalendartPlugin = class extends import_obsidian7.Plugin {
     await this.saveData(this.settings);
   }
   onunload() {
-    new import_obsidian7.Notice("Week Calendart unload.");
+    new import_obsidian8.Notice("Week Calendart unload.");
     this.subscription.unsubscribe();
   }
 };

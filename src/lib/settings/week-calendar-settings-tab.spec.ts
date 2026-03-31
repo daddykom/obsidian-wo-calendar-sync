@@ -176,6 +176,7 @@ describe('WeekCalendartSettingTab', () => {
     expect(names).toEqual([
       'Week Folder',
       'Event Folder',
+      'Overview File Name',
       'monday',
       'tuesday',
       'wednesday',

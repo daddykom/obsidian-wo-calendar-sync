@@ -45,6 +45,19 @@ export class WeekCalendartSettingTab extends PluginSettingTab {
           }),
       );
 
+    new Setting(containerEl)
+      .setName('Overview File Name')
+      .setDesc('Name of the File, where the Links to all Week Files are.')
+      .addText((text) =>
+        text
+          .setPlaceholder('Übersicht')
+          .setValue(this.plugin.settings.paths.overviewFileName)
+          .onChange(async (value) => {
+            this.plugin.settings.paths.overviewFileName = value;
+            await this.plugin.saveSettings();
+          }),
+      );
+
     // --- Weekdays ---
     containerEl.createEl('h2', { text: 'Week File Titles' });
 

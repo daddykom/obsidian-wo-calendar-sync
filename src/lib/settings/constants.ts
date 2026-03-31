@@ -6,6 +6,7 @@ export const DEFAULT_SETTINGS: WeekcalendarSettings = {
   paths: {
     weekFolder: 'week-calendar',
     eventFolder: 'week-calendar/events',
+    overviewFileName: 'Übersicht',
   },
   weekdays: {
     start: 'start',

@@ -41,7 +41,7 @@ export interface LineMatcher {
 export type LineMatchResult = [LineMatchertype, WoFileTitleStructure | null];
 
 export interface WeekcalendarSettings {
-  paths: { weekFolder: string; eventFolder: string };
+  paths: { weekFolder: string; eventFolder: string; overviewFileName: string };
   weekdays: Record<WoFileTitleStructure, string>;
   prefixes: {
     event: string;

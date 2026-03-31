@@ -1,11 +1,12 @@
 import { Notice, Plugin } from 'obsidian';
 import { fromEvent, Subscription } from 'rxjs';
-import { createYear } from './lib/commands/create-year';
+import { createYear } from './lib/commands/create-year/create-year';
 import { processActiveFile } from './lib/commands/process-active-file';
 import { processAll } from './lib/commands/process-all';
 import { modifyWeekFileEvent } from './lib/event-handling/modify-week-file-event';
 import { DEFAULT_SETTINGS } from './lib/settings/constants';
 import { WeekCalendartSettingTab } from './lib/settings/week-calendar-settings-tab';
+import { checkToSplicedCompatibility } from './lib/utils/check-toSpliced-compatibility';
 
 export default class WeekCalendartPlugin extends Plugin {
   actualFileChanded$ = fromEvent(this.app.workspace, 'active-leaf-change');
@@ -13,6 +14,11 @@ export default class WeekCalendartPlugin extends Plugin {
   settings = DEFAULT_SETTINGS;
 
   async onload(): Promise<void> {
+    const versionCheck = checkToSplicedCompatibility();
+    if (versionCheck) {
+      new Notice(versionCheck, 10000);
+      return;
+    }
     this.addCommand({
       id: 'process-active-wo-file',
       name: 'Aktives Wochenfile verarbeiten',
