@@ -1,4 +1,5 @@
 import { Notice } from 'obsidian';
+import { DEFAULT_SETTINGS } from '../../settings/constants';
 import { CreateYearPrompt } from '../../ui/create-year-prompt';
 import { createYear } from './create-year';
 import { prepareData } from './prepare-data';
@@ -32,13 +33,13 @@ describe('createYear', () => {
 
   it('should create week files and show success notice', async () => {
     const app = {};
-    const settings = {} as any;
+    const settings = DEFAULT_SETTINGS;
 
     const lastYear = [{ yyyy: 2025, week: 52 }];
     const weeks = [
-      { yyyy: 2026, week: 1 },
-      { yyyy: 2026, week: 2 },
-      { yyyy: 2026, week: 3 },
+      { yyyy: 2026, week: 1, monday: new Date('2025-12-29') },
+      { yyyy: 2026, week: 2, monday: new Date('2026-01-05') },
+      { yyyy: 2026, week: 3, monday: new Date('2026-01-12') },
     ];
     const nextYear = [{ yyyy: 2027, week: 1 }];
 

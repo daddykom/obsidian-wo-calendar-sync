@@ -3517,9 +3517,8 @@ function prepareElementStructure(settings) {
 // src/lib/commands/create-year/prepare-weeks.ts
 function prepareWeeks(yyyy, weeks, settings) {
   const dirPath = settings.paths.weekFolder;
-  const weekPath = `${dirPath}/${yyyy.toString()}/weeks`;
   const template = prepareElementStructure(settings);
-  const preparedWeeks = weeks.map((week, index) => {
+  return weeks.map((week, index) => {
     if (week.yyyy !== yyyy) {
       return null;
     }
@@ -3532,7 +3531,6 @@ function prepareWeeks(yyyy, weeks, settings) {
     const linkText = `[[${backLink}|W${lastWeekNo}]] [[${nextLink}|W${nextWeekNo}]]`;
     return [fileName, { ...template, links: [{ type: "text", content: [linkText] }] }];
   });
-  return preparedWeeks;
 }
 
 // src/lib/types.ts
@@ -3576,7 +3574,6 @@ async function writeWeekFiles(yyyy, weeks, settings, app) {
       numbExists++;
       continue;
     }
-    console.log("create", filePath, stringifyWo(week));
     await app.vault.create(filePath, stringifyWo(week));
   }
   return numbExists;
@@ -3608,7 +3605,7 @@ var createYear = (app, settings) => async () => {
 var import_obsidian4 = require("obsidian");
 
 // src/lib/settings/constants.ts
-var WO_FILE_REGEX = /^week-calendar\/.*\/WO/;
+var WO_FILE_REGEX = /^week-calendar\/.*\/W[0-5].[0-9]. /;
 var DEFAULT_SETTINGS = {
   paths: {
     weekFolder: "week-calendar",
@@ -3616,22 +3613,22 @@ var DEFAULT_SETTINGS = {
     overviewFileName: "\xDCbersicht"
   },
   weekdays: {
-    start: "start",
-    monday: "montag",
-    tuesday: "dienstag",
-    wednesday: "mittwoch",
-    thursday: "donnerstag",
-    friday: "freitag",
-    saturday: "samstag",
-    sunday: "sonntag",
-    links: "links"
+    start: "Start",
+    monday: "Montag",
+    tuesday: "Dienstag",
+    wednesday: "Mittwoch",
+    thursday: "Donnerstag",
+    friday: "Freitag",
+    saturday: "Samstag",
+    sunday: "Sonntag",
+    links: "Links"
   },
   prefixes: {
     event: "Termin",
-    time: "zeit",
-    location: "ort",
-    reminder: "erinnerung",
-    repeat: "wiederholung"
+    time: "Zeit",
+    location: "Ort",
+    reminder: "Erinnerung",
+    repeat: "Wiederholung"
   },
   caldav: {
     url: "",
@@ -3691,7 +3688,9 @@ function getLineType(line, settings = DEFAULT_SETTINGS) {
   return lineMatchers(settings).reduce((acc, { matcher, type }) => {
     const match2 = line.match(matcher);
     const text = match2 && match2[1] ? match2[1].toLowerCase() : null;
-    const [key] = typedEntries(settings.weekdays).find(([, value]) => text === value) ?? [null];
+    const [key] = typedEntries(settings.weekdays).find(
+      ([, value]) => text === value.toLowerCase()
+    ) ?? [null];
     if (match2) {
       return [type, key];
     }
@@ -3706,7 +3705,7 @@ function elementStructure(settings) {
   return {
     key: "start",
     elements: Object.entries(settings.weekdays).reduce(
-      (acc, [key, item]) => ({ ...acc, [key]: [] }),
+      (acc, [key]) => ({ ...acc, [key]: [] }),
       {}
     )
   };
@@ -3739,8 +3738,9 @@ function setEventIds(elements, year, week) {
 }
 
 // src/lib/commands/process-file.ts
-function processFile(fileContent, file) {
-  const [, year, week] = file.path.match(/^\/week-calendar\/([0-9]+)\/WO([0-9])/) ?? [];
+function processFile(fileContent, file, settings) {
+  const regex = new RegExp(`^${settings.paths.weekFolder}/([0-9]+)/weeks/W([0-9])`);
+  const [, year, week] = file.path.match(regex) ?? [];
   const structuredFile = parseWo(fileContent);
   const originalContent = stringifyWo(structuredFile);
   const changedFileContent = stringifyWo(setEventIds(structuredFile, Number(year), Number(week)));
@@ -3751,14 +3751,14 @@ function processFile(fileContent, file) {
 }
 
 // src/lib/commands/process-active-file.ts
-var processActiveFile = (app) => async () => {
+var processActiveFile = (app, settings) => async () => {
   const file = app.workspace.getActiveFile();
   if (!file) {
     new import_obsidian4.Notice("No active file.");
     return;
   }
   const fileContent = await app.vault.read(file);
-  const changedFile = processFile(fileContent, file);
+  const changedFile = processFile(fileContent, file, settings);
   if (changedFile) {
     await app.vault.modify(file, changedFile);
     new import_obsidian4.Notice("Processed current file.  Filename: " + file.name);
@@ -3769,14 +3769,14 @@ var processActiveFile = (app) => async () => {
 
 // src/lib/commands/process-all.ts
 var import_obsidian5 = require("obsidian");
-var processAll = (app) => async () => {
+var processAll = (app, settings) => async () => {
   let numb = 0;
   const files = app.vault.getMarkdownFiles();
   const woFiles = files.filter((file) => WO_FILE_REGEX.test(file.path));
   await Promise.all(
     woFiles.map(async (file) => {
       const fileContent = await app.vault.read(file);
-      const changedFile = processFile(fileContent, file);
+      const changedFile = processFile(fileContent, file, settings);
       if (changedFile) {
         ++numb;
         return app.vault.modify(file, changedFile);
@@ -3788,16 +3788,16 @@ var processAll = (app) => async () => {
 
 // src/lib/event-handling/modify-week-file-event.ts
 var import_obsidian6 = require("obsidian");
-var modifyWeekFileEvent = (app, modifyEvents, actualFileChanded$) => modifyEvents.pipe(
+var modifyWeekFileEvent = (app, modifyEvents, actualFileChanged$, settings) => modifyEvents.pipe(
   filter((file) => file instanceof import_obsidian6.TFile),
   filter((file) => WO_FILE_REGEX.test(file.path)),
   filter((file) => file.extension === "md"),
   switchMap(
     (file) => from(app.vault.read(file)).pipe(map((fileContent) => [file, fileContent]))
   ),
-  debounce(() => race(actualFileChanded$, timer(1e4))),
+  debounce(() => race(actualFileChanged$, timer(1e4))),
   switchMap(([file, fileContent]) => {
-    const changedFile = processFile(fileContent, file);
+    const changedFile = processFile(fileContent, file, settings);
     if (changedFile) {
       return from(app.vault.modify(file, changedFile)).pipe(
         map(() => new import_obsidian6.Notice(`File ${file.name} angepasst.`)),
@@ -3905,12 +3905,12 @@ var WeekCalendartPlugin = class extends import_obsidian8.Plugin {
     this.addCommand({
       id: "process-active-wo-file",
       name: "Aktives Wochenfile verarbeiten",
-      callback: processActiveFile(this.app)
+      callback: processActiveFile(this.app, this.settings)
     });
     this.addCommand({
       id: "process-all-wo-file",
       name: "Alle Wochenfile verarbeiten",
-      callback: processAll(this.app)
+      callback: processAll(this.app, this.settings)
     });
     this.addCommand({
       id: "create-new-calendar-year",
@@ -3918,7 +3918,12 @@ var WeekCalendartPlugin = class extends import_obsidian8.Plugin {
       callback: createYear(this.app, this.settings)
     });
     this.subscription.add(
-      modifyWeekFileEvent(this.app, fromEvent(this.app.vault, "modify"), this.actualFileChanded$)
+      modifyWeekFileEvent(
+        this.app,
+        fromEvent(this.app.vault, "modify"),
+        this.actualFileChanded$,
+        this.settings
+      )
     );
     this.addSettingTab(new WeekCalendartSettingTab(this.app, this));
     new import_obsidian8.Notice("Week Calendart loaded.");

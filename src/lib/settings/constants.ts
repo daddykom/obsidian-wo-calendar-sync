@@ -1,6 +1,6 @@
 import { WeekcalendarSettings } from '../types';
 
-export const WO_FILE_REGEX = /^week-calendar\/.*\/WO/;
+export const WO_FILE_REGEX = /^week-calendar\/.*\/W[0-5].[0-9]. /;
 
 export const DEFAULT_SETTINGS: WeekcalendarSettings = {
   paths: {
@@ -9,22 +9,22 @@ export const DEFAULT_SETTINGS: WeekcalendarSettings = {
     overviewFileName: 'Übersicht',
   },
   weekdays: {
-    start: 'start',
-    monday: 'montag',
-    tuesday: 'dienstag',
-    wednesday: 'mittwoch',
-    thursday: 'donnerstag',
-    friday: 'freitag',
-    saturday: 'samstag',
-    sunday: 'sonntag',
-    links: 'links',
+    start: 'Start',
+    monday: 'Montag',
+    tuesday: 'Dienstag',
+    wednesday: 'Mittwoch',
+    thursday: 'Donnerstag',
+    friday: 'Freitag',
+    saturday: 'Samstag',
+    sunday: 'Sonntag',
+    links: 'Links',
   },
   prefixes: {
     event: 'Termin',
-    time: 'zeit',
-    location: 'ort',
-    reminder: 'erinnerung',
-    repeat: 'wiederholung',
+    time: 'Zeit',
+    location: 'Ort',
+    reminder: 'Erinnerung',
+    repeat: 'Wiederholung',
   },
   caldav: {
     url: '',

@@ -22,13 +22,13 @@ export default class WeekCalendartPlugin extends Plugin {
     this.addCommand({
       id: 'process-active-wo-file',
       name: 'Aktives Wochenfile verarbeiten',
-      callback: processActiveFile(this.app),
+      callback: processActiveFile(this.app, this.settings),
     });
 
     this.addCommand({
       id: 'process-all-wo-file',
       name: 'Alle Wochenfile verarbeiten',
-      callback: processAll(this.app),
+      callback: processAll(this.app, this.settings),
     });
 
     this.addCommand({
@@ -38,7 +38,12 @@ export default class WeekCalendartPlugin extends Plugin {
     });
 
     this.subscription.add(
-      modifyWeekFileEvent(this.app, fromEvent(this.app.vault, 'modify'), this.actualFileChanded$),
+      modifyWeekFileEvent(
+        this.app,
+        fromEvent(this.app.vault, 'modify'),
+        this.actualFileChanded$,
+        this.settings,
+      ),
     );
 
     this.addSettingTab(new WeekCalendartSettingTab(this.app, this));

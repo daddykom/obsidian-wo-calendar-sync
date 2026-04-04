@@ -1,5 +1,6 @@
 import { Notice, TFile } from 'obsidian';
-import { WeekcalendarSettings, Weeks } from '../../types';
+import { DEFAULT_SETTINGS } from '../../settings/constants';
+import { Weeks } from '../../types';
 import { createFolderIfNotExist } from '../../utils/create-folder-if-not-exist';
 import { createYearFile } from './create-year-file';
 
@@ -9,12 +10,8 @@ jest.mock('../../utils/create-folder-if-not-exist', () => ({
 }));
 
 describe('createYearFile', () => {
-  const settings: WeekcalendarSettings = {
-    paths: {
-      weekFolder: 'calendar',
-      overviewFileName: 'index',
-    },
-  } as unknown as WeekcalendarSettings;
+  const settings = DEFAULT_SETTINGS;
+  const weekFolderPath = `${settings.paths.weekFolder}/2026/weeks`;
 
   const createApp = () =>
     ({
@@ -59,22 +56,22 @@ describe('createYearFile', () => {
 
     await createYearFile(2026, weeks, settings, app as unknown as any);
 
-    expect(createFolderIfNotExist).toHaveBeenCalledWith('calendar/2026/weeks', app);
+    expect(createFolderIfNotExist).toHaveBeenCalledWith(weekFolderPath, app);
 
     expect(app.vault.modify).not.toHaveBeenCalled();
     expect(app.vault.create).toHaveBeenCalledWith(
-      'calendar/2026/index.md',
+      'week-calendar/2026/Übersicht.md',
       [
         '# 2026',
         '',
         '| | | | | | | |',
         '|---|---|---|---|---|---|---|',
-        '|<b>[[calendar/2026/weeks/W08 16.02.26\\|W08]]</b><br>16.02|',
-        '|<b>[[calendar/2026/weeks/W01 29.12.25\\|W01]]</b><br>29.12|<b>[[calendar/2026/weeks/W02 05.01.26\\|W02]]</b><br>05.01|<b>[[calendar/2026/weeks/W03 12.01.26\\|W03]]</b><br>12.01|<b>[[calendar/2026/weeks/W04 19.01.26\\|W04]]</b><br>19.01|<b>[[calendar/2026/weeks/W05 26.01.26\\|W05]]</b><br>26.01|<b>[[calendar/2026/weeks/W06 02.02.26\\|W06]]</b><br>02.02|<b>[[calendar/2026/weeks/W07 09.02.26\\|W07]]</b><br>09.02|',
+        `|<b>[[${weekFolderPath}/W08 16.02.26\\|W08]]</b><br>16.02|`,
+        `|<b>[[${weekFolderPath}/W01 29.12.25\\|W01]]</b><br>29.12|<b>[[${weekFolderPath}/W02 05.01.26\\|W02]]</b><br>05.01|<b>[[${weekFolderPath}/W03 12.01.26\\|W03]]</b><br>12.01|<b>[[${weekFolderPath}/W04 19.01.26\\|W04]]</b><br>19.01|<b>[[${weekFolderPath}/W05 26.01.26\\|W05]]</b><br>26.01|<b>[[${weekFolderPath}/W06 02.02.26\\|W06]]</b><br>02.02|<b>[[${weekFolderPath}/W07 09.02.26\\|W07]]</b><br>09.02|`,
       ].join('\n'),
     );
 
-    expect(Notice).toHaveBeenCalledWith('calendar/2026/index.md wurde erstellt');
+    expect(Notice).toHaveBeenCalledWith('week-calendar/2026/Übersicht.md wurde erstellt');
   });
 
   it('modifies the overview file when it already exists', async () => {
@@ -89,7 +86,7 @@ describe('createYearFile', () => {
 
     await createYearFile(2026, weeks, settings, app as unknown as any);
 
-    expect(createFolderIfNotExist).toHaveBeenCalledWith('calendar/2026/weeks', app);
+    expect(createFolderIfNotExist).toHaveBeenCalledWith(weekFolderPath, app);
 
     expect(app.vault.create).not.toHaveBeenCalled();
     expect(app.vault.modify).toHaveBeenCalledWith(
@@ -99,11 +96,11 @@ describe('createYearFile', () => {
         '',
         '| | | | | | | |',
         '|---|---|---|---|---|---|---|',
-        '|<b>[[calendar/2026/weeks/W01 29.12.25\\|W01]]</b><br>29.12|',
+        `|<b>[[${weekFolderPath}/W01 29.12.25\\|W01]]</b><br>29.12|`,
       ].join('\n'),
     );
 
-    expect(Notice).toHaveBeenCalledWith('calendar/2026/index.md wurde angepasst');
+    expect(Notice).toHaveBeenCalledWith('week-calendar/2026/Übersicht.md wurde angepasst');
   });
 
   it('shows a notice when the target path exists but is not a file', async () => {
@@ -114,13 +111,13 @@ describe('createYearFile', () => {
 
     await createYearFile(2026, weeks, settings, app as unknown as any);
 
-    expect(createFolderIfNotExist).toHaveBeenCalledWith('calendar/2026/weeks', app);
+    expect(createFolderIfNotExist).toHaveBeenCalledWith(weekFolderPath, app);
 
     expect(app.vault.create).not.toHaveBeenCalled();
     expect(app.vault.modify).not.toHaveBeenCalled();
 
     expect(Notice).toHaveBeenCalledWith(
-      'Der Pfad calendar/2026/index.md ist ein Ordner und keine Datei',
+      `Der Pfad week-calendar/2026/Übersicht.md ist ein Ordner und keine Datei`,
     );
   });
 });

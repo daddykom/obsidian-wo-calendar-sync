@@ -18,6 +18,7 @@ import {
  *       { type: 'text', content: [ 'Irgend ein Text' ] }
  *       ]
  *   }
+ *   @param settings
  */
 export function parseWo(wochenFile: string, settings = DEFAULT_SETTINGS) {
   const wo = wochenFile.split('\n');
@@ -71,13 +72,16 @@ export function parseWo(wochenFile: string, settings = DEFAULT_SETTINGS) {
 /**
  * defines the line type
  * @param line
+ * @param settings
  */
 export function getLineType(line: string, settings = DEFAULT_SETTINGS) {
   const defaultValue: LineMatchResult = ['text', null];
   return lineMatchers(settings).reduce((acc, { matcher, type }): LineMatchResult => {
     const match = line.match(matcher);
     const text = match && match[1] ? match[1].toLowerCase() : null;
-    const [key] = typedEntries(settings.weekdays).find(([, value]) => text === value) ?? [null];
+    const [key] = typedEntries(settings.weekdays).find(
+      ([, value]) => text === value.toLowerCase(),
+    ) ?? [null];
     if (match) {
       return [type, key];
     }
@@ -100,7 +104,7 @@ function elementStructure(settings: WeekcalendarSettings): WoFileStructure {
   return {
     key: 'start',
     elements: Object.entries(settings.weekdays).reduce(
-      (acc, [key, item]) => ({ ...acc, [key]: [] }),
+      (acc, [key]) => ({ ...acc, [key]: [] }),
       {} as WoFileStructure['elements'],
     ),
   };
