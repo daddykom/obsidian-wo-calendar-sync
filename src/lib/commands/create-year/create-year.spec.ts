@@ -1,4 +1,5 @@
 import { Notice } from 'obsidian';
+import { TFile } from '../../../__mocks__/obsidian';
 import { DEFAULT_SETTINGS } from '../../settings/constants';
 import { CreateYearPrompt } from '../../ui/create-year-prompt';
 import { createYear } from './create-year';
@@ -6,9 +7,10 @@ import { prepareData } from './prepare-data';
 import { prepareWeeks } from './prepare-weeks';
 import { writeWeekFiles } from './write-week-files';
 
-jest.mock('obsidian', () => ({
-  Notice: jest.fn(),
-}));
+const file = new TFile('');
+const app = {
+  vault: { getAbstractFileByPath: jest.fn().mockReturnValue(file), modify: jest.fn() },
+};
 
 jest.mock('../../ui/create-year-prompt', () => ({
   CreateYearPrompt: jest.fn(),
@@ -26,13 +28,16 @@ jest.mock('./write-week-files', () => ({
   writeWeekFiles: jest.fn(),
 }));
 
+jest.mock('../../utils/create-folder-if-not-exist', () => ({
+  createFolderIfNotExist: jest.fn(),
+}));
+
 describe('createYear', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('should create week files and show success notice', async () => {
-    const app = {};
     const settings = DEFAULT_SETTINGS;
 
     const lastYear = [{ yyyy: 2025, week: 52 }];
@@ -63,10 +68,9 @@ describe('createYear', () => {
     });
 
     await createYear(app, settings)();
+    await submit?.('2026');
 
     expect(openMock).toHaveBeenCalled();
-
-    await submit?.('2026');
 
     expect(prepareData).toHaveBeenNthCalledWith(1, 2025);
     expect(prepareData).toHaveBeenNthCalledWith(2, 2027);
@@ -84,8 +88,7 @@ describe('createYear', () => {
   });
 
   it('should show error notice when writing week files fails', async () => {
-    const app = {};
-    const settings = {} as any;
+    const settings = DEFAULT_SETTINGS;
     const error = new Error('write failed');
 
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -117,13 +120,19 @@ describe('createYear', () => {
   });
 
   it('should parse the entered year as integer', async () => {
-    const app = {};
-    const settings = {} as any;
+    const settings = DEFAULT_SETTINGS;
+    const lastYear = [{ yyyy: 2025, week: 52 }];
+    const weeks = [
+      { yyyy: 2026, week: 1, monday: new Date('2025-12-29') },
+      { yyyy: 2026, week: 2, monday: new Date('2026-01-05') },
+      { yyyy: 2026, week: 3, monday: new Date('2026-01-12') },
+    ];
+    const nextYear = [{ yyyy: 2027, week: 1 }];
 
     (prepareData as jest.Mock)
-      .mockReturnValueOnce([{}])
-      .mockReturnValueOnce([{}])
-      .mockReturnValueOnce([{}]);
+      .mockReturnValueOnce(lastYear)
+      .mockReturnValueOnce(nextYear)
+      .mockReturnValueOnce(weeks);
 
     (prepareWeeks as jest.Mock).mockReturnValue([]);
     (writeWeekFiles as jest.Mock).mockResolvedValue(0);
