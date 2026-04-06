@@ -1,7 +1,7 @@
 {
   "id": "week-calendart",
   "name": "Week Calendart",
-  "version": "v0.1.0-alpha",
+  "version": "v0.2.0-alpha",
   "minAppVersion": "1.5.0",
   "description": "Sync WO weekly appointments to CalDAV via an outbox workflow.",
   "author": "Charley Collins",
