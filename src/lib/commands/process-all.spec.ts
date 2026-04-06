@@ -1,4 +1,5 @@
 import { Notice, TFile } from 'obsidian';
+import { DEFAULT_SETTINGS } from '../settings/constants';
 import { processAll } from './process-all';
 import { processFile } from './process-file';
 
@@ -45,7 +46,7 @@ describe('processAll', () => {
 
       (processFile as jest.Mock).mockReturnValue('changed content');
 
-      await processAll(app)();
+      await processAll(app, DEFAULT_SETTINGS)();
 
       expect(app.vault.modify).toHaveBeenCalledTimes(2);
       expect(app.vault.modify).toHaveBeenCalledWith(woFile1, 'changed content');
@@ -62,7 +63,7 @@ describe('processAll', () => {
       const nonWoFile = createFileMock('notes/daily-2024-01.md');
       const app = createAppMock([nonWoFile]);
 
-      await processAll(app)();
+      await processAll(app, DEFAULT_SETTINGS)();
 
       expect(app.vault.read).not.toHaveBeenCalled();
       expect(app.vault.modify).not.toHaveBeenCalled();
@@ -80,7 +81,7 @@ describe('processAll', () => {
 
       (processFile as jest.Mock).mockReturnValue(null);
 
-      await processAll(app)();
+      await processAll(app, DEFAULT_SETTINGS)();
 
       expect(app.vault.modify).not.toHaveBeenCalled();
 

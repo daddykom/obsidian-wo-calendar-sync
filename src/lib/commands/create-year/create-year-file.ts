@@ -1,7 +1,7 @@
-import { format } from 'date-fns/format';
 import { App, Notice, TFile } from 'obsidian';
 import { WeekcalendarSettings, Weeks } from '../../types';
 import { createFolderIfNotExist } from '../../utils/create-folder-if-not-exist';
+import { getWeekFileName } from '../../utils/util';
 
 /**
  * Create Overview File
@@ -21,10 +21,8 @@ export async function createYearFile(
   const weekPath = `${yearPath}/weeks`;
 
   const weekStrings = weeks.map((week) => {
-    const weekNo = week.week.toString().padStart(2, '0');
-    const monday = format(week.monday, 'dd.MM.yy');
-    const fileName = `W${weekNo} ${monday}`;
-    return `<b>[[${weekPath}/${fileName}\\|W${weekNo}]]</b><br>${monday.substring(0, 5)}`;
+    const fileName = getWeekFileName(week.monday, week.week);
+    return `<b>[[${weekPath}/${fileName}\\|${fileName.substring(0, 3)}]]</b><br>${fileName.substring(4, 9)}`;
   });
 
   const weekArray = weekStrings

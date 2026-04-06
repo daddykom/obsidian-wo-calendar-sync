@@ -34,7 +34,6 @@ export async function writeWeekFiles(
       continue;
     }
 
-    console.log('create', filePath, stringifyWo(week));
     await app.vault.create(filePath, stringifyWo(week));
   }
 
