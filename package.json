@@ -1,6 +1,6 @@
 {
   "name": "week-calendart",
-  "version": "0.1.0",
+  "version": "0.2.0-alpha",
   "description": "Sync WO weekly appointments to CalDAV via an outbox workflow.",
   "main": "main.js",
   "scripts": {

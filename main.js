@@ -3627,7 +3627,7 @@ var gotoCurrentWeek = (app, settings) => async () => {
   const week = getISOWeek(monday);
   const fileName = getWeekFileName(monday, week);
   const year = getISOWeekYear(monday);
-  const filePath = `${year}/${settings.paths.weekFolder}/${fileName}`;
+  const filePath = `${settings.paths.weekFolder}/${year}/weeks/${fileName}`;
   app.workspace.openLinkText(filePath, "", false);
 };
 
