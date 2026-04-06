@@ -35,12 +35,12 @@ describe('gotoCurrentWeek', () => {
 
     const settings = {
       paths: {
-        weekFolder: 'weeks',
+        weekFolder: 'week-calendar',
       },
     } as unknown as any;
 
     await gotoCurrentWeek(app, settings)();
 
-    expect(openLinkText).toHaveBeenCalledWith('2026/weeks/W12 16.03.26', '', false);
+    expect(openLinkText).toHaveBeenCalledWith('week-calendar/2026/weeks/W12 16.03.26', '', false);
   });
 });
