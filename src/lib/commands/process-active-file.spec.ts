@@ -12,6 +12,7 @@ jest.mock('./process-file', () => ({
 }));
 
 import { Notice } from 'obsidian';
+import { DEFAULT_SETTINGS } from '../settings/constants';
 
 describe('processActiveFile', () => {
   const mockRead = jest.fn();
@@ -30,7 +31,7 @@ describe('processActiveFile', () => {
   it('shows a notice and returns early when no active file exists', async () => {
     mockGetActiveFile.mockReturnValue(null);
 
-    await processActiveFile(mockApp as unknown as any)();
+    await processActiveFile(mockApp as unknown as any, DEFAULT_SETTINGS)();
 
     expect(Notice).toHaveBeenCalledWith('No active file.');
     expect(mockRead).not.toHaveBeenCalled();
@@ -46,10 +47,10 @@ describe('processActiveFile', () => {
     mockRead.mockResolvedValue(mockContent);
     (processFile as jest.Mock).mockReturnValue(mockChanged);
 
-    await processActiveFile(mockApp as unknown as any)();
+    await processActiveFile(mockApp as unknown as any, DEFAULT_SETTINGS)();
 
     expect(mockRead).toHaveBeenCalledWith(mockFile);
-    expect(processFile).toHaveBeenCalledWith(mockContent, mockFile);
+    expect(processFile).toHaveBeenCalledWith(mockContent, mockFile, DEFAULT_SETTINGS);
     expect(mockModify).toHaveBeenCalledWith(mockFile, mockChanged);
     expect(Notice).toHaveBeenCalledWith('Processed current file.  Filename: test.md');
   });
@@ -62,7 +63,7 @@ describe('processActiveFile', () => {
     mockRead.mockResolvedValue(mockContent);
     (processFile as jest.Mock).mockReturnValue(null);
 
-    await processActiveFile(mockApp as unknown as any)();
+    await processActiveFile(mockApp as unknown as any, DEFAULT_SETTINGS)();
 
     expect(mockModify).not.toHaveBeenCalled();
     expect(Notice).toHaveBeenCalledWith('Es hat keine Änderungen gegeben!');
@@ -75,7 +76,7 @@ describe('processActiveFile', () => {
     mockRead.mockResolvedValue('some content');
     (processFile as jest.Mock).mockReturnValue(undefined);
 
-    await processActiveFile(mockApp as unknown as any)();
+    await processActiveFile(mockApp as unknown as any, DEFAULT_SETTINGS)();
 
     expect(mockModify).not.toHaveBeenCalled();
     expect(Notice).toHaveBeenCalledWith('Es hat keine Änderungen gegeben!');

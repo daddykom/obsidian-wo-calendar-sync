@@ -1,5 +1,6 @@
+import { format } from 'date-fns/format';
+import { subDays } from 'date-fns/subDays';
 import { WeekcalendarSettings, WoFileTitleStructure } from '../types';
-
 /**
  * create a local ID
  * @param input
@@ -53,3 +54,23 @@ export const beforeAWeek = (date: Date): Date => {
   result.setDate(result.getDate() - 7);
   return result;
 };
+
+/**
+ * returns the last monday from a date
+ * @param date
+ * @returns date if it ist a monday or the date of the monday before date
+ */
+export function getLastMonday(date: Date) {
+  return subDays(date, (date.getUTCDay() || 7) - 1);
+}
+
+/**
+ * Create Week File Name from Monday and WeekNo
+ * @param monday
+ * @param weekNo
+ */
+export function getWeekFileName(monday: Date, weekNo: number) {
+  const week = weekNo.toString().padStart(2, '0');
+  const mondayString = format(monday, 'dd.MM.yy');
+  return `W${week} ${mondayString}`;
+}
