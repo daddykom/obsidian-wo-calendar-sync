@@ -1,6 +1,7 @@
 import { Notice, Plugin } from 'obsidian';
 import { fromEvent, Subscription } from 'rxjs';
 import { createYear } from './lib/commands/create-year/create-year';
+import { gotoCurrentWeek } from './lib/commands/goto-current-week';
 import { processActiveFile } from './lib/commands/process-active-file';
 import { processAll } from './lib/commands/process-all';
 import { modifyWeekFileEvent } from './lib/event-handling/modify-week-file-event';
@@ -35,6 +36,12 @@ export default class WeekCalendartPlugin extends Plugin {
       id: 'create-new-calendar-year',
       name: 'Ein neues Kalenderjahr erstellen',
       callback: createYear(this.app, this.settings),
+    });
+
+    this.addCommand({
+      id: 'get-current-week-file',
+      name: 'Das aktuelle Wochen-File öffnen',
+      callback: gotoCurrentWeek(this.app, this.settings),
     });
 
     this.subscription.add(

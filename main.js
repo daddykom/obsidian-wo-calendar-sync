@@ -1818,6 +1818,25 @@ var CreateYearPrompt = class extends import_obsidian.Modal {
   }
 };
 
+// src/lib/commands/create-year/create-year-file.ts
+var import_obsidian2 = require("obsidian");
+
+// src/lib/utils/create-folder-if-not-exist.ts
+async function createFolderIfNotExist(path, app) {
+  const segments = path.split("/");
+  const paths = segments.reduce((acc, item) => {
+    if (acc.length) {
+      return [...acc, `${acc[acc.length - 1]}/${item}`];
+    }
+    return [item];
+  }, []);
+  for (const folderPath of paths) {
+    if (!app.vault.getAbstractFileByPath(folderPath)) {
+      await app.vault.createFolder(folderPath);
+    }
+  }
+}
+
 // node_modules/date-fns/locale/en-US/_lib/formatDistance.js
 var formatDistanceLocale = {
   lessThanXSeconds: {
@@ -3387,23 +3406,53 @@ function cleanEscapedString(input) {
   return matched[1].replace(doubleQuoteRegExp, "'");
 }
 
-// src/lib/commands/create-year/create-year-file.ts
-var import_obsidian2 = require("obsidian");
+// node_modules/date-fns/addDays.js
+function addDays(date, amount, options) {
+  const _date = toDate(date, options?.in);
+  if (isNaN(amount)) return constructFrom(options?.in || date, NaN);
+  if (!amount) return _date;
+  _date.setDate(_date.getDate() + amount);
+  return _date;
+}
 
-// src/lib/utils/create-folder-if-not-exist.ts
-async function createFolderIfNotExist(path, app) {
-  const segments = path.split("/");
-  const paths = segments.reduce((acc, item) => {
-    if (acc.length) {
-      return [...acc, `${acc[acc.length - 1]}/${item}`];
-    }
-    return [item];
-  }, []);
-  for (const folderPath of paths) {
-    if (!app.vault.getAbstractFileByPath(folderPath)) {
-      await app.vault.createFolder(folderPath);
-    }
+// node_modules/date-fns/subDays.js
+function subDays(date, amount, options) {
+  return addDays(date, -amount, options);
+}
+
+// src/lib/utils/util.ts
+var createLocalId = (input) => {
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    hash = (hash << 5) - hash + input.charCodeAt(i);
+    hash |= 0;
   }
+  return Math.abs(hash).toString(36);
+};
+var getIsoWeek1Monday = (year) => {
+  const jan4 = new Date(Date.UTC(year, 0, 4));
+  const day = jan4.getUTCDay() || 7;
+  const monday = new Date(jan4);
+  monday.setUTCDate(jan4.getUTCDate() - (day - 1));
+  return monday;
+};
+var inAWeek = (date) => {
+  const result = new Date(date);
+  result.setDate(result.getDate() + 7);
+  return result;
+};
+var beforeAWeek = (date) => {
+  const result = new Date(date);
+  result.setDate(result.getDate() - 7);
+  return result;
+};
+function getLastMonday(date) {
+  return subDays(date, (date.getUTCDay() || 7) - 1);
+}
+function getWeekFileName(monday, weekNo) {
+  const week = weekNo.toString().padStart(2, "0");
+  const mondayString = format(monday, "dd.MM.yy");
+  return `W${week} ${mondayString}`;
 }
 
 // src/lib/commands/create-year/create-year-file.ts
@@ -3412,10 +3461,8 @@ async function createYearFile(yyyy, weeks, settings, app) {
   const yearPath = `${path}/${yyyy.toString()}`;
   const weekPath = `${yearPath}/weeks`;
   const weekStrings = weeks.map((week) => {
-    const weekNo = week.week.toString().padStart(2, "0");
-    const monday = format(week.monday, "dd.MM.yy");
-    const fileName = `W${weekNo} ${monday}`;
-    return `<b>[[${weekPath}/${fileName}\\|W${weekNo}]]</b><br>${monday.substring(0, 5)}`;
+    const fileName = getWeekFileName(week.monday, week.week);
+    return `<b>[[${weekPath}/${fileName}\\|${fileName.substring(0, 3)}]]</b><br>${fileName.substring(4, 9)}`;
   });
   const weekArray = weekStrings.reduce((acc, week, i) => {
     const x = i % 7;
@@ -3453,33 +3500,6 @@ ${body}`;
 var makeRow = (line) => {
   const strLine = line.join("|");
   return `|${strLine}|`;
-};
-
-// src/lib/utils/util.ts
-var createLocalId = (input) => {
-  let hash = 0;
-  for (let i = 0; i < input.length; i++) {
-    hash = (hash << 5) - hash + input.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash).toString(36);
-};
-var getIsoWeek1Monday = (year) => {
-  const jan4 = new Date(Date.UTC(year, 0, 4));
-  const day = jan4.getUTCDay() || 7;
-  const monday = new Date(jan4);
-  monday.setUTCDate(jan4.getUTCDate() - (day - 1));
-  return monday;
-};
-var inAWeek = (date) => {
-  const result = new Date(date);
-  result.setDate(result.getDate() + 7);
-  return result;
-};
-var beforeAWeek = (date) => {
-  const result = new Date(date);
-  result.setDate(result.getDate() - 7);
-  return result;
 };
 
 // src/lib/commands/create-year/prepare-data.ts
@@ -3599,6 +3619,16 @@ var createYear = (app, settings) => async () => {
       new import_obsidian3.Notice("Fehler beim Erstellen der Wochen-Dateien");
     }
   }).open();
+};
+
+// src/lib/commands/goto-current-week.ts
+var gotoCurrentWeek = (app, settings) => async () => {
+  const monday = getLastMonday(/* @__PURE__ */ new Date());
+  const week = getISOWeek(monday);
+  const fileName = getWeekFileName(monday, week);
+  const year = getISOWeekYear(monday);
+  const filePath = `${year}/${settings.paths.weekFolder}/${fileName}`;
+  app.workspace.openLinkText(filePath, "", false);
 };
 
 // src/lib/commands/process-active-file.ts
@@ -3916,6 +3946,11 @@ var WeekCalendartPlugin = class extends import_obsidian8.Plugin {
       id: "create-new-calendar-year",
       name: "Ein neues Kalenderjahr erstellen",
       callback: createYear(this.app, this.settings)
+    });
+    this.addCommand({
+      id: "get-current-week-file",
+      name: "Das aktuelle Wochen-File \xF6ffnen",
+      callback: gotoCurrentWeek(this.app, this.settings)
     });
     this.subscription.add(
       modifyWeekFileEvent(
