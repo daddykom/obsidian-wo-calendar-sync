@@ -3,10 +3,7 @@ import { CreateYearPrompt } from './create-year-prompt';
 const mockSetDisabled = jest.fn().mockReturnThis();
 const mockSetButtonText = jest.fn().mockReturnThis();
 const mockSetCta = jest.fn().mockReturnThis();
-const mockOnClick = jest.fn().mockReturnThis();
 const mockSetName = jest.fn().mockReturnThis();
-const mockAddText = jest.fn().mockReturnThis();
-const mockAddButton = jest.fn().mockReturnThis();
 const mockFocus = jest.fn();
 
 let capturedTextOnChange: ((value: string) => void) | undefined;

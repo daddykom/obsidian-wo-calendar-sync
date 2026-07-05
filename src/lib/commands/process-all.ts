@@ -1,4 +1,4 @@
-import { Notice, TFile } from 'obsidian';
+import { App, Notice, TFile } from 'obsidian';
 import { WO_FILE_REGEX } from '../settings/constants';
 import { WeekcalendarSettings } from '../types';
 import { processFile } from './process-file';
@@ -8,10 +8,10 @@ import { processFile } from './process-file';
  * @param app
  * @param settings
  */
-export const processAll = (app: any, settings: WeekcalendarSettings) => async () => {
+export const processAll = (app: App, settings: WeekcalendarSettings) => async () => {
   let numb = 0;
   const files = app.vault.getMarkdownFiles();
-  const woFiles = files.filter((file: any) => WO_FILE_REGEX.test(file.path));
+  const woFiles = files.filter((file: TFile) => WO_FILE_REGEX.test(file.path));
 
   await Promise.all(
     woFiles.map(async (file: TFile) => {

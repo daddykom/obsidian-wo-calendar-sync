@@ -61,7 +61,8 @@ export const beforeAWeek = (date: Date): Date => {
  * @returns date if it ist a monday or the date of the monday before date
  */
 export function getLastMonday(date: Date) {
-  return subDays(date, (date.getUTCDay() || 7) - 1);
+  const day = date.getDay() || 7;
+  return subDays(date, day - 1);
 }
 
 /**

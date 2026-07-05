@@ -1,4 +1,4 @@
-import { Notice } from 'obsidian';
+import { App, Notice } from 'obsidian';
 import { WeekcalendarSettings } from '../types';
 import { processFile } from './process-file';
 
@@ -7,7 +7,7 @@ import { processFile } from './process-file';
  * @param app
  * @param settings
  */
-export const processActiveFile = (app: any, settings: WeekcalendarSettings) => async () => {
+export const processActiveFile = (app: App, settings: WeekcalendarSettings) => async () => {
   const file = app.workspace.getActiveFile();
   if (!file) {
     new Notice('No active file.');

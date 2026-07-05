@@ -1,4 +1,4 @@
-import { Notice } from 'obsidian';
+import { App, Notice } from 'obsidian';
 import { TFile } from '../../../__mocks__/obsidian';
 import { DEFAULT_SETTINGS } from '../../settings/constants';
 import { CreateYearPrompt } from '../../ui/create-year-prompt';
@@ -8,9 +8,9 @@ import { prepareWeeks } from './prepare-weeks';
 import { writeWeekFiles } from './write-week-files';
 
 const file = new TFile('');
-const app = {
+const app: App = {
   vault: { getAbstractFileByPath: jest.fn().mockReturnValue(file), modify: jest.fn() },
-};
+} as unknown as App;
 
 jest.mock('../../ui/create-year-prompt', () => ({
   CreateYearPrompt: jest.fn(),
@@ -53,7 +53,7 @@ describe('createYear', () => {
       .mockReturnValueOnce(nextYear)
       .mockReturnValueOnce(weeks);
 
-    const preparedWeeks = ['prepared'] as any;
+    const preparedWeeks = ['prepared'] as unknown as ReturnType<typeof prepareWeeks>;
     (prepareWeeks as jest.Mock).mockReturnValue(preparedWeeks);
     (writeWeekFiles as jest.Mock).mockResolvedValue(1);
 

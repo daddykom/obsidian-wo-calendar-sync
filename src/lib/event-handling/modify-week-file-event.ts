@@ -23,8 +23,8 @@ import { WeekcalendarSettings } from '../types';
  */
 export const modifyWeekFileEvent = (
   app: App,
-  modifyEvents: Observable<any>,
-  actualFileChanged$: Observable<any>,
+  modifyEvents: Observable<TFile>,
+  actualFileChanged$: Observable<TFile>,
   settings: WeekcalendarSettings,
 ) =>
   modifyEvents

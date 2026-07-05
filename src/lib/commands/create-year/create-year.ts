@@ -1,4 +1,4 @@
-import { Notice } from 'obsidian';
+import { App, Notice } from 'obsidian';
 import { WeekcalendarSettings } from '../../types';
 import { CreateYearPrompt } from '../../ui/create-year-prompt';
 import { createYearFile } from './create-year-file';
@@ -6,7 +6,7 @@ import { prepareData } from './prepare-data';
 import { prepareWeeks } from './prepare-weeks';
 import { writeWeekFiles } from './write-week-files';
 
-export const createYear = (app: any, settings: WeekcalendarSettings) => async () => {
+export const createYear = (app: App, settings: WeekcalendarSettings) => async () => {
   new CreateYearPrompt(app, async (year) => {
     try {
       const yyyy = Number.parseInt(year, 10);

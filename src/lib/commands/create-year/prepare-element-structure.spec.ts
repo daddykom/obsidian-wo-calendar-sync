@@ -1,8 +1,10 @@
+import { WeekcalendarSettings } from '../../types';
 import { prepareElementStructure } from './prepare-element-structure';
 
 describe('prepareElementStructure', () => {
   it('should create the default element structure from weekday settings', () => {
-    const settings = {
+    const settings: WeekcalendarSettings = {
+      paths: { weekFolder: '', eventFolder: '', overviewFileName: '' },
       weekdays: {
         start: 'Start',
         monday: 'Montag',
@@ -14,7 +16,9 @@ describe('prepareElementStructure', () => {
         sunday: 'Sonntag',
         links: 'Links',
       },
-    } as any;
+      prefixes: { event: '', time: '', location: '', reminder: '', repeat: '' },
+      caldav: { url: '', username: '', password: '', calendar: '' },
+    };
 
     const result = prepareElementStructure(settings);
 
@@ -32,7 +36,8 @@ describe('prepareElementStructure', () => {
   });
 
   it('should return an empty array for start', () => {
-    const settings = {
+    const settings: WeekcalendarSettings = {
+      paths: { weekFolder: '', eventFolder: '', overviewFileName: '' },
       weekdays: {
         start: 'Start',
         monday: 'Montag',
@@ -44,7 +49,9 @@ describe('prepareElementStructure', () => {
         sunday: 'Sonntag',
         links: 'Links',
       },
-    } as any;
+      prefixes: { event: '', time: '', location: '', reminder: '', repeat: '' },
+      caldav: { url: '', username: '', password: '', calendar: '' },
+    };
 
     const result = prepareElementStructure(settings);
 

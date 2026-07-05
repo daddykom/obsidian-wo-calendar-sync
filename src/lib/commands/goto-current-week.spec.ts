@@ -1,5 +1,6 @@
 import { getISOWeek } from 'date-fns/getISOWeek';
 import { getISOWeekYear } from 'date-fns/getISOWeekYear';
+import { App } from 'obsidian';
 import { getLastMonday, getWeekFileName } from '../utils/util';
 import { gotoCurrentWeek } from './goto-current-week';
 
@@ -27,17 +28,17 @@ describe('gotoCurrentWeek', () => {
 
     const openLinkText = jest.fn();
 
-    const app = {
+    const app: App = {
       workspace: {
         openLinkText,
       },
-    };
+    } as unknown as App;
 
     const settings = {
       paths: {
         weekFolder: 'week-calendar',
       },
-    } as unknown as any;
+    } as unknown as Parameters<typeof gotoCurrentWeek>[1];
 
     await gotoCurrentWeek(app, settings)();
 

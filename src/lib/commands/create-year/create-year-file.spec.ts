@@ -13,20 +13,21 @@ describe('createYearFile', () => {
   const settings = DEFAULT_SETTINGS;
   const weekFolderPath = `${settings.paths.weekFolder}/2026/weeks`;
 
-  const createApp = () =>
-    ({
+  const createApp = () => {
+    const mockGetAbstractFileByPath = jest.fn();
+    const mockCreate = jest.fn();
+    const mockModify = jest.fn();
+    return {
       vault: {
-        getAbstractFileByPath: jest.fn(),
-        create: jest.fn(),
-        modify: jest.fn(),
+        getAbstractFileByPath: mockGetAbstractFileByPath,
+        create: mockCreate,
+        modify: mockModify,
       },
-    }) as unknown as {
-      vault: {
-        getAbstractFileByPath: jest.Mock;
-        create: jest.Mock;
-        modify: jest.Mock;
-      };
+      mockGetAbstractFileByPath,
+      mockCreate,
+      mockModify,
     };
+  };
 
   const makeWeek = (week: number, year: number, month: number, day: number): Weeks =>
     ({
@@ -41,7 +42,7 @@ describe('createYearFile', () => {
 
   it('creates the overview file when it does not exist', async () => {
     const app = createApp();
-    app.vault.getAbstractFileByPath.mockReturnValue(null);
+    app.mockGetAbstractFileByPath.mockReturnValue(null);
 
     const weeks: Weeks[] = [
       makeWeek(1, 2025, 11, 29),
@@ -54,12 +55,13 @@ describe('createYearFile', () => {
       makeWeek(8, 2026, 1, 16),
     ];
 
-    await createYearFile(2026, weeks, settings, app as unknown as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await createYearFile(2026, weeks, settings, app as any);
 
     expect(createFolderIfNotExist).toHaveBeenCalledWith(weekFolderPath, app);
 
-    expect(app.vault.modify).not.toHaveBeenCalled();
-    expect(app.vault.create).toHaveBeenCalledWith(
+    expect(app.mockModify).not.toHaveBeenCalled();
+    expect(app.mockCreate).toHaveBeenCalledWith(
       'week-calendar/2026/Übersicht.md',
       [
         '# 2026',
@@ -80,16 +82,17 @@ describe('createYearFile', () => {
     const file = new TFile();
     file.path = 'calendar/2026/index.md';
 
-    app.vault.getAbstractFileByPath.mockReturnValue(file);
+    app.mockGetAbstractFileByPath.mockReturnValue(file);
 
     const weeks: Weeks[] = [makeWeek(1, 2025, 11, 29)];
 
-    await createYearFile(2026, weeks, settings, app as unknown as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await createYearFile(2026, weeks, settings, app as any);
 
     expect(createFolderIfNotExist).toHaveBeenCalledWith(weekFolderPath, app);
 
-    expect(app.vault.create).not.toHaveBeenCalled();
-    expect(app.vault.modify).toHaveBeenCalledWith(
+    expect(app.mockCreate).not.toHaveBeenCalled();
+    expect(app.mockModify).toHaveBeenCalledWith(
       file,
       [
         '# 2026',
@@ -105,16 +108,17 @@ describe('createYearFile', () => {
 
   it('shows a notice when the target path exists but is not a file', async () => {
     const app = createApp();
-    app.vault.getAbstractFileByPath.mockReturnValue({ path: 'calendar/2026/index.md' });
+    app.mockGetAbstractFileByPath.mockReturnValue({ path: 'calendar/2026/index.md' });
 
     const weeks: Weeks[] = [makeWeek(1, 2025, 11, 29)];
 
-    await createYearFile(2026, weeks, settings, app as unknown as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await createYearFile(2026, weeks, settings, app as any);
 
     expect(createFolderIfNotExist).toHaveBeenCalledWith(weekFolderPath, app);
 
-    expect(app.vault.create).not.toHaveBeenCalled();
-    expect(app.vault.modify).not.toHaveBeenCalled();
+    expect(app.mockCreate).not.toHaveBeenCalled();
+    expect(app.mockModify).not.toHaveBeenCalled();
 
     expect(Notice).toHaveBeenCalledWith(
       `Der Pfad week-calendar/2026/Übersicht.md ist ein Ordner und keine Datei`,

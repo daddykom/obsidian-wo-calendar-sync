@@ -1,19 +1,18 @@
-import js from "@eslint/js";
-import tseslint from "typescript-eslint";
+import plugin from '@typescript-eslint/eslint-plugin';
+import parser from '@typescript-eslint/parser';
 
 export default [
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
   {
-    files: ["**/*.ts"],
+    files: ['**/*.ts'],
+    plugins: {
+      '@typescript-eslint': plugin,
+    },
     languageOptions: {
-      parserOptions: {
-        ecmaVersion: "latest",
-        sourceType: "module",
-      },
+      parser,
     },
     rules: {
-      "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+      ...plugin.configs.recommended.rules,
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
     },
   },
 ];
