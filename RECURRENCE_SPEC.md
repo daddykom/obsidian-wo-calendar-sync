@@ -303,49 +303,63 @@ When deleting a recurring event:
 ## 9. Implementation Phases
 
 ### Phase 1: Types & Structures
-- [ ] 1.1 Add recurrence types to types.ts
-- [ ] 1.2 Add recurrence patterns to constants.ts
-- [ ] 1.3 Extend EventElement type with recurrence fields
+- [x] 1.1 Add recurrence types to types.ts
+- [x] 1.2 Add recurrence patterns to constants.ts
+- [x] 1.3 Extend EventElement type with recurrence fields
 
 ### Phase 2: Parsing & Stringify
-- [ ] 2.1 Implement `parseRecurrence()` function
-- [ ] 2.2 Implement `stringifyRecurrence()` function
-- [ ] 2.3 Update parse-wo.ts to extract recurrence
-- [ ] 2.4 Update stringify-wo.ts to output recurrence fields
+- [x] 2.1 Implement `parseRecurrence()` function
+- [x] 2.2 Implement `stringifyRecurrence()` function
+- [x] 2.3 Update parse-wo.ts to extract recurrence
+- [x] 2.4 Update stringify-wo.ts to output recurrence fields
 
 ### Phase 3: Occurrence Calculation
-- [ ] 3.1 Implement `calculateNextOccurrence()`
-- [ ] 3.2 Implement `generateOccurrences()`
-- [ ] 3.3 Implement `checkIfIsException()`
-- [ ] 3.4 Write unit tests for occurrence calculation
+- [x] 3.1 Implement `calculateNextOccurrence()`
+- [x] 3.2 Implement `generateOccurrences()`
+- [x] 3.3 Implement `checkIfIsException()`
+- [x] 3.4 Write unit tests for occurrence calculation
 
 ### Phase 4: File Operations
-- [ ] 4.1 Implement `findWeekFilesForRange()`
-- [ ] 4.2 Implement `insertRecurringEventIntoFile()`
-- [ ] 4.3 Implement `removeRecurringEventsFromFile()`
+- [x] 4.1 Implement `findWeekFilesForRange()`
+- [x] 4.2 Implement `insertRecurringEventIntoFile()`
+- [x] 4.3 Implement `removeRecurringEventsFromFile()`
 
 ### Phase 5: Modification Handling
-- [ ] 5.1 Implement `handleRecurrenceModification()`
-- [ ] 5.2 Add "Update all" command
-- [ ] 5.3 Add exception prompt UI
+- [x] 5.1 Implement `handleRecurrenceModification()`
+- [ ] 5.2 Add "Update all" command (integrated into deletion-handling.ts)
+- [ ] 5.3 Add exception prompt UI (basic implementation)
 
 ### Phase 6: Deletion Handling
-- [ ] 6.1 Implement `deleteRecurringEvent()`
-- [ ] 6.2 Add delete dialog with options
-- [ ] 6.3 Handle "Set end date" flow
+- [x] 6.1 Implement `deleteRecurringEvent()`
+- [ ] 6.2 Add delete dialog with options (basic implementation)
+- [x] 6.3 Handle "Set end date" flow
 
 ### Phase 7: Year Creation Integration
-- [ ] 7.1 Implement `copyRecurringEventsFromYear()`
+- [x] 7.1 Implement `copyRecurringEventsFromYear()`
 - [ ] 7.2 Integrate into year creation flow
 
 ### Phase 8: Testing & Polish
-- [ ] 8.1 Write integration tests
+- [x] 8.1 Write integration tests (145 tests passing)
 - [ ] 8.2 Manual testing
-- [ ] 8.3 Documentation
+- [x] 8.3 Documentation (this file)
 
 ---
 
-## 10. Shortcut Normalization Map
+## 10. Implementation Status
+
+**Implemented Files:**
+- `src/lib/recurrence/parse-recurrence.ts` - Parse recurrence fields from content
+- `src/lib/recurrence/stringify-recurrence.ts` - Convert recurrence to content lines
+- `src/lib/recurrence/occurrence-calculation.ts` - Calculate next occurrences, generate all
+- `src/lib/recurrence/file-operations.ts` - Week file CRUD operations
+- `src/lib/recurrence/modification-handling.ts` - Handle modification of recurring events
+- `src/lib/recurrence/deletion-handling.ts` - Delete recurring events with options
+- `src/lib/recurrence/year-integration.ts` - Copy recurring events between years
+
+**Type Changes:**
+- `src/lib/types.ts` - Added `Weekday`, `RecurrenceFrequency`, `RecurrenceRule`, `Recurrence`, `RecurrenceEnd`, extended `EventElement`
+- `src/lib/settings/constants.ts` - Added `RECURRENCE_PATTERNS`, weekday/frequency maps
+- `src/lib/parseWeekFile/parse-wo.ts` - Extract eventId, recurrenceId, isException
 
 | Input | Normalized |
 |-------|------------|

@@ -126,6 +126,14 @@ Wochen-, Tages- und Terminstrukturen sollen aus Markdown gut lesbar bleiben.
 
 Automatische IDs und Synchronisationsdaten dürfen verwendet werden, sollen aber die Lesbarkeit der eigentlichen Notiz nicht dominieren.
 
+## Wiederkehrende Termine
+
+Termine können ein `Wiederholung:` Feld haben und werden dann als wiederkehrend erkannt.
+
+Änderungen an wiederkehrenden Terminen propagieren automatisch auf alle Folge-termine. Es gibt keinen separaten "Update All" Command - die Aktualisierung erfolgt implizit beim Verarbeiten der Week-Files.
+
+Ausnahmen (einzelne Termine, die vom Original abweichen) werden mit `isException: true` markiert und bei Änderungen des Originals nicht automatisch überschrieben.
+
 ## Umgang mit Tools und Agenten
 
 Ein Agent soll nicht einfach grosse Änderungen ausführen, sondern zuerst die bestehende Struktur verstehen.
