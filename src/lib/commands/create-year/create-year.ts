@@ -5,6 +5,7 @@ import { createYearFile } from './create-year-file';
 import { prepareData } from './prepare-data';
 import { prepareWeeks } from './prepare-weeks';
 import { writeWeekFiles } from './write-week-files';
+import { copyRecurringEventsFromYear } from '../../recurrence/year-integration';
 
 export const createYear = (app: App, settings: WeekcalendarSettings) => async () => {
   new CreateYearPrompt(app, async (year) => {
@@ -19,6 +20,20 @@ export const createYear = (app: App, settings: WeekcalendarSettings) => async ()
       const preparedWeeks = prepareWeeks(yyyy, expandedWeeks, settings);
       const numbFiles = await writeWeekFiles(yyyy, preparedWeeks, settings, app);
       createYearFile(yyyy, weeks, settings, app);
+
+      try {
+        const { eventsCopied, occurrencesCreated } = await copyRecurringEventsFromYear(
+          yyyy - 1,
+          yyyy,
+          settings,
+          app
+        );
+        new Notice(
+          `${eventsCopied} Terminserien mit ${occurrencesCreated} Vorkommen kopiert`
+        );
+      } catch (copyError) {
+        new Notice(`Kopieren fehlgeschlagen: ${copyError}`);
+      }
 
       new Notice(
         `Total ${weeks.length} Wochen, davon ${weeks.length - numbFiles} erstellt, ${numbFiles} existierten schon`,
