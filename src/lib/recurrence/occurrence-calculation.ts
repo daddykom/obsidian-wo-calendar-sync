@@ -204,17 +204,13 @@ export function generateOccurrences(
 
 export function checkIfIsException(
   eventContent: string[],
-  recurrence: Recurrence,
-  expectedDate: Date,
+  _recurrence: Recurrence,
+  _expectedDate: Date,
 ): boolean {
   const titleLine = eventContent.find((line) => line.startsWith('- Termin:'));
   if (!titleLine) return false;
 
-  const titleWithoutMarker = titleLine.replace(/\s*\(AUSNAHME\)/i, '').trim();
-
-  const hasExceptionMarker = titleLine.includes('(AUSNAHME)') || titleLine.includes('(AUSNAME)');
-
-  return hasExceptionMarker;
+  return titleLine.includes('(AUSNAHME)') || titleLine.includes('(AUSNAME)');
 }
 
 export function getWeekdayFromDate(date: Date): Weekday {

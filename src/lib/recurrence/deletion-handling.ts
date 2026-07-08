@@ -1,5 +1,5 @@
 import { App, Notice, TFile } from 'obsidian';
-import { EventElement, Recurrence, WeekcalendarSettings, WoFileTitleStructure, ElementsStructure } from '../types';
+import { EventElement, Recurrence, WeekcalendarSettings, WoFileTitleStructure } from '../types';
 import { generateOccurrences } from './occurrence-calculation';
 import {
   findWeekFilesForRange,
@@ -101,7 +101,7 @@ export async function updateRecurringEvent(
   recurrence: Recurrence,
   startDate: Date,
   settings: WeekcalendarSettings,
-  app: any
+  app: App
 ): Promise<void> {
   const occurrences = generateOccurrences(startDate, recurrence.end.endDate, recurrence);
 

@@ -1,38 +1,4 @@
-import { App, Notice } from 'obsidian';
-import { deleteRecurringEvent } from './deletion-handling';
-import { WeekcalendarSettings, Recurrence, EventElement } from '../types';
-
-const mockSettings: WeekcalendarSettings = {
-  paths: {
-    weekFolder: 'week-calendar',
-    eventFolder: 'week-calendar/events',
-    overviewFileName: 'Übersicht',
-  },
-  weekdays: {
-    start: 'Start',
-    monday: 'Montag',
-    tuesday: 'Dienstag',
-    wednesday: 'Mittwoch',
-    thursday: 'Donnerstag',
-    friday: 'Freitag',
-    saturday: 'Samstag',
-    sunday: 'Sonntag',
-    links: 'Links',
-  },
-  prefixes: {
-    event: 'Termin',
-    time: 'Zeit',
-    location: 'Ort',
-    reminder: 'Erinnerung',
-    repeat: 'Wiederholung',
-  },
-  caldav: {
-    url: '',
-    username: '',
-    password: '',
-    calendar: '',
-  },
-};
+import { Recurrence, EventElement } from '../types';
 
 const mockRecurrence: Recurrence = {
   rule: {
@@ -63,21 +29,17 @@ const mockEvent: EventElement = {
 };
 
 describe('deleteRecurringEvent', () => {
-  it('returns cancelled when modal is cancelled', async () => {
-    const mockApp = {
-      vault: {
-        getAbstractFileByPath: jest.fn().mockReturnValue(null),
-      },
-    } as unknown as App;
-
+  it('accepts valid parameters', () => {
     const callback = (result: 'all' | 'single' | 'cancel') => {
       if (result === 'cancel') {
-        return Promise.resolve('cancelled');
+        return 'cancelled';
       }
-      return Promise.resolve('deleted');
+      return 'deleted';
     };
 
-    expect(callback).toBeDefined();
+    expect(callback('cancel')).toBe('cancelled');
+    expect(callback('all')).toBe('deleted');
+    expect(callback('single')).toBe('deleted');
   });
 });
 

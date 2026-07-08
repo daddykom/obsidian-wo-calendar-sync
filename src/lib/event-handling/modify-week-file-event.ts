@@ -26,10 +26,9 @@ interface RecurringEventInfo {
 }
 
 function extractDateFromFilePath(filePath: string): Date | null {
-  const match = filePath.match(/W(\d{2}) (\d{2})\.(\d{2})\.(\d{2})\.md$/);
+  const match = filePath.match(/W\d{2} (\d{2})\.(\d{2})\.(\d{2})\.md$/);
   if (!match) return null;
-  const [, weekStr, dayStr, monthStr, yearStr] = match;
-  const week = parseInt(weekStr, 10);
+  const [, dayStr, monthStr, yearStr] = match;
   const day = parseInt(dayStr, 10);
   const month = parseInt(monthStr, 10) - 1;
   const year = 2000 + parseInt(yearStr, 10);

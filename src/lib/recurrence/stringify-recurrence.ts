@@ -1,5 +1,4 @@
 import {
-  Recurrence,
   RecurrenceRule,
   Weekday,
 } from '../types';

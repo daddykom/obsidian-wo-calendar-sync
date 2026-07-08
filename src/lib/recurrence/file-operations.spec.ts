@@ -4,7 +4,7 @@ import {
   getWeekdaySection,
   getMondayOfWeek,
 } from './file-operations';
-import { WeekcalendarSettings, WoFileTitleStructure } from '../types';
+import { WeekcalendarSettings } from '../types';
 
 const mockSettings: WeekcalendarSettings = {
   paths: {

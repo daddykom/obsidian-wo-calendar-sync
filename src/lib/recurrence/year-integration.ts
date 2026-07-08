@@ -3,7 +3,6 @@ import {
   EventElement,
   Recurrence,
   WeekcalendarSettings,
-  WoFileTitleStructure,
   woFileTitleStructure,
 } from '../types';
 import { parseRecurrence } from './parse-recurrence';

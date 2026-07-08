@@ -1,4 +1,4 @@
-import { App, TFile, TAbstractFile } from 'obsidian';
+import { App, TFile } from 'obsidian';
 import { format } from 'date-fns/format';
 import {
   ElementsStructure,

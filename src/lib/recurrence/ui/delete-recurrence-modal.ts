@@ -1,4 +1,4 @@
-import { App, ButtonComponent, Modal, Setting } from 'obsidian';
+import { App, Modal, Setting } from 'obsidian';
 
 export type DeleteRecurrenceResult = 'all' | 'single' | 'cancel';
 

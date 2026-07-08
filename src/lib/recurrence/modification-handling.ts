@@ -1,3 +1,4 @@
+import { App } from 'obsidian';
 import {
   EventElement,
   Recurrence,
@@ -62,9 +63,10 @@ export async function handleRecurrenceModification(
 export async function checkExistingExceptions(
   filePath: string,
   recurrenceId: string,
-  settings: WeekcalendarSettings
+  settings: WeekcalendarSettings,
+  app: App
 ): Promise<AffectedOccurrence[]> {
-  const { elements, exists } = await readWeekFile(filePath, settings, {} as any);
+  const { elements, exists } = await readWeekFile(filePath, settings, app);
   if (!exists) return [];
 
   const exceptions: AffectedOccurrence[] = [];
