@@ -12,9 +12,9 @@ import {
  */
 function extractEventId(content: string[]): string | null {
   const matchLine = content.find(
-    (line) => !line.match(RECURRENCE_PATTERNS.recurrenceId) && line.match(/\^woev-([a-zA-Z0-9]+)/)
+    (line) => !line.match(RECURRENCE_PATTERNS.recurrenceId) && line.match(/\^woev-([a-zA-Z0-9]+)/),
   );
-  return matchLine ? matchLine.match(/\^woev-([a-zA-Z0-9]+)/)?.[1] ?? null : null;
+  return matchLine ? (matchLine.match(/\^woev-([a-zA-Z0-9]+)/)?.[1] ?? null) : null;
 }
 
 /**
@@ -22,13 +22,16 @@ function extractEventId(content: string[]): string | null {
  */
 function extractRecurrenceId(content: string[]): string | null {
   const matchLine = content.find((line) => line.match(RECURRENCE_PATTERNS.recurrenceId));
-  return matchLine ? matchLine.match(RECURRENCE_PATTERNS.recurrenceId)?.[1] ?? null : null;
+  return matchLine ? (matchLine.match(RECURRENCE_PATTERNS.recurrenceId)?.[1] ?? null) : null;
 }
 
 /**
  * Extract exception info from content lines
  */
-function extractExceptionInfo(content: string[]): { isException: boolean; exceptionOfRecurrenceId: string | null } {
+function extractExceptionInfo(content: string[]): {
+  isException: boolean;
+  exceptionOfRecurrenceId: string | null;
+} {
   const matchLine = content.find((line) => line.match(RECURRENCE_PATTERNS.exceptionTag));
   if (matchLine) {
     const match = matchLine.match(RECURRENCE_PATTERNS.exceptionTag);
@@ -96,6 +99,7 @@ export function parseWo(wochenFile: string, settings = DEFAULT_SETTINGS) {
     }
     return acc;
   }, elementStructure(settings));
+  console.log('elements', isolateElements);
   return isolateElements.elements;
 }
 

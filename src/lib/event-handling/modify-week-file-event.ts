@@ -42,25 +42,30 @@ export function detectRecurringEvents(
 ): RecurringEventInfo[] {
   const elements = parseWo(fileContent, settings);
   const fileDate = extractDateFromFilePath(filePath);
-  const recurring: RecurringEventInfo[] = [];
 
-  for (const section of Object.keys(elements) as WoFileTitleStructure[]) {
-    for (const element of elements[section]) {
-      if (element.type === 'event') {
-        const eventElement = element as EventElement;
-        if (eventElement.recurrenceId && !eventElement.isException) {
+  if (!fileDate) return [];
+
+  const recurring: RecurringEventInfo[] = Object.entries(elements)
+    .flatMap(([, sectionElements]) =>
+      sectionElements
+        .filter(
+          (element): element is EventElement =>
+            element.type === 'event' &&
+            (element as EventElement).recurrenceId !== undefined &&
+            !(element as EventElement).isException
+        )
+        .map((eventElement) => {
           const recurrence = parseRecurrence(
             eventElement.content,
             eventElement.eventId,
-            eventElement.recurrenceId,
+            eventElement.recurrenceId!,
           );
-          if (recurrence && fileDate) {
-            recurring.push({ event: eventElement, recurrence, eventDate: fileDate });
-          }
-        }
-      }
-    }
-  }
+          return recurrence
+            ? { event: eventElement, recurrence, eventDate: fileDate }
+            : null;
+        })
+    )
+    .filter((item): item is RecurringEventInfo => item !== null);
 
   return recurring;
 }
