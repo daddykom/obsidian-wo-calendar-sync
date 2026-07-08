@@ -13,11 +13,11 @@ import {
 } from 'rxjs';
 import { processFile } from '../commands/process-file';
 import { parseWo } from '../parseWeekFile/parse-wo';
-import { WO_FILE_REGEX } from '../settings/constants';
-import { WeekcalendarSettings, EventElement, WoFileTitleStructure, Recurrence } from '../types';
-import { parseRecurrence } from '../recurrence/parse-recurrence';
-import { findWeekFilesForRange, readWeekFile } from '../recurrence/file-operations';
 import { stringifyWo } from '../parseWeekFile/stringify-wo';
+import { findWeekFilesForRange, readWeekFile } from '../recurrence/file-operations';
+import { parseRecurrence } from '../recurrence/parse-recurrence';
+import { WO_FILE_REGEX } from '../settings/constants';
+import { EventElement, Recurrence, WeekcalendarSettings, WoFileTitleStructure } from '../types';
 
 interface RecurringEventInfo {
   event: EventElement;
@@ -25,7 +25,7 @@ interface RecurringEventInfo {
   eventDate: Date;
 }
 
-function extractDateFromFilePath(filePath: string): Date | null {
+export function extractDateFromFilePath(filePath: string): Date | null {
   const match = filePath.match(/W\d{2} (\d{2})\.(\d{2})\.(\d{2})\.md$/);
   if (!match) return null;
   const [, dayStr, monthStr, yearStr] = match;
@@ -35,10 +35,10 @@ function extractDateFromFilePath(filePath: string): Date | null {
   return new Date(year, month, day);
 }
 
-function detectRecurringEvents(
+export function detectRecurringEvents(
   fileContent: string,
   filePath: string,
-  settings: WeekcalendarSettings
+  settings: WeekcalendarSettings,
 ): RecurringEventInfo[] {
   const elements = parseWo(fileContent, settings);
   const fileDate = extractDateFromFilePath(filePath);
@@ -52,7 +52,7 @@ function detectRecurringEvents(
           const recurrence = parseRecurrence(
             eventElement.content,
             eventElement.eventId,
-            eventElement.recurrenceId
+            eventElement.recurrenceId,
           );
           if (recurrence && fileDate) {
             recurring.push({ event: eventElement, recurrence, eventDate: fileDate });
@@ -68,7 +68,7 @@ function detectRecurringEvents(
 async function propagateRecurrenceChanges(
   app: App,
   settings: WeekcalendarSettings,
-  recurringEvents: RecurringEventInfo[]
+  recurringEvents: RecurringEventInfo[],
 ): Promise<void> {
   for (const { event, recurrence, eventDate } of recurringEvents) {
     const endDate = recurrence.end.endDate;
@@ -115,6 +115,7 @@ async function propagateRecurrenceChanges(
  * @param app
  * @param modifyEvents
  * @param actualFileChanged$
+ * @param settings
  */
 export const modifyWeekFileEvent = (
   app: App,
@@ -142,9 +143,10 @@ export const modifyWeekFileEvent = (
               }
               return new Notice(`File ${file.name} angepasst.`);
             }),
-            catchError((err) =>
-              of(new Notice(`Fehler bei der Anpassung von ${file.name}: ` + JSON.stringify(err))),
-            ),
+            catchError((err) => {
+              const message = err instanceof Error ? err.message : String(err);
+              return of(new Notice(`Fehler bei der Anpassung von ${file.name}: ${message}`));
+            }),
           );
         }
         return of('');

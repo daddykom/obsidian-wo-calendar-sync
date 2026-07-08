@@ -12,7 +12,7 @@ import {
  */
 function extractEventId(content: string[]): string | null {
   for (const line of content) {
-    const match = line.match(/\^woev-([a-z0-9]+)/);
+    const match = line.match(/\^woev-([a-zA-Z0-9]+)/);
     if (match && !line.match(RECURRENCE_PATTERNS.recurrenceId)) {
       return match[1];
     }

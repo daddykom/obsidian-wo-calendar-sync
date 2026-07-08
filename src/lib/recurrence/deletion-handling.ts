@@ -10,6 +10,7 @@ import {
 } from './file-operations';
 import { DeleteRecurrenceModal, DeleteRecurrenceResult } from './ui/delete-recurrence-modal';
 import { stringifyWo } from '../parseWeekFile/stringify-wo';
+import { formatEndDate } from './stringify-recurrence';
 
 export async function deleteRecurringEvent(
   recurrenceId: string,
@@ -44,7 +45,7 @@ export async function deleteRecurringEvent(
         const dayBefore = new Date(deletedDate);
         dayBefore.setDate(dayBefore.getDate() - 1);
 
-        const dayBeforeStr = `${dayBefore.getDate().toString().padStart(2, '0')}.${(dayBefore.getMonth() + 1).toString().padStart(2, '0')}.${dayBefore.getFullYear()}`;
+        const dayBeforeStr = formatEndDate(dayBefore);
 
         const filePath = getWeekFilePath(deletedDate, settings);
         const { elements, exists } = await readWeekFile(filePath, settings, app);

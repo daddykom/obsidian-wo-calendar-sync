@@ -66,7 +66,7 @@ Vermeiden:
 
 Code soll klar, direkt und testbar sein.
 
-Bevorzugt wird ein funktionaler Stil mit kleinen, reinen Funktionen, wo das sinnvoll ist.
+Bevorzugt wird ein funktionaler Stil mit kleinen, reinen Funktionen. Ausnahmen nur, wenn funktionaler Ansatz  nicht wirklich optimal ist.
 
 Klassen nur verwenden, wenn sie fachlich oder technisch wirklich passen, zum Beispiel für Components, Services oder klar zustandsbehaftete Objekte.
 
