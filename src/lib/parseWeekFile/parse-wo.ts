@@ -11,37 +11,28 @@ import {
  * Extract eventId from content lines
  */
 function extractEventId(content: string[]): string | null {
-  for (const line of content) {
-    const match = line.match(/\^woev-([a-zA-Z0-9]+)/);
-    if (match && !line.match(RECURRENCE_PATTERNS.recurrenceId)) {
-      return match[1];
-    }
-  }
-  return null;
+  const matchLine = content.find(
+    (line) => !line.match(RECURRENCE_PATTERNS.recurrenceId) && line.match(/\^woev-([a-zA-Z0-9]+)/)
+  );
+  return matchLine ? matchLine.match(/\^woev-([a-zA-Z0-9]+)/)?.[1] ?? null : null;
 }
 
 /**
  * Extract recurrenceId from content lines
  */
 function extractRecurrenceId(content: string[]): string | null {
-  for (const line of content) {
-    const match = line.match(RECURRENCE_PATTERNS.recurrenceId);
-    if (match) {
-      return match[1];
-    }
-  }
-  return null;
+  const matchLine = content.find((line) => line.match(RECURRENCE_PATTERNS.recurrenceId));
+  return matchLine ? matchLine.match(RECURRENCE_PATTERNS.recurrenceId)?.[1] ?? null : null;
 }
 
 /**
  * Extract exception info from content lines
  */
 function extractExceptionInfo(content: string[]): { isException: boolean; exceptionOfRecurrenceId: string | null } {
-  for (const line of content) {
-    const match = line.match(RECURRENCE_PATTERNS.exceptionTag);
-    if (match) {
-      return { isException: true, exceptionOfRecurrenceId: match[1] };
-    }
+  const matchLine = content.find((line) => line.match(RECURRENCE_PATTERNS.exceptionTag));
+  if (matchLine) {
+    const match = matchLine.match(RECURRENCE_PATTERNS.exceptionTag);
+    return { isException: true, exceptionOfRecurrenceId: match?.[1] ?? null };
   }
   return { isException: false, exceptionOfRecurrenceId: null };
 }

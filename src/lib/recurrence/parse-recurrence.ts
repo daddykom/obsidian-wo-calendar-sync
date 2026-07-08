@@ -42,18 +42,19 @@ const WEEKDAY_SHORTCUT_KEYS = Object.keys(WEEKDAY_SHORTCUT_MAP);
 export function parseRecurrenceRule(fieldValue: string): RecurrenceRule | null {
   const normalized = normalizeShortcut(fieldValue);
 
-  for (const key of WEEKDAY_SHORTCUT_KEYS) {
-    if (normalized.startsWith(key) || normalized === key) {
-      const shortcut = WEEKDAY_SHORTCUT_MAP[key];
-      const rule: RecurrenceRule = {
-        frequency: shortcut.frequency,
-        interval: 1,
-      };
-      if (shortcut.ordinal !== undefined && shortcut.weekday !== undefined) {
-        rule.byWeekday = { ordinal: shortcut.ordinal, weekday: shortcut.weekday };
-      }
-      return rule;
+  const matchedKey = WEEKDAY_SHORTCUT_KEYS.find(
+    (key) => normalized.startsWith(key) || normalized === key
+  );
+  if (matchedKey) {
+    const shortcut = WEEKDAY_SHORTCUT_MAP[matchedKey];
+    const rule: RecurrenceRule = {
+      frequency: shortcut.frequency,
+      interval: 1,
+    };
+    if (shortcut.ordinal !== undefined && shortcut.weekday !== undefined) {
+      rule.byWeekday = { ordinal: shortcut.ordinal, weekday: shortcut.weekday };
     }
+    return rule;
   }
 
   const parts = fieldValue.split(',').map((p) => p.trim());
@@ -169,13 +170,8 @@ export function parseEndDate(fieldValue: string): Date | null {
  * Extract recurrence ID from content lines
  */
 export function extractRecurrenceId(content: string[]): string | null {
-  for (const line of content) {
-    const match = line.match(RECURRENCE_PATTERNS.recurrenceId);
-    if (match) {
-      return match[1];
-    }
-  }
-  return null;
+  const matchLine = content.find((line) => line.match(RECURRENCE_PATTERNS.recurrenceId));
+  return matchLine ? matchLine.match(RECURRENCE_PATTERNS.recurrenceId)?.[1] ?? null : null;
 }
 
 /**
@@ -184,11 +180,10 @@ export function extractRecurrenceId(content: string[]): string | null {
 export function extractExceptionInfo(
   content: string[]
 ): { isException: boolean; exceptionOfRecurrenceId: string | null } {
-  for (const line of content) {
-    const match = line.match(RECURRENCE_PATTERNS.exceptionTag);
-    if (match) {
-      return { isException: true, exceptionOfRecurrenceId: match[1] };
-    }
+  const matchLine = content.find((line) => line.match(RECURRENCE_PATTERNS.exceptionTag));
+  if (matchLine) {
+    const match = matchLine.match(RECURRENCE_PATTERNS.exceptionTag);
+    return { isException: true, exceptionOfRecurrenceId: match?.[1] ?? null };
   }
   return { isException: false, exceptionOfRecurrenceId: null };
 }
@@ -197,26 +192,16 @@ export function extractExceptionInfo(
  * Find the Wiederholung field value in content
  */
 export function findRecurrenceField(content: string[]): string | null {
-  for (const line of content) {
-    const match = line.match(RECURRENCE_PATTERNS.field);
-    if (match) {
-      return match[1].trim();
-    }
-  }
-  return null;
+  const matchLine = content.find((line) => line.match(RECURRENCE_PATTERNS.field));
+  return matchLine ? matchLine.match(RECURRENCE_PATTERNS.field)?.[1].trim() ?? null : null;
 }
 
 /**
  * Find the WiederholungEnde field value in content
  */
 export function findEndDateField(content: string[]): string | null {
-  for (const line of content) {
-    const match = line.match(RECURRENCE_PATTERNS.endField);
-    if (match) {
-      return match[1].trim();
-    }
-  }
-  return null;
+  const matchLine = content.find((line) => line.match(RECURRENCE_PATTERNS.endField));
+  return matchLine ? matchLine.match(RECURRENCE_PATTERNS.endField)?.[1].trim() ?? null : null;
 }
 
 /**

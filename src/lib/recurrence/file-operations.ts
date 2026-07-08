@@ -122,10 +122,8 @@ export async function removeRecurringEventsFromFile(
   const content = await app.vault.read(abstractFile);
   const elements = parseWo(content, settings);
 
-  const updatedElements: ElementsStructure = {} as ElementsStructure;
-
-  for (const key of woFileTitleStructure) {
-    updatedElements[key] = elements[key].filter((element) => {
+  const updatedElements = woFileTitleStructure.reduce<ElementsStructure>((acc, key) => {
+    acc[key] = elements[key].filter((element) => {
       if (element.type !== 'event') {
         return true;
       }
@@ -138,7 +136,8 @@ export async function removeRecurringEventsFromFile(
       }
       return false;
     });
-  }
+    return acc;
+  }, {} as ElementsStructure);
 
   await app.vault.modify(abstractFile, stringifyWo(updatedElements));
 }
