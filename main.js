@@ -3447,7 +3447,8 @@ var beforeAWeek = (date) => {
   return result;
 };
 function getLastMonday(date) {
-  return subDays(date, (date.getUTCDay() || 7) - 1);
+  const day = date.getDay() || 7;
+  return subDays(date, day - 1);
 }
 function getWeekFileName(monday, weekNo) {
   const week = weekNo.toString().padStart(2, "0");
@@ -3636,6 +3637,43 @@ var import_obsidian4 = require("obsidian");
 
 // src/lib/settings/constants.ts
 var WO_FILE_REGEX = /^week-calendar\/.*\/W[0-5].[0-9]. /;
+var RECURRENCE_PATTERNS = {
+  field: /^Wiederholung:\s*(.+)$/i,
+  endField: /^WiederholungEnde:\s*(.+)$/i,
+  recurrenceId: /\^woev-rec-([a-z0-9]+)/,
+  exceptionTag: /^AusnahmeVon:\s*\^woev-([a-z0-9]+)/
+};
+var WEEKDAY_MAP = {
+  mo: "Mo",
+  montag: "Mo",
+  di: "Di",
+  dienstag: "Di",
+  mi: "Mi",
+  mittwoch: "Mi",
+  do: "Do",
+  donnerstag: "Do",
+  fr: "Fr",
+  freitag: "Fr",
+  sa: "Sa",
+  samstag: "Sa",
+  so: "So",
+  sonntag: "So"
+};
+var WEEKDAY_KEYS = Object.keys(WEEKDAY_MAP);
+var FREQUENCY_MAP = {
+  t\u00E4glich: "daily",
+  taeglich: "daily",
+  w\u00F6chentlich: "weekly",
+  wochentlich: "weekly",
+  w\u00F6chentl: "weekly",
+  monatlich: "monthly-date",
+  "mntl": "monthly-date",
+  "mntl.": "monthly-date",
+  j\u00E4hrlich: "yearly",
+  jaehrlich: "yearly",
+  jaehrl: "yearly"
+};
+var FREQUENCY_KEYS = Object.keys(FREQUENCY_MAP);
 var DEFAULT_SETTINGS = {
   paths: {
     weekFolder: "week-calendar",
@@ -3669,6 +3707,33 @@ var DEFAULT_SETTINGS = {
 };
 
 // src/lib/parseWeekFile/parse-wo.ts
+function extractEventId(content) {
+  for (const line of content) {
+    const match2 = line.match(/\^woev-([a-z0-9]+)/);
+    if (match2 && !line.match(RECURRENCE_PATTERNS.recurrenceId)) {
+      return match2[1];
+    }
+  }
+  return null;
+}
+function extractRecurrenceId(content) {
+  for (const line of content) {
+    const match2 = line.match(RECURRENCE_PATTERNS.recurrenceId);
+    if (match2) {
+      return match2[1];
+    }
+  }
+  return null;
+}
+function extractExceptionInfo(content) {
+  for (const line of content) {
+    const match2 = line.match(RECURRENCE_PATTERNS.exceptionTag);
+    if (match2) {
+      return { isException: true, exceptionOfRecurrenceId: match2[1] };
+    }
+  }
+  return { isException: false, exceptionOfRecurrenceId: null };
+}
 function parseWo(wochenFile, settings = DEFAULT_SETTINGS) {
   const wo = wochenFile.split("\n");
   const isolateElements = wo.reduce((acc, line) => {
@@ -3729,7 +3794,19 @@ function getLineType(line, settings = DEFAULT_SETTINGS) {
 }
 function createElement(type, content, element) {
   const newContent = element ? [...element.content, content] : [content];
-  return { ...element, type, content: newContent };
+  if (type === "event") {
+    const eventId = extractEventId(newContent);
+    const recurrenceId = extractRecurrenceId(newContent);
+    const exceptionInfo = extractExceptionInfo(newContent);
+    return {
+      type: "event",
+      content: newContent,
+      eventId: eventId || "",
+      ...recurrenceId && { recurrenceId },
+      ...exceptionInfo.isException && { isException: true, exceptionOfRecurrenceId: exceptionInfo.exceptionOfRecurrenceId }
+    };
+  }
+  return { type, content: newContent };
 }
 function elementStructure(settings) {
   return {

@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS } from '../settings/constants';
+import { DEFAULT_SETTINGS, RECURRENCE_PATTERNS } from '../settings/constants';
 import {
   LineMatcher,
   LineMatchResult,
@@ -6,6 +6,45 @@ import {
   WoElement,
   WoFileStructure,
 } from '../types';
+
+/**
+ * Extract eventId from content lines
+ */
+function extractEventId(content: string[]): string | null {
+  for (const line of content) {
+    const match = line.match(/\^woev-([a-z0-9]+)/);
+    if (match && !line.match(RECURRENCE_PATTERNS.recurrenceId)) {
+      return match[1];
+    }
+  }
+  return null;
+}
+
+/**
+ * Extract recurrenceId from content lines
+ */
+function extractRecurrenceId(content: string[]): string | null {
+  for (const line of content) {
+    const match = line.match(RECURRENCE_PATTERNS.recurrenceId);
+    if (match) {
+      return match[1];
+    }
+  }
+  return null;
+}
+
+/**
+ * Extract exception info from content lines
+ */
+function extractExceptionInfo(content: string[]): { isException: boolean; exceptionOfRecurrenceId: string | null } {
+  for (const line of content) {
+    const match = line.match(RECURRENCE_PATTERNS.exceptionTag);
+    if (match) {
+      return { isException: true, exceptionOfRecurrenceId: match[1] };
+    }
+  }
+  return { isException: false, exceptionOfRecurrenceId: null };
+}
 
 /**
  * parses WochenFile into blocks of text
@@ -97,7 +136,28 @@ export function getLineType(line: string, settings = DEFAULT_SETTINGS) {
  */
 function createElement(type: WoElement['type'], content: string, element?: WoElement): WoElement {
   const newContent = element ? [...element.content, content] : [content];
-  return { ...element, type, content: newContent };
+
+  if (type === 'event') {
+    const eventId = extractEventId(newContent);
+    const recurrenceId = extractRecurrenceId(newContent);
+    const exceptionInfo = extractExceptionInfo(newContent);
+
+    const result: WoElement = {
+      type: 'event',
+      content: newContent,
+      eventId: eventId || '',
+    };
+    if (recurrenceId) {
+      result.recurrenceId = recurrenceId;
+    }
+    if (exceptionInfo.isException && exceptionInfo.exceptionOfRecurrenceId) {
+      result.isException = true;
+      result.exceptionOfRecurrenceId = exceptionInfo.exceptionOfRecurrenceId;
+    }
+    return result;
+  }
+
+  return { type, content: newContent };
 }
 
 function elementStructure(settings: WeekcalendarSettings): WoFileStructure {
