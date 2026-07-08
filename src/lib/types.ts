@@ -52,12 +52,12 @@ export interface Recurrence {
 
 export type WoElement = TextElement | EventElement;
 
-interface TextElement {
+export interface TextElement {
   type: 'text';
   content: string[];
 }
 
-interface EventElement {
+export interface EventElement {
   type: 'event';
   content: string[];
   eventId: string;

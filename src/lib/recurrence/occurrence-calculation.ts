@@ -1,9 +1,4 @@
-import {
-  Recurrence,
-  RecurrenceRule,
-  RecurrenceFrequency,
-  Weekday,
-} from '../types';
+import { Recurrence, RecurrenceRule, Weekday } from '../types';
 
 const WEEKDAY_TO_NUMBER: Record<Weekday, number> = {
   Mo: 1,
@@ -108,7 +103,12 @@ function calculateNextMonthlyWeekday(from: Date, rule: RecurrenceRule): Date | n
   result.setDate(1);
 
   let currentMonth = result.getMonth();
-  let targetDate = findNthWeekdayOfMonth(result.getFullYear(), currentMonth, targetWeekday, ordinal);
+  let targetDate = findNthWeekdayOfMonth(
+    result.getFullYear(),
+    currentMonth,
+    targetWeekday,
+    ordinal,
+  );
 
   if (targetDate && targetDate > result.getDate()) {
     result.setDate(targetDate);
@@ -132,7 +132,12 @@ function calculateNextMonthlyWeekday(from: Date, rule: RecurrenceRule): Date | n
   return null;
 }
 
-function findNthWeekdayOfMonth(year: number, month: number, weekday: number, ordinal: number): number | null {
+function findNthWeekdayOfMonth(
+  year: number,
+  month: number,
+  weekday: number,
+  ordinal: number,
+): number | null {
   const firstDayOfMonth = new Date(year, month, 1);
   const firstWeekday = firstDayOfMonth.getDay();
 
@@ -155,8 +160,10 @@ function calculateNextYearly(from: Date, rule: RecurrenceRule): Date {
   const targetMonth = rule.byMonth !== undefined ? rule.byMonth - 1 : result.getMonth();
   const targetDay = rule.byMonthDay ?? result.getDate();
 
-  if (result.getMonth() < targetMonth ||
-      (result.getMonth() === targetMonth && result.getDate() < targetDay)) {
+  if (
+    result.getMonth() < targetMonth ||
+    (result.getMonth() === targetMonth && result.getDate() < targetDay)
+  ) {
     result.setMonth(targetMonth);
     const daysInMonth = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
     result.setDate(Math.min(targetDay, daysInMonth));
@@ -174,7 +181,7 @@ function calculateNextYearly(from: Date, rule: RecurrenceRule): Date {
 export function generateOccurrences(
   startDate: Date,
   endDate: Date,
-  recurrence: Recurrence
+  recurrence: Recurrence,
 ): Date[] {
   const occurrences: Date[] = [];
 
@@ -198,7 +205,7 @@ export function generateOccurrences(
 export function checkIfIsException(
   eventContent: string[],
   recurrence: Recurrence,
-  expectedDate: Date
+  expectedDate: Date,
 ): boolean {
   const titleLine = eventContent.find((line) => line.startsWith('- Termin:'));
   if (!titleLine) return false;
@@ -219,5 +226,5 @@ export function getDateWeekNumber(date: Date): number {
   const dayNum = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 }

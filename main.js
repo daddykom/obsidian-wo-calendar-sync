@@ -3638,10 +3638,10 @@ var import_obsidian4 = require("obsidian");
 // src/lib/settings/constants.ts
 var WO_FILE_REGEX = /^week-calendar\/.*\/W[0-5].[0-9]. /;
 var RECURRENCE_PATTERNS = {
-  field: /^Wiederholung:\s*(.+)$/i,
-  endField: /^WiederholungEnde:\s*(.+)$/i,
-  recurrenceId: /\^woev-rec-([a-z0-9]+)/,
-  exceptionTag: /^AusnahmeVon:\s*\^woev-([a-z0-9]+)/
+  field: /^\s*Wiederholung:\s*(.+)$/i,
+  endField: /^\s*WiederholungEnde:\s*(.+)$/i,
+  recurrenceId: /\^woev-rec-([a-zA-Z0-9]+)/,
+  exceptionTag: /^\s*AusnahmeVon:\s*\^woev-([a-zA-Z0-9]+)/i
 };
 var WEEKDAY_MAP = {
   mo: "Mo",
@@ -3798,13 +3798,19 @@ function createElement(type, content, element) {
     const eventId = extractEventId(newContent);
     const recurrenceId = extractRecurrenceId(newContent);
     const exceptionInfo = extractExceptionInfo(newContent);
-    return {
+    const result = {
       type: "event",
       content: newContent,
-      eventId: eventId || "",
-      ...recurrenceId && { recurrenceId },
-      ...exceptionInfo.isException && { isException: true, exceptionOfRecurrenceId: exceptionInfo.exceptionOfRecurrenceId }
+      eventId: eventId || ""
     };
+    if (recurrenceId) {
+      result.recurrenceId = recurrenceId;
+    }
+    if (exceptionInfo.isException && exceptionInfo.exceptionOfRecurrenceId) {
+      result.isException = true;
+      result.exceptionOfRecurrenceId = exceptionInfo.exceptionOfRecurrenceId;
+    }
+    return result;
   }
   return { type, content: newContent };
 }
