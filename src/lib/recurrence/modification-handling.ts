@@ -3,7 +3,6 @@ import {
   EventElement,
   Recurrence,
   WeekcalendarSettings,
-  WoFileTitleStructure,
 } from '../types';
 import { checkIfIsException } from './occurrence-calculation';
 import { readWeekFile } from './file-operations';
@@ -69,22 +68,21 @@ export async function checkExistingExceptions(
   const { elements, exists } = await readWeekFile(filePath, settings, app);
   if (!exists) return [];
 
-  const exceptions: AffectedOccurrence[] = [];
-
-  for (const section of Object.keys(elements) as WoFileTitleStructure[]) {
-    for (const element of elements[section]) {
-      if (element.type === 'event') {
-        const eventElement = element as EventElement;
-        if (eventElement.recurrenceId === recurrenceId && eventElement.isException) {
-          exceptions.push({
-            file: filePath,
-            date: new Date(),
-            isException: true,
-          });
-        }
-      }
-    }
-  }
+  const exceptions: AffectedOccurrence[] = Object.entries(elements)
+    .flatMap(([, sectionElements]) =>
+      sectionElements
+        .filter(
+          (element): element is EventElement =>
+            element.type === 'event' &&
+            (element as EventElement).recurrenceId === recurrenceId &&
+            (element as EventElement).isException === true
+        )
+        .map(() => ({
+          file: filePath,
+          date: new Date(),
+          isException: true,
+        }))
+    );
 
   return exceptions;
 }
