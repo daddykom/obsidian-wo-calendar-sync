@@ -38,6 +38,42 @@ the target branch's GitHub ruleset or branch protection settings. The check must
 run at least once before it can be selected. This repository setting is not
 enabled automatically by the workflow file.
 
+## Releases
+
+Prepare a release with one command:
+
+```sh
+npm run release -- patch
+```
+
+Use `patch`, `minor` or `major` to increase the corresponding part of the version.
+For example, `1.2.3` becomes `1.2.4`, `1.3.0` or `2.0.0`. Lower parts are reset
+when needed. The manifest is the source of truth; legacy `v` prefixes and alpha
+suffixes are removed (for example, a patch bump from `v0.2.1-alpha` produces `0.2.2`).
+
+The script updates `manifest.json`, `package.json`, `package-lock.json` and
+`versions.json`, preserving the minimum Obsidian version. It does not commit,
+tag, push, build or publish anything.
+
+Review the four files, commit, push and merge into `main`. When `manifest.json`
+changes on `main`, the release workflow validates the version and checks whether
+it is already published. For a new version it runs all tests, builds the plugin
+and publishes a GitHub release with `main.js` and `manifest.json`. The version
+tag is created automatically at the exact commit that was tested. You do not
+need to create or push a tag yourself. A direct push to `main` with the same
+version changes also triggers publication; other branches do not.
+
+Existing published versions are skipped. Failed tests or builds prevent a
+release. A failed run can be retried through GitHub Actions; the workflow also
+supports a manual run on `main`. Existing draft releases or tags without a
+release require inspection rather than being silently overwritten.
+
+BRAT can install the plugin from `daddykom/obsidian-wo-calendar-sync`. With
+automatic updates enabled in BRAT, new releases are downloaded and the plugin
+reloaded at its next update check, not necessarily immediately after the merge.
+
+`npm run build` performs a single production build; `npm run dev` watches for changes.
+
 ## Architecture
 
 ```
