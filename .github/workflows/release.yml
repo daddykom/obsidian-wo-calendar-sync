@@ -1,0 +1,102 @@
+name: Release plugin
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - manifest.json
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-plugin
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Test, build and release
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Check for a new release
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { appendFileSync, readFileSync } from 'node:fs';
+
+          const readJson = (file) => JSON.parse(readFileSync(file, 'utf8'));
+          const manifest = readJson('manifest.json');
+          const version = manifest.version;
+          const pkg = readJson('package.json');
+          const lock = readJson('package-lock.json');
+          const versions = readJson('versions.json');
+
+          assert.match(version, /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/, 'Prepare a release using npm run release -- patch|minor|major.');
+          assert.equal(pkg.version, version, 'package.json version must match the manifest.');
+          assert.equal(lock.version, version, 'package-lock.json version must match the manifest.');
+          assert.equal(lock.packages[''].version, version, 'Lockfile root version must match the manifest.');
+          assert.equal(versions[version], manifest.minAppVersion, 'versions.json must map the release version to minAppVersion.');
+
+          const base = `${process.env.GITHUB_API_URL}/repos/${process.env.GITHUB_REPOSITORY}`;
+          const options = { headers: { Authorization: `Bearer ${process.env.GH_TOKEN}`, Accept: 'application/vnd.github+json' } };
+          const release = await fetch(`${base}/releases/tags/${version}`, options);
+          let publish = false;
+          if (release.status === 404) {
+            const tag = await fetch(`${base}/git/ref/tags/${version}`, options);
+            assert.equal(tag.status, 404, `Tag ${version} already exists without a release, or the tag lookup failed. Inspect it before retrying.`);
+            publish = true;
+          } else {
+            assert.ok(release.ok, `Release lookup failed: HTTP ${release.status}`);
+            assert.equal((await release.json()).draft, false, 'An unpublished draft already exists; inspect it before retrying.');
+            console.log(`Release ${version} already exists; skipping publication.`);
+          }
+          appendFileSync(process.env.GITHUB_OUTPUT, `version=${version}\npublish=${publish}\n`);
+          NODE
+
+      - name: Install dependencies
+        if: steps.version.outputs.publish == 'true'
+        run: npm ci
+
+      - name: Run all tests
+        if: steps.version.outputs.publish == 'true'
+        run: npm test -- --ci --runInBand
+
+      - name: Build plugin
+        if: steps.version.outputs.publish == 'true'
+        run: npm run build
+
+      - name: Publish release
+        if: steps.version.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release create "$RELEASE_VERSION" \
+            --target "$GITHUB_SHA" \
+            --title "$RELEASE_VERSION" \
+            --generate-notes \
+            main.js manifest.json

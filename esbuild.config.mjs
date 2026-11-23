@@ -1,14 +1,21 @@
 import * as esbuild from 'esbuild';
 
-const context = await esbuild.context({
+const production = process.argv.includes('production');
+
+const options = {
   entryPoints: ['src/main.ts'],
   bundle: true,
   outfile: 'main.js',
   format: 'cjs',
   platform: 'browser',
-  sourcemap: true,
+  sourcemap: !production,
 
   external: ['obsidian'],
-});
+};
 
-await context.watch();
+if (production) {
+  await esbuild.build(options);
+} else {
+  const context = await esbuild.context(options);
+  await context.watch();
+}
