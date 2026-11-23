@@ -2,6 +2,7 @@ import { Notice, Plugin } from 'obsidian';
 import { fromEvent, Subscription } from 'rxjs';
 import { createYear } from './lib/commands/create-year/create-year';
 import { gotoCurrentWeek } from './lib/commands/goto-current-week';
+import { migrateAllWeekHeadings } from './lib/commands/migrate-week-headings';
 import { processActiveFile } from './lib/commands/process-active-file';
 import { processAll } from './lib/commands/process-all';
 import { modifyWeekFileEvent } from './lib/event-handling/modify-week-file-event';
@@ -13,6 +14,7 @@ export default class WeekCalendartPlugin extends Plugin {
   actualFileChanded$ = fromEvent(this.app.workspace, 'active-leaf-change');
   subscription = new Subscription();
   settings = DEFAULT_SETTINGS;
+  migratingFiles = new Set<string>();
 
   async onload(): Promise<void> {
     const versionCheck = checkToSplicedCompatibility();
@@ -20,6 +22,8 @@ export default class WeekCalendartPlugin extends Plugin {
       new Notice(versionCheck, 10000);
       return;
     }
+    await this.loadSettings();
+
     this.addCommand({
       id: 'process-active-wo-file',
       name: 'Aktives Wochenfile verarbeiten',
@@ -39,6 +43,12 @@ export default class WeekCalendartPlugin extends Plugin {
     });
 
     this.addCommand({
+      id: 'migrate-week-day-headings',
+      name: 'Monatstage in bestehenden Wochen-Dateien ergänzen',
+      callback: migrateAllWeekHeadings(this.app, this.settings, this.migratingFiles),
+    });
+
+    this.addCommand({
       id: 'get-current-week-file',
       name: 'Das aktuelle Wochen-File öffnen',
       callback: gotoCurrentWeek(this.app, this.settings),
@@ -50,6 +60,7 @@ export default class WeekCalendartPlugin extends Plugin {
         fromEvent(this.app.vault, 'modify'),
         this.actualFileChanded$,
         this.settings,
+        this.migratingFiles,
       ),
     );
 

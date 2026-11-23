@@ -18,6 +18,16 @@ WO files are the **single source of truth**.
 
 ---
 
+## Add month days to existing week notes
+
+After installing the updated plugin, back up your vault and run
+**Monatstage in bestehenden Wochen-Dateien ergänzen** from Obsidian's command palette.
+The command updates weekday headings (for example, `# Montag` → `# Montag (23)`)
+in `<configured week folder>/<year>/weeks/Wxx dd.MM.yy.md`.
+Other content and yearly overviews are preserved. The final notice reports checked,
+changed and failed files. Running it again does not change already migrated notes.
+The command does not run automatically when the plugin loads.
+
 ## Architecture
 
 ```

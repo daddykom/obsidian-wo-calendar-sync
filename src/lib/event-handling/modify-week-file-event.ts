@@ -124,13 +124,15 @@ async function propagateRecurrenceChanges(
  */
 export const modifyWeekFileEvent = (
   app: App,
-  modifyEvents: Observable<TFile>,
-  actualFileChanged$: Observable<TFile>,
+  modifyEvents: Observable<unknown>,
+  actualFileChanged$: Observable<unknown>,
   settings: WeekcalendarSettings,
+  ignoredFiles: ReadonlySet<string> = new Set(),
 ) =>
   modifyEvents
     .pipe(
       filter((file): file is TFile => file instanceof TFile),
+      filter((file: TFile) => !ignoredFiles.has(file.path)),
       filter((file: TFile) => WO_FILE_REGEX.test(file.path)),
       filter((file: TFile) => file.extension === 'md'),
       switchMap((file: TFile) =>
