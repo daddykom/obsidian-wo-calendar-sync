@@ -112,11 +112,11 @@ export function getLineType(line: string, settings = DEFAULT_SETTINGS) {
   const defaultValue: LineMatchResult = ['text', null];
   return lineMatchers(settings).reduce((acc, { matcher, type }): LineMatchResult => {
     const match = line.match(matcher);
-    const text = match && match[1] ? match[1].toLowerCase() : null;
+    const text = match && match[1] ? match[1].trim().toLowerCase() : null;
     const [key] = typedEntries(settings.weekdays).find(
       ([, value]) => text === value.toLowerCase(),
     ) ?? [null];
-    if (match) {
+    if (match && (type !== 'key' || key !== null)) {
       return [type, key];
     }
     return acc;
@@ -166,7 +166,7 @@ function elementStructure(settings: WeekcalendarSettings): WoFileStructure {
 }
 
 const lineMatchers = (settings: WeekcalendarSettings): LineMatcher[] => [
-  { matcher: /^#\s+([a-z,A-Z]+)/, type: 'key' },
+  { matcher: /^#\s+(.+?)(?:\s+\(\d{1,2}\))?\s*$/, type: 'key' },
   { matcher: new RegExp(`^-\\s+${settings.prefixes.event}`, 'i'), type: 'event' },
   { matcher: /^\s{2}/, type: 'followUp' },
 ];
