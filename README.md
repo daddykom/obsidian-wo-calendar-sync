@@ -28,6 +28,16 @@ Other content and yearly overviews are preserved. The final notice reports check
 changed and failed files. Running it again does not change already migrated notes.
 The command does not run automatically when the plugin loads.
 
+## Pull request checks
+
+GitHub Actions runs all tests on every pull request using Node.js 22 and `npm ci`.
+The workflow can also be started manually from the Actions tab.
+
+To block merges when tests fail, add **All tests** as a required status check in
+the target branch's GitHub ruleset or branch protection settings. The check must
+run at least once before it can be selected. This repository setting is not
+enabled automatically by the workflow file.
+
 ## Architecture
 
 ```
