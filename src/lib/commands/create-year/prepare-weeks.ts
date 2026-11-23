@@ -4,11 +4,11 @@ import { prepareElementStructure } from './prepare-element-structure';
 
 export function prepareWeeks(yyyy: number, weeks: Weeks[], settings: WeekcalendarSettings) {
   const dirPath = settings.paths.weekFolder;
-  const template = prepareElementStructure(settings);
   return weeks.map((week, index): [string, ElementsStructure] | null => {
     if (week.yyyy !== yyyy) {
       return null;
     }
+    const template = prepareElementStructure(settings, week.monday);
     const lastWeekNo = weeks[index - 1].week.toString().padStart(2, '0');
     const weekNo = index.toString().padStart(2, '0');
     const nextWeekNo = weeks[index + 1].week.toString().padStart(2, '0');

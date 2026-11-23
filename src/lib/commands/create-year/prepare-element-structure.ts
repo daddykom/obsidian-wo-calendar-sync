@@ -1,11 +1,15 @@
-import { WeekcalendarSettings, WoFileStructure } from '../../types';
+import { WeekcalendarSettings, WoFileStructure, woFileTitleStructure } from '../../types';
+import { formatDayHeading } from '../../utils/format-day-heading';
 
 export function prepareElementStructure(
   settings: WeekcalendarSettings,
+  monday: Date,
 ): WoFileStructure['elements'] {
-  return Object.entries(settings.weekdays).reduce(
-    (acc, [key, name]) => {
-      const text = key !== 'start' ? `# ${name}` : '';
+  return woFileTitleStructure.reduce(
+    (acc, key) => {
+      const name = settings.weekdays[key];
+      const text =
+        key === 'start' ? '' : key === 'links' ? `# ${name}` : formatDayHeading(monday, key, name);
       return {
         ...acc,
         [key]: key !== 'start' ? [{ type: 'text', content: [text, ''] }] : [],

@@ -18,6 +18,26 @@ WO files are the **single source of truth**.
 
 ---
 
+## Add month days to existing week notes
+
+After installing the updated plugin, back up your vault and run
+**Monatstage in bestehenden Wochen-Dateien ergänzen** from Obsidian's command palette.
+The command updates weekday headings (for example, `# Montag` → `# Montag (23)`)
+in `<configured week folder>/<year>/weeks/Wxx dd.MM.yy.md`.
+Other content and yearly overviews are preserved. The final notice reports checked,
+changed and failed files. Running it again does not change already migrated notes.
+The command does not run automatically when the plugin loads.
+
+## Pull request checks
+
+GitHub Actions runs all tests on every pull request using Node.js 22 and `npm ci`.
+The workflow can also be started manually from the Actions tab.
+
+To block merges when tests fail, add **All tests** as a required status check in
+the target branch's GitHub ruleset or branch protection settings. The check must
+run at least once before it can be selected. This repository setting is not
+enabled automatically by the workflow file.
+
 ## Architecture
 
 ```

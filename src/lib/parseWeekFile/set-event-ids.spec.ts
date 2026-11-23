@@ -7,7 +7,7 @@ describe('Set Event Ids', () => {
   const result = setEventIds(parsed, 2026, 17);
   describe('setEventIds', () => {
     it('It exists', () => {
-      typeof expect(setEventIds).toBeDefined();
+      expect(setEventIds).toBeDefined();
     });
     it('has event id, does nothing', () => {
       expect(result['tuesday'].length).toBe(3);

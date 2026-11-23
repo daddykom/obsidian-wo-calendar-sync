@@ -1,3 +1,4 @@
+import { WeekcalendarSettings, Weeks } from '../../types';
 import { prepareElementStructure } from './prepare-element-structure';
 import { prepareWeeks } from './prepare-weeks';
 
@@ -22,11 +23,37 @@ describe('prepareWeeks', () => {
       links: [],
     });
 
-    const settings = {
+    const settings: WeekcalendarSettings = {
       paths: {
         weekFolder: 'calendar',
+        eventFolder: '',
+        overviewFileName: '',
       },
-    } as any;
+      weekdays: {
+        start: 'Start',
+        monday: 'Montag',
+        tuesday: 'Dienstag',
+        wednesday: 'Mittwoch',
+        thursday: 'Donnerstag',
+        friday: 'Freitag',
+        saturday: 'Samstag',
+        sunday: 'Sonntag',
+        links: 'Links',
+      },
+      prefixes: {
+        event: '',
+        time: '',
+        location: '',
+        reminder: '',
+        repeat: '',
+      },
+      caldav: {
+        url: '',
+        username: '',
+        password: '',
+        calendar: '',
+      },
+    };
 
     const weeks = [
       {
@@ -71,11 +98,14 @@ describe('prepareWeeks', () => {
         lastMonday: new Date('2026-01-19'),
         nextMonday: new Date('2026-02-02'),
       },
-    ] as any;
+    ] as Weeks[];
 
     const result = prepareWeeks(2026, weeks, settings);
 
-    expect(prepareElementStructure).toHaveBeenCalledWith(settings);
+    expect(prepareElementStructure).toHaveBeenCalledTimes(4);
+    weeks.filter((week) => week.yyyy === 2026).forEach((week, index) => {
+      expect(prepareElementStructure).toHaveBeenNthCalledWith(index + 1, settings, week.monday);
+    });
 
     expect(result).toEqual([
       null,
@@ -168,13 +198,39 @@ describe('prepareWeeks', () => {
       links: [],
     });
 
-    const settings = {
+    const settings: WeekcalendarSettings = {
       paths: {
         weekFolder: 'calendar',
+        eventFolder: '',
+        overviewFileName: '',
       },
-    } as any;
+      weekdays: {
+        start: 'Start',
+        monday: 'Montag',
+        tuesday: 'Dienstag',
+        wednesday: 'Mittwoch',
+        thursday: 'Donnerstag',
+        friday: 'Freitag',
+        saturday: 'Samstag',
+        sunday: 'Sonntag',
+        links: 'Links',
+      },
+      prefixes: {
+        event: '',
+        time: '',
+        location: '',
+        reminder: '',
+        repeat: '',
+      },
+      caldav: {
+        url: '',
+        username: '',
+        password: '',
+        calendar: '',
+      },
+    };
 
-    const weeks = [
+    const weeks: Weeks[] = [
       {
         yyyy: 2025,
         week: 51,
@@ -189,10 +245,11 @@ describe('prepareWeeks', () => {
         lastMonday: new Date('2025-12-15'),
         nextMonday: new Date('2025-12-29'),
       },
-    ] as any;
+    ];
 
     const result = prepareWeeks(2026, weeks, settings);
 
     expect(result).toEqual([null, null]);
+    expect(prepareElementStructure).not.toHaveBeenCalled();
   });
 });

@@ -6,3 +6,4 @@ dist/
 /src/*.js
 !/main.js
 /src/__mocks__/obsidian.js
+/.codanna/index/*

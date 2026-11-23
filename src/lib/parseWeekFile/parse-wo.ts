@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS } from '../settings/constants';
+import { DEFAULT_SETTINGS, RECURRENCE_PATTERNS } from '../settings/constants';
 import {
   LineMatcher,
   LineMatchResult,
@@ -6,6 +6,39 @@ import {
   WoElement,
   WoFileStructure,
 } from '../types';
+
+/**
+ * Extract eventId from content lines
+ */
+function extractEventId(content: string[]): string | null {
+  const matchLine = content.find(
+    (line) => !line.match(RECURRENCE_PATTERNS.recurrenceId) && line.match(/\^woev-([a-zA-Z0-9]+)/),
+  );
+  return matchLine ? (matchLine.match(/\^woev-([a-zA-Z0-9]+)/)?.[1] ?? null) : null;
+}
+
+/**
+ * Extract recurrenceId from content lines
+ */
+function extractRecurrenceId(content: string[]): string | null {
+  const matchLine = content.find((line) => line.match(RECURRENCE_PATTERNS.recurrenceId));
+  return matchLine ? (matchLine.match(RECURRENCE_PATTERNS.recurrenceId)?.[1] ?? null) : null;
+}
+
+/**
+ * Extract exception info from content lines
+ */
+function extractExceptionInfo(content: string[]): {
+  isException: boolean;
+  exceptionOfRecurrenceId: string | null;
+} {
+  const matchLine = content.find((line) => line.match(RECURRENCE_PATTERNS.exceptionTag));
+  if (matchLine) {
+    const match = matchLine.match(RECURRENCE_PATTERNS.exceptionTag);
+    return { isException: true, exceptionOfRecurrenceId: match?.[1] ?? null };
+  }
+  return { isException: false, exceptionOfRecurrenceId: null };
+}
 
 /**
  * parses WochenFile into blocks of text
@@ -66,6 +99,7 @@ export function parseWo(wochenFile: string, settings = DEFAULT_SETTINGS) {
     }
     return acc;
   }, elementStructure(settings));
+  console.log('elements', isolateElements);
   return isolateElements.elements;
 }
 
@@ -78,11 +112,11 @@ export function getLineType(line: string, settings = DEFAULT_SETTINGS) {
   const defaultValue: LineMatchResult = ['text', null];
   return lineMatchers(settings).reduce((acc, { matcher, type }): LineMatchResult => {
     const match = line.match(matcher);
-    const text = match && match[1] ? match[1].toLowerCase() : null;
+    const text = match && match[1] ? match[1].trim().toLowerCase() : null;
     const [key] = typedEntries(settings.weekdays).find(
       ([, value]) => text === value.toLowerCase(),
     ) ?? [null];
-    if (match) {
+    if (match && (type !== 'key' || key !== null)) {
       return [type, key];
     }
     return acc;
@@ -97,7 +131,28 @@ export function getLineType(line: string, settings = DEFAULT_SETTINGS) {
  */
 function createElement(type: WoElement['type'], content: string, element?: WoElement): WoElement {
   const newContent = element ? [...element.content, content] : [content];
-  return { ...element, type, content: newContent };
+
+  if (type === 'event') {
+    const eventId = extractEventId(newContent);
+    const recurrenceId = extractRecurrenceId(newContent);
+    const exceptionInfo = extractExceptionInfo(newContent);
+
+    const result: WoElement = {
+      type: 'event',
+      content: newContent,
+      eventId: eventId || '',
+    };
+    if (recurrenceId) {
+      result.recurrenceId = recurrenceId;
+    }
+    if (exceptionInfo.isException && exceptionInfo.exceptionOfRecurrenceId) {
+      result.isException = true;
+      result.exceptionOfRecurrenceId = exceptionInfo.exceptionOfRecurrenceId;
+    }
+    return result;
+  }
+
+  return { type, content: newContent };
 }
 
 function elementStructure(settings: WeekcalendarSettings): WoFileStructure {
@@ -111,7 +166,7 @@ function elementStructure(settings: WeekcalendarSettings): WoFileStructure {
 }
 
 const lineMatchers = (settings: WeekcalendarSettings): LineMatcher[] => [
-  { matcher: /^#\s+([a-z,A-Z]+)/, type: 'key' },
+  { matcher: /^#\s+(.+?)(?:\s+\(\d{1,2}\))?\s*$/, type: 'key' },
   { matcher: new RegExp(`^-\\s+${settings.prefixes.event}`, 'i'), type: 'event' },
   { matcher: /^\s{2}/, type: 'followUp' },
 ];

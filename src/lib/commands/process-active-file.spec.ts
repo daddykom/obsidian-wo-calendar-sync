@@ -1,28 +1,25 @@
+import { App, Notice } from 'obsidian';
+import { DEFAULT_SETTINGS } from '../settings/constants';
 import { processActiveFile } from './process-active-file';
 import { processFile } from './process-file';
 
-// Mock the obsidian module
 jest.mock('obsidian', () => ({
   Notice: jest.fn(),
 }));
 
-// Mock the processFile dependency
 jest.mock('./process-file', () => ({
   processFile: jest.fn(),
 }));
-
-import { Notice } from 'obsidian';
-import { DEFAULT_SETTINGS } from '../settings/constants';
 
 describe('processActiveFile', () => {
   const mockRead = jest.fn();
   const mockModify = jest.fn();
   const mockGetActiveFile = jest.fn();
 
-  const mockApp = {
+  const mockApp: App = {
     workspace: { getActiveFile: mockGetActiveFile },
     vault: { read: mockRead, modify: mockModify },
-  };
+  } as unknown as App;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -31,7 +28,7 @@ describe('processActiveFile', () => {
   it('shows a notice and returns early when no active file exists', async () => {
     mockGetActiveFile.mockReturnValue(null);
 
-    await processActiveFile(mockApp as unknown as any, DEFAULT_SETTINGS)();
+    await processActiveFile(mockApp, DEFAULT_SETTINGS)();
 
     expect(Notice).toHaveBeenCalledWith('No active file.');
     expect(mockRead).not.toHaveBeenCalled();
@@ -47,7 +44,7 @@ describe('processActiveFile', () => {
     mockRead.mockResolvedValue(mockContent);
     (processFile as jest.Mock).mockReturnValue(mockChanged);
 
-    await processActiveFile(mockApp as unknown as any, DEFAULT_SETTINGS)();
+    await processActiveFile(mockApp, DEFAULT_SETTINGS)();
 
     expect(mockRead).toHaveBeenCalledWith(mockFile);
     expect(processFile).toHaveBeenCalledWith(mockContent, mockFile, DEFAULT_SETTINGS);
@@ -63,7 +60,7 @@ describe('processActiveFile', () => {
     mockRead.mockResolvedValue(mockContent);
     (processFile as jest.Mock).mockReturnValue(null);
 
-    await processActiveFile(mockApp as unknown as any, DEFAULT_SETTINGS)();
+    await processActiveFile(mockApp, DEFAULT_SETTINGS)();
 
     expect(mockModify).not.toHaveBeenCalled();
     expect(Notice).toHaveBeenCalledWith('Es hat keine Änderungen gegeben!');
@@ -76,7 +73,7 @@ describe('processActiveFile', () => {
     mockRead.mockResolvedValue('some content');
     (processFile as jest.Mock).mockReturnValue(undefined);
 
-    await processActiveFile(mockApp as unknown as any, DEFAULT_SETTINGS)();
+    await processActiveFile(mockApp, DEFAULT_SETTINGS)();
 
     expect(mockModify).not.toHaveBeenCalled();
     expect(Notice).toHaveBeenCalledWith('Es hat keine Änderungen gegeben!');
