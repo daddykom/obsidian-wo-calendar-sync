@@ -20,17 +20,17 @@ describe('prepareElementStructure', () => {
       caldav: { url: '', username: '', password: '', calendar: '' },
     };
 
-    const result = prepareElementStructure(settings);
+    const result = prepareElementStructure(settings, new Date(2026, 10, 23));
 
     expect(result).toEqual({
       start: [],
-      monday: [{ type: 'text', content: ['# Montag', ''] }],
-      tuesday: [{ type: 'text', content: ['# Dienstag', ''] }],
-      wednesday: [{ type: 'text', content: ['# Mittwoch', ''] }],
-      thursday: [{ type: 'text', content: ['# Donnerstag', ''] }],
-      friday: [{ type: 'text', content: ['# Freitag', ''] }],
-      saturday: [{ type: 'text', content: ['# Samstag', ''] }],
-      sunday: [{ type: 'text', content: ['# Sonntag', ''] }],
+      monday: [{ type: 'text', content: ['# Montag (23)', ''] }],
+      tuesday: [{ type: 'text', content: ['# Dienstag (24)', ''] }],
+      wednesday: [{ type: 'text', content: ['# Mittwoch (25)', ''] }],
+      thursday: [{ type: 'text', content: ['# Donnerstag (26)', ''] }],
+      friday: [{ type: 'text', content: ['# Freitag (27)', ''] }],
+      saturday: [{ type: 'text', content: ['# Samstag (28)', ''] }],
+      sunday: [{ type: 'text', content: ['# Sonntag (29)', ''] }],
       links: [{ type: 'text', content: ['# Links', ''] }],
     });
   });
@@ -53,7 +53,7 @@ describe('prepareElementStructure', () => {
       caldav: { url: '', username: '', password: '', calendar: '' },
     };
 
-    const result = prepareElementStructure(settings);
+    const result = prepareElementStructure(settings, new Date(2026, 10, 23));
 
     expect(result.start).toEqual([]);
   });

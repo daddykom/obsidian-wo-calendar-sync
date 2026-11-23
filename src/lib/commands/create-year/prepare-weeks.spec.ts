@@ -102,7 +102,10 @@ describe('prepareWeeks', () => {
 
     const result = prepareWeeks(2026, weeks, settings);
 
-    expect(prepareElementStructure).toHaveBeenCalledWith(settings);
+    expect(prepareElementStructure).toHaveBeenCalledTimes(4);
+    weeks.filter((week) => week.yyyy === 2026).forEach((week, index) => {
+      expect(prepareElementStructure).toHaveBeenNthCalledWith(index + 1, settings, week.monday);
+    });
 
     expect(result).toEqual([
       null,
@@ -247,5 +250,6 @@ describe('prepareWeeks', () => {
     const result = prepareWeeks(2026, weeks, settings);
 
     expect(result).toEqual([null, null]);
+    expect(prepareElementStructure).not.toHaveBeenCalled();
   });
 });
