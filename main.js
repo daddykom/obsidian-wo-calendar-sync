@@ -23,7 +23,7 @@ __export(main_exports, {
   default: () => WeekCalendartPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian10 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 
 // node_modules/tslib/tslib.es6.mjs
 var extendStatics = function(d, b) {
@@ -1779,7 +1779,7 @@ function switchMap(project, resultSelector) {
 }
 
 // src/lib/commands/create-year/create-year.ts
-var import_obsidian4 = require("obsidian");
+var import_obsidian3 = require("obsidian");
 
 // src/lib/ui/create-year-prompt.ts
 var import_obsidian = require("obsidian");
@@ -3447,8 +3447,7 @@ var beforeAWeek = (date) => {
   return result;
 };
 function getLastMonday(date) {
-  const day = date.getDay() || 7;
-  return subDays(date, day - 1);
+  return subDays(date, (date.getUTCDay() || 7) - 1);
 }
 function getWeekFileName(monday, weekNo) {
   const week = weekNo.toString().padStart(2, "0");
@@ -3521,41 +3520,11 @@ function prepareData(yyyy) {
   return weeks;
 }
 
-// src/lib/types.ts
-var woFileTitleStructure = [
-  "start",
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-  "links"
-];
-
-// src/lib/utils/format-day-heading.ts
-var weekdayOffsets = {
-  monday: 0,
-  tuesday: 1,
-  wednesday: 2,
-  thursday: 3,
-  friday: 4,
-  saturday: 5,
-  sunday: 6
-};
-function formatDayHeading(monday, weekday, name) {
-  const date = new Date(monday);
-  date.setDate(date.getDate() + weekdayOffsets[weekday]);
-  return `# ${name} (${date.getDate()})`;
-}
-
 // src/lib/commands/create-year/prepare-element-structure.ts
-function prepareElementStructure(settings, monday) {
-  return woFileTitleStructure.reduce(
-    (acc, key) => {
-      const name = settings.weekdays[key];
-      const text = key === "start" ? "" : key === "links" ? `# ${name}` : formatDayHeading(monday, key, name);
+function prepareElementStructure(settings) {
+  return Object.entries(settings.weekdays).reduce(
+    (acc, [key, name]) => {
+      const text = key !== "start" ? `# ${name}` : "";
       return {
         ...acc,
         [key]: key !== "start" ? [{ type: "text", content: [text, ""] }] : []
@@ -3568,11 +3537,11 @@ function prepareElementStructure(settings, monday) {
 // src/lib/commands/create-year/prepare-weeks.ts
 function prepareWeeks(yyyy, weeks, settings) {
   const dirPath = settings.paths.weekFolder;
+  const template = prepareElementStructure(settings);
   return weeks.map((week, index) => {
     if (week.yyyy !== yyyy) {
       return null;
     }
-    const template = prepareElementStructure(settings, week.monday);
     const lastWeekNo = weeks[index - 1].week.toString().padStart(2, "0");
     const weekNo = index.toString().padStart(2, "0");
     const nextWeekNo = weeks[index + 1].week.toString().padStart(2, "0");
@@ -3583,6 +3552,19 @@ function prepareWeeks(yyyy, weeks, settings) {
     return [fileName, { ...template, links: [{ type: "text", content: [linkText] }] }];
   });
 }
+
+// src/lib/types.ts
+var woFileTitleStructure = [
+  "start",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+  "links"
+];
 
 // src/lib/parseWeekFile/stringify-wo.ts
 function stringifyWo(elements) {
@@ -3617,67 +3599,43 @@ async function writeWeekFiles(yyyy, weeks, settings, app) {
   return numbExists;
 }
 
+// src/lib/commands/create-year/create-year.ts
+var createYear = (app, settings) => async () => {
+  new CreateYearPrompt(app, async (year) => {
+    try {
+      const yyyy = Number.parseInt(year, 10);
+      const lastYear = prepareData(yyyy - 1);
+      const nextYear = prepareData(yyyy + 1);
+      const weeks = prepareData(yyyy);
+      const expandedWeeks = [lastYear[lastYear.length - 1], ...weeks, nextYear[0]];
+      const preparedWeeks = prepareWeeks(yyyy, expandedWeeks, settings);
+      const numbFiles = await writeWeekFiles(yyyy, preparedWeeks, settings, app);
+      createYearFile(yyyy, weeks, settings, app);
+      new import_obsidian3.Notice(
+        `Total ${weeks.length} Wochen, davon ${weeks.length - numbFiles} erstellt, ${numbFiles} existierten schon`
+      );
+    } catch (error) {
+      console.error(error);
+      new import_obsidian3.Notice("Fehler beim Erstellen der Wochen-Dateien");
+    }
+  }).open();
+};
+
+// src/lib/commands/goto-current-week.ts
+var gotoCurrentWeek = (app, settings) => async () => {
+  const monday = getLastMonday(/* @__PURE__ */ new Date());
+  const week = getISOWeek(monday);
+  const fileName = getWeekFileName(monday, week);
+  const year = getISOWeekYear(monday);
+  const filePath = `${settings.paths.weekFolder}/${year}/weeks/${fileName}`;
+  app.workspace.openLinkText(filePath, "", false);
+};
+
+// src/lib/commands/process-active-file.ts
+var import_obsidian4 = require("obsidian");
+
 // src/lib/settings/constants.ts
 var WO_FILE_REGEX = /^week-calendar\/.*\/W[0-5].[0-9]. /;
-var RECURRENCE_PATTERNS = {
-  field: /^\s*Wiederholung:\s*(.+)$/i,
-  endField: /^\s*WiederholungEnde:\s*(.+)$/i,
-  recurrenceId: /\^woev-rec-([a-zA-Z0-9]+)/,
-  exceptionTag: /^\s*AusnahmeVon:\s*\^woev-([a-zA-Z0-9]+)/i
-};
-var WEEKDAY_MAP = {
-  mo: "Mo",
-  montag: "Mo",
-  di: "Di",
-  dienstag: "Di",
-  mi: "Mi",
-  mittwoch: "Mi",
-  do: "Do",
-  donnerstag: "Do",
-  fr: "Fr",
-  freitag: "Fr",
-  sa: "Sa",
-  samstag: "Sa",
-  so: "So",
-  sonntag: "So"
-};
-var WEEKDAY_KEYS = Object.keys(WEEKDAY_MAP);
-var FREQUENCY_MAP = {
-  t\u00E4glich: "daily",
-  taeglich: "daily",
-  w\u00F6chentlich: "weekly",
-  wochentlich: "weekly",
-  w\u00F6chentl: "weekly",
-  monatlich: "monthly-date",
-  "mntl": "monthly-date",
-  "mntl.": "monthly-date",
-  j\u00E4hrlich: "yearly",
-  jaehrlich: "yearly",
-  jaehrl: "yearly"
-};
-var FREQUENCY_KEYS = Object.keys(FREQUENCY_MAP);
-function normalizeShortcut(input) {
-  return input.toLowerCase().trim();
-}
-function parseWeekday(input) {
-  const normalized = normalizeShortcut(input);
-  return WEEKDAY_MAP[normalized] || null;
-}
-function parseWeekdays(input) {
-  const result = [];
-  const parts = input.split(/[,\s]+/);
-  for (const part of parts) {
-    const wd = parseWeekday(part);
-    if (wd && !result.includes(wd)) {
-      result.push(wd);
-    }
-  }
-  return result;
-}
-function normalizeFrequency(input) {
-  const normalized = normalizeShortcut(input);
-  return FREQUENCY_MAP[normalized] || normalized;
-}
 var DEFAULT_SETTINGS = {
   paths: {
     weekFolder: "week-calendar",
@@ -3710,332 +3668,7 @@ var DEFAULT_SETTINGS = {
   }
 };
 
-// src/lib/recurrence/parse-recurrence.ts
-var WEEKDAY_SHORTCUT_MAP = {
-  "j2. mo": { frequency: "monthly-weekday", ordinal: 2, weekday: "Mo" },
-  "j2.mo": { frequency: "monthly-weekday", ordinal: 2, weekday: "Mo" },
-  "j2 mo": { frequency: "monthly-weekday", ordinal: 2, weekday: "Mo" },
-  "jeden 2. montag": { frequency: "monthly-weekday", ordinal: 2, weekday: "Mo" },
-  "j2. di": { frequency: "monthly-weekday", ordinal: 2, weekday: "Di" },
-  "j2.di": { frequency: "monthly-weekday", ordinal: 2, weekday: "Di" },
-  "j2 di": { frequency: "monthly-weekday", ordinal: 2, weekday: "Di" },
-  "jeden 2. dienstag": { frequency: "monthly-weekday", ordinal: 2, weekday: "Di" },
-  "j2. mi": { frequency: "monthly-weekday", ordinal: 2, weekday: "Mi" },
-  "jeden 2. mittwoch": { frequency: "monthly-weekday", ordinal: 2, weekday: "Mi" },
-  "j2. do": { frequency: "monthly-weekday", ordinal: 2, weekday: "Do" },
-  "jeden 2. donnerstag": { frequency: "monthly-weekday", ordinal: 2, weekday: "Do" },
-  "j2. fr": { frequency: "monthly-weekday", ordinal: 2, weekday: "Fr" },
-  "jeden 2. freitag": { frequency: "monthly-weekday", ordinal: 2, weekday: "Fr" },
-  "j2. sa": { frequency: "monthly-weekday", ordinal: 2, weekday: "Sa" },
-  "jeden 2. samstag": { frequency: "monthly-weekday", ordinal: 2, weekday: "Sa" },
-  "j2. so": { frequency: "monthly-weekday", ordinal: 2, weekday: "So" },
-  "jeden 2. sonntag": { frequency: "monthly-weekday", ordinal: 2, weekday: "So" }
-};
-var WEEKDAY_SHORTCUT_KEYS = Object.keys(WEEKDAY_SHORTCUT_MAP);
-function parseRecurrenceRule(fieldValue) {
-  const normalized = normalizeShortcut(fieldValue);
-  const matchedKey = WEEKDAY_SHORTCUT_KEYS.find(
-    (key) => normalized.startsWith(key) || normalized === key
-  );
-  if (matchedKey) {
-    const shortcut = WEEKDAY_SHORTCUT_MAP[matchedKey];
-    const rule2 = {
-      frequency: shortcut.frequency,
-      interval: 1
-    };
-    if (shortcut.ordinal !== void 0 && shortcut.weekday !== void 0) {
-      rule2.byWeekday = { ordinal: shortcut.ordinal, weekday: shortcut.weekday };
-    }
-    return rule2;
-  }
-  const parts = fieldValue.split(",").map((p) => p.trim());
-  if (parts.length === 0) return null;
-  const frequencyInput = parts[0];
-  const frequency = normalizeFrequency(frequencyInput);
-  if (!["daily", "weekly", "monthly-date", "monthly-weekday", "yearly"].includes(frequency)) {
-    return null;
-  }
-  const rule = {
-    frequency,
-    interval: 1
-  };
-  switch (frequency) {
-    case "daily":
-      break;
-    case "weekly":
-      if (parts.length > 1) {
-        const days = parseWeekdays(parts.slice(1).join(","));
-        if (days.length > 0) {
-          rule.byDay = days;
-        }
-      }
-      break;
-    case "monthly-date":
-      if (parts.length > 1) {
-        const day = parseInt(parts[1], 10);
-        if (!isNaN(day) && day >= 1 && day <= 31) {
-          rule.byMonthDay = day;
-        }
-      }
-      break;
-    case "monthly-weekday": {
-      if (parts.length >= 2) {
-        const second = parts[1].toLowerCase().trim();
-        const ordinalMatch = second.match(/^(\d+)\.?\s*(.+)$/);
-        if (ordinalMatch) {
-          rule.byWeekday = {
-            ordinal: parseInt(ordinalMatch[1], 10),
-            weekday: parseWeekday(ordinalMatch[2]) || "Mo"
-          };
-        } else {
-          const day = parseWeekday(second);
-          if (day) {
-            rule.byWeekday = { ordinal: 1, weekday: day };
-          }
-        }
-      }
-      if (parts.length >= 3) {
-        const day = parseWeekday(parts[2]);
-        if (day) {
-          rule.byWeekday = rule.byWeekday || { ordinal: 1, weekday: day };
-          rule.byWeekday.weekday = day;
-        }
-      }
-      break;
-    }
-    case "yearly":
-      if (parts.length > 1) {
-        const month = parseInt(parts[1], 10);
-        if (!isNaN(month) && month >= 1 && month <= 12) {
-          rule.byMonth = month;
-        }
-      }
-      break;
-  }
-  return rule;
-}
-function parseEndDate(fieldValue) {
-  const trimmed = fieldValue.trim();
-  const europeanMatch = trimmed.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
-  if (europeanMatch) {
-    return new Date(
-      parseInt(europeanMatch[3], 10),
-      parseInt(europeanMatch[2], 10) - 1,
-      parseInt(europeanMatch[1], 10)
-    );
-  }
-  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (isoMatch) {
-    return new Date(
-      parseInt(isoMatch[1], 10),
-      parseInt(isoMatch[2], 10) - 1,
-      parseInt(isoMatch[3], 10)
-    );
-  }
-  const parsed = new Date(trimmed);
-  if (!isNaN(parsed.getTime())) {
-    return parsed;
-  }
-  return null;
-}
-function findRecurrenceField(content) {
-  const matchLine = content.find((line) => line.match(RECURRENCE_PATTERNS.field));
-  return matchLine ? matchLine.match(RECURRENCE_PATTERNS.field)?.[1].trim() ?? null : null;
-}
-function findEndDateField(content) {
-  const matchLine = content.find((line) => line.match(RECURRENCE_PATTERNS.endField));
-  return matchLine ? matchLine.match(RECURRENCE_PATTERNS.endField)?.[1].trim() ?? null : null;
-}
-function parseRecurrence(content, originalEventId, recurrenceId) {
-  const ruleValue = findRecurrenceField(content);
-  if (!ruleValue) return null;
-  const rule = parseRecurrenceRule(ruleValue);
-  if (!rule) return null;
-  const endValue = findEndDateField(content);
-  const endDate = endValue ? parseEndDate(endValue) : null;
-  return {
-    rule,
-    end: {
-      type: "enddate",
-      endDate: endDate || /* @__PURE__ */ new Date("2099-12-31")
-    },
-    originalEventId,
-    recurrenceId
-  };
-}
-
-// src/lib/recurrence/occurrence-calculation.ts
-var WEEKDAY_TO_NUMBER = {
-  Mo: 1,
-  Di: 2,
-  Mi: 3,
-  Do: 4,
-  Fr: 5,
-  Sa: 6,
-  So: 0
-};
-var NUMBER_TO_WEEKDAY = {
-  0: "So",
-  1: "Mo",
-  2: "Di",
-  3: "Mi",
-  4: "Do",
-  5: "Fr",
-  6: "Sa"
-};
-function calculateNextOccurrence(from2, rule) {
-  const result = new Date(from2);
-  result.setHours(0, 0, 0, 0);
-  switch (rule.frequency) {
-    case "daily":
-      result.setDate(result.getDate() + rule.interval);
-      return result;
-    case "weekly":
-      return calculateNextWeekly(from2, rule);
-    case "monthly-date":
-      return calculateNextMonthlyDate(from2, rule);
-    case "monthly-weekday":
-      return calculateNextMonthlyWeekday(from2, rule);
-    case "yearly":
-      return calculateNextYearly(from2, rule);
-    default:
-      return null;
-  }
-}
-function calculateNextWeekly(from2, rule) {
-  const result = new Date(from2);
-  result.setHours(0, 0, 0, 0);
-  if (!rule.byDay || rule.byDay.length === 0) {
-    result.setDate(result.getDate() + 7 * rule.interval);
-    return result;
-  }
-  const currentDay = result.getDay();
-  const sortedDays = rule.byDay.map((d) => WEEKDAY_TO_NUMBER[d]).sort((a, b) => a - b);
-  for (const targetDay of sortedDays) {
-    if (targetDay > currentDay) {
-      result.setDate(result.getDate() + (targetDay - currentDay));
-      return result;
-    }
-  }
-  const weeksToAdd = 7 * rule.interval;
-  const daysToAdd = weeksToAdd - (currentDay - sortedDays[sortedDays.length - 1] + 7) % 7;
-  result.setDate(result.getDate() + daysToAdd);
-  return result;
-}
-function calculateNextMonthlyDate(from2, rule) {
-  const result = new Date(from2);
-  result.setHours(0, 0, 0, 0);
-  const currentDay = result.getDate();
-  const targetDay = rule.byMonthDay ?? currentDay;
-  if (currentDay < targetDay) {
-    result.setDate(targetDay);
-    return result;
-  }
-  result.setMonth(result.getMonth() + rule.interval);
-  const daysInMonth = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
-  result.setDate(Math.min(targetDay, daysInMonth));
-  return result;
-}
-function calculateNextMonthlyWeekday(from2, rule) {
-  if (!rule.byWeekday) return null;
-  const result = new Date(from2);
-  result.setHours(0, 0, 0, 0);
-  const { ordinal, weekday } = rule.byWeekday;
-  const targetWeekday = WEEKDAY_TO_NUMBER[weekday];
-  result.setDate(1);
-  let currentMonth = result.getMonth();
-  let targetDate = findNthWeekdayOfMonth(
-    result.getFullYear(),
-    currentMonth,
-    targetWeekday,
-    ordinal
-  );
-  if (targetDate && targetDate > result.getDate()) {
-    result.setDate(targetDate);
-    return result;
-  }
-  currentMonth = currentMonth + rule.interval;
-  if (currentMonth >= 12) {
-    result.setFullYear(result.getFullYear() + Math.floor(currentMonth / 12));
-    currentMonth = currentMonth % 12;
-  }
-  targetDate = findNthWeekdayOfMonth(result.getFullYear(), currentMonth, targetWeekday, ordinal);
-  if (targetDate) {
-    result.setMonth(currentMonth);
-    result.setDate(targetDate);
-    return result;
-  }
-  return null;
-}
-function findNthWeekdayOfMonth(year, month, weekday, ordinal) {
-  const firstDayOfMonth = new Date(year, month, 1);
-  const firstWeekday = firstDayOfMonth.getDay();
-  let daysToAdd = weekday - firstWeekday;
-  if (daysToAdd < 0) daysToAdd += 7;
-  const firstOccurrence = 1 + daysToAdd;
-  const nthOccurrence = firstOccurrence + (ordinal - 1) * 7;
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  if (nthOccurrence > daysInMonth) return null;
-  return nthOccurrence;
-}
-function calculateNextYearly(from2, rule) {
-  const result = new Date(from2);
-  result.setHours(0, 0, 0, 0);
-  const targetMonth = rule.byMonth !== void 0 ? rule.byMonth - 1 : result.getMonth();
-  const targetDay = rule.byMonthDay ?? result.getDate();
-  if (result.getMonth() < targetMonth || result.getMonth() === targetMonth && result.getDate() < targetDay) {
-    result.setMonth(targetMonth);
-    const daysInMonth2 = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
-    result.setDate(Math.min(targetDay, daysInMonth2));
-    return result;
-  }
-  result.setFullYear(result.getFullYear() + rule.interval);
-  result.setMonth(targetMonth);
-  const daysInMonth = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
-  result.setDate(Math.min(targetDay, daysInMonth));
-  return result;
-}
-function generateOccurrences(startDate, endDate, recurrence) {
-  const occurrences = [];
-  let current = new Date(startDate);
-  current.setHours(0, 0, 0, 0);
-  const maxIterations = 1e3;
-  let iterations = 0;
-  while (current <= endDate && current <= recurrence.end.endDate && iterations < maxIterations) {
-    occurrences.push(new Date(current));
-    const next = calculateNextOccurrence(current, recurrence.rule);
-    if (!next) break;
-    current = next;
-    iterations++;
-  }
-  return occurrences;
-}
-function getWeekdayFromDate(date) {
-  return NUMBER_TO_WEEKDAY[date.getDay()];
-}
-
-// src/lib/recurrence/file-operations.ts
-var import_obsidian3 = require("obsidian");
-
 // src/lib/parseWeekFile/parse-wo.ts
-function extractEventId(content) {
-  const matchLine = content.find(
-    (line) => !line.match(RECURRENCE_PATTERNS.recurrenceId) && line.match(/\^woev-([a-zA-Z0-9]+)/)
-  );
-  return matchLine ? matchLine.match(/\^woev-([a-zA-Z0-9]+)/)?.[1] ?? null : null;
-}
-function extractRecurrenceId(content) {
-  const matchLine = content.find((line) => line.match(RECURRENCE_PATTERNS.recurrenceId));
-  return matchLine ? matchLine.match(RECURRENCE_PATTERNS.recurrenceId)?.[1] ?? null : null;
-}
-function extractExceptionInfo(content) {
-  const matchLine = content.find((line) => line.match(RECURRENCE_PATTERNS.exceptionTag));
-  if (matchLine) {
-    const match2 = matchLine.match(RECURRENCE_PATTERNS.exceptionTag);
-    return { isException: true, exceptionOfRecurrenceId: match2?.[1] ?? null };
-  }
-  return { isException: false, exceptionOfRecurrenceId: null };
-}
 function parseWo(wochenFile, settings = DEFAULT_SETTINGS) {
   const wo = wochenFile.split("\n");
   const isolateElements = wo.reduce((acc, line) => {
@@ -4078,18 +3711,17 @@ function parseWo(wochenFile, settings = DEFAULT_SETTINGS) {
     }
     return acc;
   }, elementStructure(settings));
-  console.log("elements", isolateElements);
   return isolateElements.elements;
 }
 function getLineType(line, settings = DEFAULT_SETTINGS) {
   const defaultValue = ["text", null];
   return lineMatchers(settings).reduce((acc, { matcher, type }) => {
     const match2 = line.match(matcher);
-    const text = match2 && match2[1] ? match2[1].trim().toLowerCase() : null;
+    const text = match2 && match2[1] ? match2[1].toLowerCase() : null;
     const [key] = typedEntries(settings.weekdays).find(
       ([, value]) => text === value.toLowerCase()
     ) ?? [null];
-    if (match2 && (type !== "key" || key !== null)) {
+    if (match2) {
       return [type, key];
     }
     return acc;
@@ -4097,25 +3729,7 @@ function getLineType(line, settings = DEFAULT_SETTINGS) {
 }
 function createElement(type, content, element) {
   const newContent = element ? [...element.content, content] : [content];
-  if (type === "event") {
-    const eventId = extractEventId(newContent);
-    const recurrenceId = extractRecurrenceId(newContent);
-    const exceptionInfo = extractExceptionInfo(newContent);
-    const result = {
-      type: "event",
-      content: newContent,
-      eventId: eventId || ""
-    };
-    if (recurrenceId) {
-      result.recurrenceId = recurrenceId;
-    }
-    if (exceptionInfo.isException && exceptionInfo.exceptionOfRecurrenceId) {
-      result.isException = true;
-      result.exceptionOfRecurrenceId = exceptionInfo.exceptionOfRecurrenceId;
-    }
-    return result;
-  }
-  return { type, content: newContent };
+  return { ...element, type, content: newContent };
 }
 function elementStructure(settings) {
   return {
@@ -4127,263 +3741,11 @@ function elementStructure(settings) {
   };
 }
 var lineMatchers = (settings) => [
-  { matcher: /^#\s+(.+?)(?:\s+\(\d{1,2}\))?\s*$/, type: "key" },
+  { matcher: /^#\s+([a-z,A-Z]+)/, type: "key" },
   { matcher: new RegExp(`^-\\s+${settings.prefixes.event}`, "i"), type: "event" },
   { matcher: /^\s{2}/, type: "followUp" }
 ];
 var typedEntries = (obj) => Object.entries(obj);
-
-// src/lib/recurrence/file-operations.ts
-var WEEKDAY_MAP2 = {
-  Mo: "monday",
-  Di: "tuesday",
-  Mi: "wednesday",
-  Do: "thursday",
-  Fr: "friday",
-  Sa: "saturday",
-  So: "sunday"
-};
-function getWeekFilePath(date, settings) {
-  const year = date.getFullYear();
-  const monday = getMondayOfWeek(date);
-  const weekNo = getWeekNumber(date);
-  const fileName = `W${weekNo.toString().padStart(2, "0")} ${format(monday, "dd.MM.yy")}.md`;
-  return `${settings.paths.weekFolder}/${year}/weeks/${fileName}`;
-}
-function getMondayOfWeek(date) {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  return new Date(d.setDate(diff));
-}
-function getWeekNumber(date) {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil(((d.getTime() - yearStart.getTime()) / 864e5 + 1) / 7);
-}
-function getWeekdaySection(date) {
-  const wd = getWeekdayFromDate(date);
-  return WEEKDAY_MAP2[wd];
-}
-async function findWeekFilesForRange(startDate, endDate, settings, app) {
-  const files = [];
-  const current = new Date(startDate);
-  current.setHours(0, 0, 0, 0);
-  while (current <= endDate) {
-    const filePath = getWeekFilePath(current, settings);
-    const abstractFile = app.vault.getAbstractFileByPath(filePath);
-    if (abstractFile instanceof import_obsidian3.TFile) {
-      files.push(filePath);
-    }
-    current.setDate(current.getDate() + 7);
-  }
-  return files;
-}
-async function insertRecurringEventIntoFile(filePath, event, date, settings, app) {
-  const abstractFile = app.vault.getAbstractFileByPath(filePath);
-  if (!(abstractFile instanceof import_obsidian3.TFile)) {
-    return;
-  }
-  const content = await app.vault.read(abstractFile);
-  const elements = parseWo(content, settings);
-  const section = getWeekdaySection(date);
-  const newElements = [...elements[section], event];
-  const updatedElements = {
-    ...elements,
-    [section]: newElements
-  };
-  await app.vault.modify(abstractFile, stringifyWo(updatedElements));
-}
-async function readWeekFile(filePath, settings, app) {
-  const abstractFile = app.vault.getAbstractFileByPath(filePath);
-  if (!(abstractFile instanceof import_obsidian3.TFile)) {
-    return { elements: {}, exists: false };
-  }
-  const content = await app.vault.read(abstractFile);
-  const elements = parseWo(content, settings);
-  return { elements, exists: true };
-}
-
-// src/lib/recurrence/year-integration.ts
-async function copyRecurringEventsFromYear(sourceYear, targetYear, settings, app) {
-  const sourceStart = new Date(sourceYear, 0, 1);
-  const sourceEnd = new Date(sourceYear, 11, 31);
-  const targetStart = new Date(targetYear, 0, 1);
-  const targetEnd = new Date(targetYear, 11, 31);
-  const sourceFiles = await findWeekFilesForRange(sourceStart, sourceEnd, settings, app);
-  let eventsCopied = 0;
-  let occurrencesCreated = 0;
-  for (const filePath of sourceFiles) {
-    const { elements, exists } = await readWeekFile(filePath, settings, app);
-    if (!exists) continue;
-    for (const section of woFileTitleStructure) {
-      if (section === "start" || section === "links") continue;
-      for (const element of elements[section]) {
-        if (element.type !== "event") continue;
-        const eventElement = element;
-        if (!eventElement.recurrenceId) continue;
-        const recurrence = parseRecurrence(
-          eventElement.content,
-          eventElement.eventId,
-          eventElement.recurrenceId
-        );
-        if (!recurrence) continue;
-        if (recurrence.end.endDate < targetStart) continue;
-        const effectiveEndDate = recurrence.end.endDate > targetEnd ? targetEnd : recurrence.end.endDate;
-        const occurrences = generateOccurrences(targetStart, effectiveEndDate, recurrence);
-        for (const date of occurrences) {
-          const targetFilePath = getWeekFilePath(date, settings);
-          await insertRecurringEventIntoFile(
-            targetFilePath,
-            eventElement,
-            date,
-            settings,
-            app
-          );
-          occurrencesCreated++;
-        }
-        eventsCopied++;
-      }
-    }
-  }
-  return { eventsCopied, occurrencesCreated };
-}
-
-// src/lib/commands/create-year/create-year.ts
-var createYear = (app, settings) => async () => {
-  new CreateYearPrompt(app, async (year) => {
-    try {
-      const yyyy = Number.parseInt(year, 10);
-      const lastYear = prepareData(yyyy - 1);
-      const nextYear = prepareData(yyyy + 1);
-      const weeks = prepareData(yyyy);
-      const expandedWeeks = [lastYear[lastYear.length - 1], ...weeks, nextYear[0]];
-      const preparedWeeks = prepareWeeks(yyyy, expandedWeeks, settings);
-      const numbFiles = await writeWeekFiles(yyyy, preparedWeeks, settings, app);
-      createYearFile(yyyy, weeks, settings, app);
-      try {
-        const { eventsCopied, occurrencesCreated } = await copyRecurringEventsFromYear(
-          yyyy - 1,
-          yyyy,
-          settings,
-          app
-        );
-        new import_obsidian4.Notice(
-          `${eventsCopied} Terminserien mit ${occurrencesCreated} Vorkommen kopiert`
-        );
-      } catch (copyError) {
-        new import_obsidian4.Notice(`Kopieren fehlgeschlagen: ${copyError}`);
-      }
-      new import_obsidian4.Notice(
-        `Total ${weeks.length} Wochen, davon ${weeks.length - numbFiles} erstellt, ${numbFiles} existierten schon`
-      );
-    } catch (error) {
-      console.error(error);
-      new import_obsidian4.Notice("Fehler beim Erstellen der Wochen-Dateien");
-    }
-  }).open();
-};
-
-// src/lib/commands/goto-current-week.ts
-var gotoCurrentWeek = (app, settings) => async () => {
-  const monday = getLastMonday(/* @__PURE__ */ new Date());
-  const week = getISOWeek(monday);
-  const fileName = getWeekFileName(monday, week);
-  const year = getISOWeekYear(monday);
-  const filePath = `${settings.paths.weekFolder}/${year}/weeks/${fileName}`;
-  app.workspace.openLinkText(filePath, "", false);
-};
-
-// src/lib/commands/migrate-week-headings.ts
-var import_obsidian5 = require("obsidian");
-
-// src/lib/parseWeekFile/migrate-week-headings.ts
-function migrateWeekHeadings(content, filePath, settings) {
-  const prefix = `${settings.paths.weekFolder}/`;
-  if (!filePath.startsWith(prefix)) return content;
-  const match2 = filePath.slice(prefix.length).match(/^\d{4}\/weeks\/W(0[1-9]|[1-4]\d|5[0-3]) (\d{2})\.(\d{2})\.(\d{2})\.md$/);
-  if (!match2) return content;
-  const [, , day, month, year] = match2;
-  const monday = new Date(2e3 + Number(year), Number(month) - 1, Number(day));
-  if (monday.getFullYear() !== 2e3 + Number(year) || monday.getMonth() !== Number(month) - 1 || monday.getDate() !== Number(day) || monday.getDay() !== 1) {
-    return content;
-  }
-  let frontmatter = false;
-  let fence = null;
-  return content.split("\n").map((line, index) => {
-    const text = line.endsWith("\r") ? line.slice(0, -1) : line;
-    if (index === 0 && /^\uFEFF?---$/.test(text)) {
-      frontmatter = true;
-      return line;
-    }
-    if (frontmatter) {
-      if (/^(---|\.\.\.)$/.test(text)) frontmatter = false;
-      return line;
-    }
-    if (fence) {
-      const closing = text.match(/^ {0,3}(`+|~+)\s*$/)?.[1];
-      if (closing && closing[0] === fence[0] && closing.length >= fence.length) fence = null;
-      return line;
-    }
-    const opening = text.match(/^ {0,3}(`{3,}|~{3,})/);
-    if (opening) {
-      fence = opening[1];
-      return line;
-    }
-    const [type, key] = getLineType(text, settings);
-    if (type !== "key" || key === null || key === "start" || key === "links") return line;
-    return formatDayHeading(monday, key, settings.weekdays[key]) + (line.endsWith("\r") ? "\r" : "");
-  }).join("\n");
-}
-
-// src/lib/commands/migrate-week-headings.ts
-var migrateAllWeekHeadings = (app, settings, migratingFiles) => {
-  let running = false;
-  return async () => {
-    if (running) {
-      new import_obsidian5.Notice("Die Erg\xE4nzung der Monatstage l\xE4uft bereits.");
-      return;
-    }
-    running = true;
-    let changed = 0;
-    let failed = 0;
-    try {
-      const prefix = `${settings.paths.weekFolder}/`;
-      const files = app.vault.getMarkdownFiles().filter(
-        (file) => file.path.startsWith(prefix) && /^\d{4}\/weeks\/W\d{2} \d{2}\.\d{2}\.\d{2}\.md$/.test(file.path.slice(prefix.length))
-      );
-      for (const file of files) {
-        try {
-          const content = await app.vault.read(file);
-          if (migrateWeekHeadings(content, file.path, settings) === content) continue;
-          migratingFiles.add(file.path);
-          let updated = false;
-          await app.vault.process(file, (current) => {
-            const migrated = migrateWeekHeadings(current, file.path, settings);
-            updated = migrated !== current;
-            return migrated;
-          });
-          if (updated) changed++;
-        } catch (error) {
-          failed++;
-          console.error(`Failed to migrate week headings: ${file.path}`, error);
-        } finally {
-          migratingFiles.delete(file.path);
-        }
-      }
-      new import_obsidian5.Notice(
-        `Monatstage: ${files.length} Wochen-Dateien gepr\xFCft, ${changed} angepasst, ${failed} Fehler.`
-      );
-    } finally {
-      running = false;
-    }
-  };
-};
-
-// src/lib/commands/process-active-file.ts
-var import_obsidian6 = require("obsidian");
 
 // src/lib/parseWeekFile/set-event-ids.ts
 function setEventIds(elements, year, week) {
@@ -4422,21 +3784,21 @@ function processFile(fileContent, file, settings) {
 var processActiveFile = (app, settings) => async () => {
   const file = app.workspace.getActiveFile();
   if (!file) {
-    new import_obsidian6.Notice("No active file.");
+    new import_obsidian4.Notice("No active file.");
     return;
   }
   const fileContent = await app.vault.read(file);
   const changedFile = processFile(fileContent, file, settings);
   if (changedFile) {
     await app.vault.modify(file, changedFile);
-    new import_obsidian6.Notice("Processed current file.  Filename: " + file.name);
+    new import_obsidian4.Notice("Processed current file.  Filename: " + file.name);
   } else {
-    new import_obsidian6.Notice("Es hat keine \xC4nderungen gegeben!");
+    new import_obsidian4.Notice("Es hat keine \xC4nderungen gegeben!");
   }
 };
 
 // src/lib/commands/process-all.ts
-var import_obsidian7 = require("obsidian");
+var import_obsidian5 = require("obsidian");
 var processAll = (app, settings) => async () => {
   let numb = 0;
   const files = app.vault.getMarkdownFiles();
@@ -4451,74 +3813,13 @@ var processAll = (app, settings) => async () => {
       }
     })
   );
-  new import_obsidian7.Notice(`Es wurden ${woFiles.length} WochenFiles verarbeitet und davon ${numb} angepasst.`);
+  new import_obsidian5.Notice(`Es wurden ${woFiles.length} WochenFiles verarbeitet und davon ${numb} angepasst.`);
 };
 
 // src/lib/event-handling/modify-week-file-event.ts
-var import_obsidian8 = require("obsidian");
-function extractDateFromFilePath(filePath) {
-  const match2 = filePath.match(/W\d{2} (\d{2})\.(\d{2})\.(\d{2})\.md$/);
-  if (!match2) return null;
-  const [, dayStr, monthStr, yearStr] = match2;
-  const day = parseInt(dayStr, 10);
-  const month = parseInt(monthStr, 10) - 1;
-  const year = 2e3 + parseInt(yearStr, 10);
-  return new Date(year, month, day);
-}
-function detectRecurringEvents(fileContent, filePath, settings) {
-  const elements = parseWo(fileContent, settings);
-  const fileDate = extractDateFromFilePath(filePath);
-  if (!fileDate) return [];
-  const recurring = Object.entries(elements).flatMap(
-    ([, sectionElements]) => sectionElements.filter(
-      (element) => element.type === "event" && element.recurrenceId !== void 0 && !element.isException
-    ).map((eventElement) => {
-      const recurrence = parseRecurrence(
-        eventElement.content,
-        eventElement.eventId,
-        eventElement.recurrenceId
-      );
-      return recurrence ? { event: eventElement, recurrence, eventDate: fileDate } : null;
-    })
-  ).filter((item) => item !== null);
-  return recurring;
-}
-async function propagateRecurrenceChanges(app, settings, recurringEvents) {
-  for (const { event, recurrence, eventDate } of recurringEvents) {
-    const endDate = recurrence.end.endDate;
-    const files = await findWeekFilesForRange(eventDate, endDate, settings, app);
-    for (const filePath of files) {
-      const { elements, exists } = await readWeekFile(filePath, settings, app);
-      if (!exists) continue;
-      let updated = false;
-      for (const section of Object.keys(elements)) {
-        const sectionElements = elements[section];
-        for (let i = 0; i < sectionElements.length; i++) {
-          const element = sectionElements[i];
-          if (element.type === "event") {
-            const eventElement = element;
-            if (eventElement.recurrenceId === recurrence.recurrenceId && !eventElement.isException && eventElement.eventId !== event.eventId) {
-              sectionElements[i] = {
-                ...eventElement,
-                content: event.content
-              };
-              updated = true;
-            }
-          }
-        }
-      }
-      if (updated) {
-        const abstractFile = app.vault.getAbstractFileByPath(filePath);
-        if (abstractFile instanceof import_obsidian8.TFile) {
-          await app.vault.modify(abstractFile, stringifyWo(elements));
-        }
-      }
-    }
-  }
-}
-var modifyWeekFileEvent = (app, modifyEvents, actualFileChanged$, settings, ignoredFiles = /* @__PURE__ */ new Set()) => modifyEvents.pipe(
-  filter((file) => file instanceof import_obsidian8.TFile),
-  filter((file) => !ignoredFiles.has(file.path)),
+var import_obsidian6 = require("obsidian");
+var modifyWeekFileEvent = (app, modifyEvents, actualFileChanged$, settings) => modifyEvents.pipe(
+  filter((file) => file instanceof import_obsidian6.TFile),
   filter((file) => WO_FILE_REGEX.test(file.path)),
   filter((file) => file.extension === "md"),
   switchMap(
@@ -4529,17 +3830,10 @@ var modifyWeekFileEvent = (app, modifyEvents, actualFileChanged$, settings, igno
     const changedFile = processFile(fileContent, file, settings);
     if (changedFile) {
       return from(app.vault.modify(file, changedFile)).pipe(
-        switchMap(async () => {
-          const recurringInFile = detectRecurringEvents(fileContent, file.path, settings);
-          if (recurringInFile.length > 0) {
-            await propagateRecurrenceChanges(app, settings, recurringInFile);
-          }
-          return new import_obsidian8.Notice(`File ${file.name} angepasst.`);
-        }),
-        catchError((err) => {
-          const message2 = err instanceof Error ? err.message : String(err);
-          return of(new import_obsidian8.Notice(`Fehler bei der Anpassung von ${file.name}: ${message2}`));
-        })
+        map(() => new import_obsidian6.Notice(`File ${file.name} angepasst.`)),
+        catchError(
+          (err) => of(new import_obsidian6.Notice(`Fehler bei der Anpassung von ${file.name}: ` + JSON.stringify(err)))
+        )
       );
     }
     return of("");
@@ -4547,8 +3841,8 @@ var modifyWeekFileEvent = (app, modifyEvents, actualFileChanged$, settings, igno
 ).subscribe();
 
 // src/lib/settings/week-calendar-settings-tab.ts
-var import_obsidian9 = require("obsidian");
-var WeekCalendartSettingTab = class extends import_obsidian9.PluginSettingTab {
+var import_obsidian7 = require("obsidian");
+var WeekCalendartSettingTab = class extends import_obsidian7.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -4557,19 +3851,19 @@ var WeekCalendartSettingTab = class extends import_obsidian9.PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     containerEl.createEl("h2", { text: "Folders" });
-    new import_obsidian9.Setting(containerEl).setName("Week Folder").setDesc("Folder for all Week Files").addText(
+    new import_obsidian7.Setting(containerEl).setName("Week Folder").setDesc("Folder for all Week Files").addText(
       (text) => text.setPlaceholder("wochen").setValue(this.plugin.settings.paths.weekFolder).onChange(async (value) => {
         this.plugin.settings.paths.weekFolder = value;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian9.Setting(containerEl).setName("Event Folder").setDesc("Folder for CalDav Events").addText(
+    new import_obsidian7.Setting(containerEl).setName("Event Folder").setDesc("Folder for CalDav Events").addText(
       (text) => text.setPlaceholder("events").setValue(this.plugin.settings.paths.eventFolder).onChange(async (value) => {
         this.plugin.settings.paths.eventFolder = value;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian9.Setting(containerEl).setName("Overview File Name").setDesc("Name of the File, where the Links to all Week Files are.").addText(
+    new import_obsidian7.Setting(containerEl).setName("Overview File Name").setDesc("Name of the File, where the Links to all Week Files are.").addText(
       (text) => text.setPlaceholder("\xDCbersicht").setValue(this.plugin.settings.paths.overviewFileName).onChange(async (value) => {
         this.plugin.settings.paths.overviewFileName = value;
         await this.plugin.saveSettings();
@@ -4577,7 +3871,7 @@ var WeekCalendartSettingTab = class extends import_obsidian9.PluginSettingTab {
     );
     containerEl.createEl("h2", { text: "Week File Titles" });
     Object.entries(this.plugin.settings.weekdays).filter(([key]) => key !== "start").forEach(([key, value]) => {
-      new import_obsidian9.Setting(containerEl).setName(key).addText(
+      new import_obsidian7.Setting(containerEl).setName(key).addText(
         (text) => text.setValue(value).onChange(async (val) => {
           this.plugin.settings.weekdays[key] = val;
           await this.plugin.saveSettings();
@@ -4586,7 +3880,7 @@ var WeekCalendartSettingTab = class extends import_obsidian9.PluginSettingTab {
     });
     containerEl.createEl("h2", { text: "Event Fields" });
     Object.entries(this.plugin.settings.prefixes).forEach(([key, value]) => {
-      new import_obsidian9.Setting(containerEl).setName(key).addText(
+      new import_obsidian7.Setting(containerEl).setName(key).addText(
         (text) => text.setValue(value).onChange(async (val) => {
           this.plugin.settings.prefixes[key] = val;
           await this.plugin.saveSettings();
@@ -4594,19 +3888,19 @@ var WeekCalendartSettingTab = class extends import_obsidian9.PluginSettingTab {
       );
     });
     containerEl.createEl("h2", { text: "CalDAV" });
-    new import_obsidian9.Setting(containerEl).setName("URL").addText(
+    new import_obsidian7.Setting(containerEl).setName("URL").addText(
       (text) => text.setValue(this.plugin.settings.caldav.url).onChange(async (val) => {
         this.plugin.settings.caldav.url = val;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian9.Setting(containerEl).setName("Benutzername").addText(
+    new import_obsidian7.Setting(containerEl).setName("Benutzername").addText(
       (text) => text.setValue(this.plugin.settings.caldav.username).onChange(async (val) => {
         this.plugin.settings.caldav.username = val;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian9.Setting(containerEl).setName("Passwort").addText(
+    new import_obsidian7.Setting(containerEl).setName("Passwort").addText(
       (text) => text.setValue(this.plugin.settings.caldav.password).onChange(async (val) => {
         this.plugin.settings.caldav.password = val;
         await this.plugin.saveSettings();
@@ -4625,21 +3919,19 @@ Fehlende Features: toSpliced verlangs ES2023}`;
 }
 
 // src/main.ts
-var WeekCalendartPlugin = class extends import_obsidian10.Plugin {
+var WeekCalendartPlugin = class extends import_obsidian8.Plugin {
   constructor() {
     super(...arguments);
     this.actualFileChanded$ = fromEvent(this.app.workspace, "active-leaf-change");
     this.subscription = new Subscription();
     this.settings = DEFAULT_SETTINGS;
-    this.migratingFiles = /* @__PURE__ */ new Set();
   }
   async onload() {
     const versionCheck = checkToSplicedCompatibility();
     if (versionCheck) {
-      new import_obsidian10.Notice(versionCheck, 1e4);
+      new import_obsidian8.Notice(versionCheck, 1e4);
       return;
     }
-    await this.loadSettings();
     this.addCommand({
       id: "process-active-wo-file",
       name: "Aktives Wochenfile verarbeiten",
@@ -4656,11 +3948,6 @@ var WeekCalendartPlugin = class extends import_obsidian10.Plugin {
       callback: createYear(this.app, this.settings)
     });
     this.addCommand({
-      id: "migrate-week-day-headings",
-      name: "Monatstage in bestehenden Wochen-Dateien erg\xE4nzen",
-      callback: migrateAllWeekHeadings(this.app, this.settings, this.migratingFiles)
-    });
-    this.addCommand({
       id: "get-current-week-file",
       name: "Das aktuelle Wochen-File \xF6ffnen",
       callback: gotoCurrentWeek(this.app, this.settings)
@@ -4670,12 +3957,11 @@ var WeekCalendartPlugin = class extends import_obsidian10.Plugin {
         this.app,
         fromEvent(this.app.vault, "modify"),
         this.actualFileChanded$,
-        this.settings,
-        this.migratingFiles
+        this.settings
       )
     );
     this.addSettingTab(new WeekCalendartSettingTab(this.app, this));
-    new import_obsidian10.Notice("Week Calendart loaded.");
+    new import_obsidian8.Notice("Week Calendart loaded.");
   }
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
@@ -4684,7 +3970,7 @@ var WeekCalendartPlugin = class extends import_obsidian10.Plugin {
     await this.saveData(this.settings);
   }
   onunload() {
-    new import_obsidian10.Notice("Week Calendart unload.");
+    new import_obsidian8.Notice("Week Calendart unload.");
     this.subscription.unsubscribe();
   }
 };
