@@ -358,6 +358,34 @@ at startup or on note modification; there is no outbox, stored preview or sync l
 Source snapshots remain in memory only. Credentials continue to live in the ignored
 local `data.json`, not in the repository.
 
+### Automatic synchronization: settings and status (automation step 1)
+
+The **Automatisch synchronisieren** option is saved as `caldav.autoSync` and defaults
+to `false`, including when loading older configurations. This is a preparation
+step only: enabling it does **not yet schedule, read or write anything on the
+server**. The existing manual sync and read-only preview remain available.
+
+Status is available in:
+
+- **Automatik-Status** in the plugin settings;
+- a ribbon icon that opens a live status dialog;
+- the **Kalender-Sync: Status anzeigen** command (also available on mobile if the
+  ribbon icon is hidden);
+- a clickable status bar item on desktop only. Obsidian does not support custom
+  status bar items on mobile, so no unsupported mobile status bar API is used.
+
+The status model distinguishes disabled, setup required, unchecked, pending,
+running, synchronized, error and manual confirmation required. In this preparation
+step, configuration changes initialize the status as disabled, setup required or
+unchecked. No successful synchronization is inferred from saved credentials or a
+previous session. Runtime status is kept in memory, not in `data.json`. UI observers
+are removed on view closure/plugin unload; open status dialogs close on unload.
+
+Remaining automation steps: reuse the guarded execution path without ordinary
+confirmation dialogs, trigger after local processing and five quiet seconds,
+recheck when Obsidian becomes active, and add coordinated retry/error behavior.
+Deleting/replacing all existing resources will still require manual confirmation.
+
 ### Original architecture proposal (not yet implemented)
 
 Stored in a vault config file (v1):
