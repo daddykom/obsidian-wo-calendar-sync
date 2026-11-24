@@ -18154,6 +18154,7 @@ async function executeSync(vault, settings, approved, settingsSnapshot, fullDele
     };
     const { plan } = fresh;
     if (!plan.create.length && !plan.update.length && !plan.delete.length) {
+      await assertSourcesCurrent();
       return { ...result, ok: true, message: "Kalender ist bereits aktuell. Keine \xC4nderungen n\xF6tig." };
     }
     for (const remote of [...plan.update.map(({ remote: remote2 }) => remote2), ...plan.delete]) {
@@ -18201,6 +18202,55 @@ async function executeSync(vault, settings, approved, settingsSnapshot, fullDele
   }
 }
 
+// src/lib/sync/sync-status.ts
+var SYNC_STATUS_PRESENTATION = {
+  off: {
+    label: "Automatik aus",
+    icon: "calendar",
+    description: "Der automatische Kalender-Sync ist ausgeschaltet. Der manuelle Sync bleibt verf\xFCgbar."
+  },
+  "setup-required": {
+    label: "Einrichtung erforderlich",
+    icon: "settings",
+    description: "Bitte CalDAV-Zugang, Zielkalender und die Freigabe des exklusiven Kalenders in den Einstellungen pr\xFCfen."
+  },
+  "not-checked": {
+    label: "Noch nicht gepr\xFCft",
+    icon: "help-circle",
+    description: "In dieser Sitzung wurde noch kein Kalenderabgleich best\xE4tigt."
+  },
+  pending: {
+    label: "Ausstehend",
+    icon: "clock",
+    description: "Lokale Kalender\xE4nderungen warten auf einen Abgleich."
+  },
+  running: {
+    label: "Synchronisierung l\xE4uft",
+    icon: "refresh-cw",
+    description: "Der Kalenderabgleich wird gerade ausgef\xFChrt."
+  },
+  synced: {
+    label: "Synchronisiert",
+    icon: "check-circle",
+    description: "Der zuletzt gepr\xFCfte lokale Terminbestand stimmt mit dem Zielkalender \xFCberein."
+  },
+  error: {
+    label: "Fehler",
+    icon: "alert-circle",
+    description: "Der letzte Kalenderabgleich konnte nicht abgeschlossen werden. Bitte die manuelle Kalender-Vorschau pr\xFCfen."
+  },
+  "confirmation-required": {
+    label: "Best\xE4tigung n\xF6tig",
+    icon: "shield-alert",
+    description: "Das vollst\xE4ndige Leeren oder Ersetzen des Kalenders muss \xFCber \u201EKalender synchronisieren\u201C manuell best\xE4tigt werden."
+  }
+};
+function getInitialSyncStatus(settings) {
+  if (settings.autoSync !== true) return "off";
+  if (!settings.url.trim() || !settings.username.trim() || !settings.password || !settings.calendar || settings.managedCalendarConfirmed !== true) return "setup-required";
+  return "not-checked";
+}
+
 // src/lib/ui/confirm-calendar-sync.ts
 var import_obsidian11 = require("obsidian");
 var ConfirmCalendarSyncModal = class extends import_obsidian11.Modal {
@@ -18243,10 +18293,15 @@ var ConfirmCalendarSyncModal = class extends import_obsidian11.Modal {
 };
 
 // src/lib/commands/sync-calendar.ts
-function createCalendarSync(app, settings) {
+function createCalendarSync(app, settings, reportStatus = () => {
+}) {
   let active = true;
   let running = false;
   let dialog;
+  const publishStatus = (status) => {
+    if (active) reportStatus(settings.caldav.autoSync === true ? status : "off");
+  };
+  const publishConfigStatus = () => publishStatus(getInitialSyncStatus(settings.caldav));
   return {
     async run() {
       if (!active) return;
@@ -18255,6 +18310,7 @@ function createCalendarSync(app, settings) {
         return;
       }
       running = true;
+      publishStatus("running");
       const settingsSnapshot = JSON.stringify(settings);
       let progress;
       try {
@@ -18262,38 +18318,107 @@ function createCalendarSync(app, settings) {
         const preview = await preparePreview(app.vault, JSON.parse(settingsSnapshot));
         if (!active) return;
         if (JSON.stringify(settings) !== settingsSnapshot) {
+          publishConfigStatus();
           new import_obsidian12.Notice("Einstellungen wurden inzwischen ge\xE4ndert. Bitte Sync erneut starten.");
           return;
         }
         if (!preview.ok) {
+          const initial = getInitialSyncStatus(settings.caldav);
+          publishStatus(initial === "setup-required" ? initial : "error");
           new SyncPreviewModal(app, preview).open();
           return;
         }
-        if (!preview.plan.create.length && !preview.plan.update.length && !preview.plan.delete.length) {
-          new import_obsidian12.Notice("Kalender ist bereits aktuell. Keine \xC4nderungen n\xF6tig.");
-          return;
+        const hasChanges = preview.plan.create.length + preview.plan.update.length + preview.plan.delete.length > 0;
+        let fullDeletionConfirmed = false;
+        if (hasChanges) {
+          dialog = new ConfirmCalendarSyncModal(app, preview);
+          const approval = await dialog.waitForApproval();
+          dialog = void 0;
+          if (!active) return;
+          if (!approval) {
+            if (JSON.stringify(settings) !== settingsSnapshot) publishConfigStatus();
+            else publishStatus(requiresFullDeletionConfirmation(preview) ? "confirmation-required" : "pending");
+            return;
+          }
+          fullDeletionConfirmed = approval.fullDeletionConfirmed;
         }
-        dialog = new ConfirmCalendarSyncModal(app, preview);
-        const approval = await dialog.waitForApproval();
-        dialog = void 0;
-        if (!approval || !active) return;
         progress = new import_obsidian12.Notice("Kalender wird erneut gepr\xFCft und synchronisiert \u2026", 0);
         const result = await executeSync(
           app.vault,
           settings,
           preview,
           settingsSnapshot,
-          approval.fullDeletionConfirmed,
+          fullDeletionConfirmed,
           () => active
         );
         if (active) {
+          if (JSON.stringify(settings) !== settingsSnapshot) publishConfigStatus();
+          else publishStatus(result.ok ? "synced" : "error");
           new import_obsidian12.Notice(`${result.message}
 ${result.created} neu \xB7 ${result.updated} ge\xE4ndert \xB7 ${result.deleted} gel\xF6scht \xB7 ${result.unchanged} unver\xE4ndert`, 2e4);
         }
       } catch {
+        if (JSON.stringify(settings) !== settingsSnapshot) publishConfigStatus();
+        else publishStatus("error");
         if (active) new import_obsidian12.Notice("Kalender-Sync konnte nicht abgeschlossen werden. Bitte eine neue Vorschau erstellen.", 1e4);
       } finally {
         progress?.hide();
+        running = false;
+      }
+    },
+    async runAutomatic() {
+      if (!active) return { status: "cancelled" };
+      if (settings.caldav.autoSync !== true) {
+        publishStatus("off");
+        return { status: "off" };
+      }
+      if (running) return { status: "busy" };
+      if (getInitialSyncStatus(settings.caldav) === "setup-required") {
+        publishStatus("setup-required");
+        return { status: "setup-required" };
+      }
+      running = true;
+      publishStatus("running");
+      const settingsSnapshot = JSON.stringify(settings);
+      try {
+        const preview = await preparePreview(app.vault, JSON.parse(settingsSnapshot));
+        if (!active) return { status: "cancelled" };
+        if (JSON.stringify(settings) !== settingsSnapshot) {
+          publishConfigStatus();
+          return { status: settings.caldav.autoSync === true ? "stale" : "off" };
+        }
+        if (!preview.ok) {
+          publishStatus("error");
+          return { status: "error" };
+        }
+        if (requiresFullDeletionConfirmation(preview)) {
+          publishStatus("confirmation-required");
+          return { status: "confirmation-required" };
+        }
+        const result = await executeSync(
+          app.vault,
+          settings,
+          preview,
+          settingsSnapshot,
+          false,
+          () => active && settings.caldav.autoSync === true
+        );
+        if (!active) return { status: "cancelled", result };
+        if (JSON.stringify(settings) !== settingsSnapshot) {
+          publishConfigStatus();
+          return { status: settings.caldav.autoSync === true ? "stale" : "off", result };
+        }
+        publishStatus(result.ok ? "synced" : "error");
+        return { status: result.ok ? "synced" : "error", result };
+      } catch {
+        if (!active) return { status: "cancelled" };
+        if (JSON.stringify(settings) !== settingsSnapshot) {
+          publishConfigStatus();
+          return { status: settings.caldav.autoSync === true ? "stale" : "off" };
+        }
+        publishStatus("error");
+        return { status: "error" };
+      } finally {
         running = false;
       }
     },
@@ -18419,55 +18544,6 @@ async function discoverCalendars(settings) {
     result.set(url, { url, name });
   }
   return [...result.values()].sort((a, b) => a.name.localeCompare(b.name) || a.url.localeCompare(b.url));
-}
-
-// src/lib/sync/sync-status.ts
-var SYNC_STATUS_PRESENTATION = {
-  off: {
-    label: "Automatik aus",
-    icon: "calendar",
-    description: "Der automatische Kalender-Sync ist ausgeschaltet. Der manuelle Sync bleibt verf\xFCgbar."
-  },
-  "setup-required": {
-    label: "Einrichtung erforderlich",
-    icon: "settings",
-    description: "Bitte CalDAV-Zugang, Zielkalender und die Freigabe des exklusiven Kalenders in den Einstellungen pr\xFCfen."
-  },
-  "not-checked": {
-    label: "Noch nicht gepr\xFCft",
-    icon: "help-circle",
-    description: "In dieser Sitzung wurde noch kein automatischer Abgleich best\xE4tigt."
-  },
-  pending: {
-    label: "Ausstehend",
-    icon: "clock",
-    description: "Lokale Kalender\xE4nderungen warten auf einen Abgleich."
-  },
-  running: {
-    label: "Synchronisierung l\xE4uft",
-    icon: "refresh-cw",
-    description: "Der Kalenderabgleich wird gerade ausgef\xFChrt."
-  },
-  synced: {
-    label: "Synchronisiert",
-    icon: "check-circle",
-    description: "Der zuletzt gepr\xFCfte lokale Terminbestand stimmt mit dem Zielkalender \xFCberein."
-  },
-  error: {
-    label: "Fehler",
-    icon: "alert-circle",
-    description: "Der letzte automatische Abgleich konnte nicht abgeschlossen werden. Bitte die manuelle Kalender-Vorschau pr\xFCfen."
-  },
-  "confirmation-required": {
-    label: "Best\xE4tigung n\xF6tig",
-    icon: "shield-alert",
-    description: "Das vollst\xE4ndige Leeren oder Ersetzen des Kalenders muss \xFCber \u201EKalender synchronisieren\u201C manuell best\xE4tigt werden."
-  }
-};
-function getInitialSyncStatus(settings) {
-  if (settings.autoSync !== true) return "off";
-  if (!settings.url.trim() || !settings.username.trim() || !settings.password || !settings.calendar || settings.managedCalendarConfirmed !== true) return "setup-required";
-  return "not-checked";
 }
 
 // src/lib/settings/week-calendar-settings-tab.ts
@@ -18722,7 +18798,7 @@ var WeekCalendartPlugin = class extends import_obsidian16.Plugin {
     await this.loadSettings();
     this.syncStatus$.next(getInitialSyncStatus(this.settings.caldav));
     this.subscription.add(addSyncStatusUi(this, this.syncStatus$));
-    const calendarSync = createCalendarSync(this.app, this.settings);
+    const calendarSync = createCalendarSync(this.app, this.settings, (status) => this.syncStatus$.next(status));
     this.stopCalendarSync = calendarSync.cancel;
     this.addCommand({
       id: "sync-calendar",

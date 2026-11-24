@@ -21,7 +21,7 @@ export const SYNC_STATUS_PRESENTATION = {
   },
   'not-checked': {
     label: 'Noch nicht geprüft', icon: 'help-circle',
-    description: 'In dieser Sitzung wurde noch kein automatischer Abgleich bestätigt.',
+    description: 'In dieser Sitzung wurde noch kein Kalenderabgleich bestätigt.',
   },
   pending: {
     label: 'Ausstehend', icon: 'clock',
@@ -37,7 +37,7 @@ export const SYNC_STATUS_PRESENTATION = {
   },
   error: {
     label: 'Fehler', icon: 'alert-circle',
-    description: 'Der letzte automatische Abgleich konnte nicht abgeschlossen werden. Bitte die manuelle Kalender-Vorschau prüfen.',
+    description: 'Der letzte Kalenderabgleich konnte nicht abgeschlossen werden. Bitte die manuelle Kalender-Vorschau prüfen.',
   },
   'confirmation-required': {
     label: 'Bestätigung nötig', icon: 'shield-alert',

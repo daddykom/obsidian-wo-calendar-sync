@@ -377,14 +377,45 @@ Status is available in:
 The status model distinguishes disabled, setup required, unchecked, pending,
 running, synchronized, error and manual confirmation required. In this preparation
 step, configuration changes initialize the status as disabled, setup required or
-unchecked. No successful synchronization is inferred from saved credentials or a
+unchecked. From automation step 2, manual execution also updates the shared status
+when automatic mode is enabled. No successful synchronization is inferred from saved credentials or a
 previous session. Runtime status is kept in memory, not in `data.json`. UI observers
 are removed on view closure/plugin unload; open status dialogs close on unload.
 
-Remaining automation steps: reuse the guarded execution path without ordinary
-confirmation dialogs, trigger after local processing and five quiet seconds,
+Remaining automation steps: trigger after local processing and five quiet seconds,
 recheck when Obsidian becomes active, and add coordinated retry/error behavior.
 Deleting/replacing all existing resources will still require manual confirmation.
+
+### Automatic synchronization: guarded execution (automation step 2)
+
+`createCalendarSync()` now offers an internal `runAutomatic()` entry point alongside
+the existing manual command. Both share one per-plugin-instance lock, which is held
+through preparation, execution and any manual confirmation dialog. Automatic calls
+return a `busy` outcome instead of overlapping a manual or automatic run.
+
+This step adds **no timers, vault listeners to trigger sync, startup sync or resume
+handling**. The new entry point is not yet called by the plugin. Enabling the saved
+option still does not start an automatic sync; those triggers follow in steps 3–4.
+
+When invoked by the future coordinator, the automatic path:
+
+- Requires explicit automatic opt-in, complete connection settings and dedicated
+  calendar consent before accessing the server.
+- Prepares a local/server snapshot and calls the same guarded `executeSync()` used
+  by the manual command, with full-deletion consent always set to `false`.
+- Refuses the entire plan if it would delete all current resources, even when new
+  local events would replace them. It reports **Bestätigung nötig**, performs no
+  upserts or deletions, and leaves approval to the manual command.
+- Retains exact snapshot revalidation, conditional requests, ETag conflict handling,
+  upserts-before-deletes, source observation and final verification. Even a no-change
+  result is revalidated before reporting **Synchronisiert**.
+- Opens no dialogs and shows no notices. It returns structured outcomes and updates
+  the shared status instead. No raw exception or credentials are exposed.
+- Stops subsequent requests if automatic mode is disabled, settings change or the
+  plugin unloads. Already-issued requests may still finish; the existing partial
+  result and safe-retry behavior is unchanged.
+- Does not retry or queue runs itself. Busy, stale, error and cancellation outcomes
+  are available for the coordinator/error policy in the remaining steps.
 
 ### Original architecture proposal (not yet implemented)
 

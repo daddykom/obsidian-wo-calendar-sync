@@ -97,6 +97,18 @@ describe('executeSync safety and retry behavior', () => {
     expect(calls).toEqual([]);
   });
 
+  it('rechecks source contents before reporting an unchanged calendar as synchronized', async () => {
+    expect((await run()).ok).toBe(true);
+    approved = await freshApproval();
+    calls = [];
+    (readCalendar as jest.Mock).mockImplementationOnce(async () => {
+      notes[path] += '\nExtern geändert, noch ohne Vault-Event';
+      return JSON.parse(JSON.stringify(server));
+    });
+    expect((await run()).ok).toBe(false);
+    expect(calls).toEqual([]);
+  });
+
   it('rejects changed local note contents even if appointments are semantically unchanged', async () => {
     notes[path] += '\nEigene Notiz';
     expect((await run()).ok).toBe(false);

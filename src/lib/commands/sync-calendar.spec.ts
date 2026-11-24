@@ -9,7 +9,9 @@ import { mergeSettings } from '../settings/load-settings';
 
 jest.mock('obsidian', () => ({ Notice: jest.fn().mockImplementation(() => ({ hide: jest.fn() })) }));
 jest.mock('../sync/prepare-preview', () => ({ preparePreview: jest.fn() }));
-jest.mock('../sync/execute-sync', () => ({ executeSync: jest.fn() }));
+jest.mock('../sync/execute-sync', () => ({
+  ...jest.requireActual('../sync/execute-sync'), executeSync: jest.fn(),
+}));
 jest.mock('../ui/sync-preview', () => ({ SyncPreviewModal: jest.fn().mockImplementation(() => ({ open: jest.fn() })) }));
 jest.mock('../ui/confirm-calendar-sync', () => ({ ConfirmCalendarSyncModal: jest.fn() }));
 
@@ -78,5 +80,18 @@ describe('manual calendar sync command', () => {
     await pending;
     expect(close).toHaveBeenCalled();
     expect(executeSync).not.toHaveBeenCalled();
+  });
+
+  it('updates the shared status after a manually approved sync when automatic mode is enabled', async () => {
+    const status = jest.fn();
+    await createCalendarSync(app, mergeSettings({ caldav: { autoSync: true } }), status).run();
+    expect(status.mock.calls.map(([value]) => value)).toEqual(['running', 'synced']);
+  });
+
+  it('does not present automatic mode as enabled after a manual sync when the flag is off', async () => {
+    const status = jest.fn();
+    await createCalendarSync(app, mergeSettings(), status).run();
+    expect(status).toHaveBeenLastCalledWith('off');
+    expect(status).not.toHaveBeenCalledWith('synced');
   });
 });

@@ -100,6 +100,7 @@ export async function executeSync(
     };
     const { plan } = fresh;
     if (!plan.create.length && !plan.update.length && !plan.delete.length) {
+      await assertSourcesCurrent();
       return { ...result, ok: true, message: 'Kalender ist bereits aktuell. Keine Änderungen nötig.' };
     }
     // Validate every payload and destructive precondition before the first write.

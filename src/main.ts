@@ -32,7 +32,7 @@ export default class WeekCalendartPlugin extends Plugin {
     this.syncStatus$.next(getInitialSyncStatus(this.settings.caldav));
     this.subscription.add(addSyncStatusUi(this, this.syncStatus$));
 
-    const calendarSync = createCalendarSync(this.app, this.settings);
+    const calendarSync = createCalendarSync(this.app, this.settings, (status) => this.syncStatus$.next(status));
     this.stopCalendarSync = calendarSync.cancel;
     this.addCommand({
       id: 'sync-calendar',
