@@ -16,8 +16,8 @@ import { parseWo } from '../parseWeekFile/parse-wo';
 import { stringifyWo } from '../parseWeekFile/stringify-wo';
 import { findWeekFilesForRange, readWeekFile } from '../recurrence/file-operations';
 import { parseRecurrence } from '../recurrence/parse-recurrence';
-import { WO_FILE_REGEX } from '../settings/constants';
 import { EventElement, Recurrence, WeekcalendarSettings, WoFileTitleStructure } from '../types';
+import { getWeekFileInfo } from '../commands/process-file';
 
 interface RecurringEventInfo {
   event: EventElement;
@@ -133,7 +133,7 @@ export const modifyWeekFileEvent = (
     .pipe(
       filter((file): file is TFile => file instanceof TFile),
       filter((file: TFile) => !ignoredFiles.has(file.path)),
-      filter((file: TFile) => WO_FILE_REGEX.test(file.path)),
+      filter((file: TFile) => getWeekFileInfo(file.path, settings.paths.weekFolder) !== null),
       filter((file: TFile) => file.extension === 'md'),
       switchMap((file: TFile) =>
         from(app.vault.read(file)).pipe(map((fileContent) => [file, fileContent] as const)),

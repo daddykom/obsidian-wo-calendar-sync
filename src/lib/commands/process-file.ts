@@ -4,6 +4,28 @@ import { setEventIds } from '../parseWeekFile/set-event-ids';
 import { stringifyWo } from '../parseWeekFile/stringify-wo';
 import { WeekcalendarSettings } from '../types';
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function getWeekFileInfo(
+  filePath: string,
+  weekFolder: string,
+): { year: number; week: number } | null {
+  const matcher = new RegExp(
+    `^${escapeRegExp(weekFolder)}/(\\d{4})/weeks/W(\\d{1,2})(?:\\s|$)`,
+  );
+  const match = filePath.match(matcher);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const week = Number(match[2]);
+  if (!Number.isInteger(year) || !Number.isInteger(week) || week < 1 || week > 53) {
+    return null;
+  }
+  return { year, week };
+}
+
 /**
  * process a file from read to change to write
  * @param fileContent
@@ -12,11 +34,14 @@ import { WeekcalendarSettings } from '../types';
  * @return changed content
  */
 export function processFile(fileContent: string, file: TFile, settings: WeekcalendarSettings) {
-  const regex = new RegExp(`^${settings.paths.weekFolder}/([0-9]+)/weeks/W([0-9])`);
-  const [, year, week] = file.path.match(regex) ?? [];
-  const structuredFile = parseWo(fileContent);
+  const weekFileInfo = getWeekFileInfo(file.path, settings.paths.weekFolder);
+  if (!weekFileInfo) return '';
+
+  const structuredFile = parseWo(fileContent, settings);
   const originalContent = stringifyWo(structuredFile);
-  const changedFileContent = stringifyWo(setEventIds(structuredFile, Number(year), Number(week)));
+  const changedFileContent = stringifyWo(
+    setEventIds(structuredFile, weekFileInfo.year, weekFileInfo.week),
+  );
   if (originalContent === changedFileContent) {
     return '';
   }

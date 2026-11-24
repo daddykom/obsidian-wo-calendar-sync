@@ -3618,7 +3618,6 @@ async function writeWeekFiles(yyyy, weeks, settings, app) {
 }
 
 // src/lib/settings/constants.ts
-var WO_FILE_REGEX = /^week-calendar\/.*\/W[0-5].[0-9]. /;
 var RECURRENCE_PATTERNS = {
   field: /^\s*Wiederholung:\s*(.+)$/i,
   endField: /^\s*WiederholungEnde:\s*(.+)$/i,
@@ -4078,7 +4077,6 @@ function parseWo(wochenFile, settings = DEFAULT_SETTINGS) {
     }
     return acc;
   }, elementStructure(settings));
-  console.log("elements", isolateElements);
   return isolateElements.elements;
 }
 function getLineType(line, settings = DEFAULT_SETTINGS) {
@@ -4391,7 +4389,7 @@ function setEventIds(elements, year, week) {
     const elements2 = acc[section].map((element) => {
       if (element.type === "event") {
         const content = element.content;
-        if (content[content.length - 1].match(/^  \^woev-/)) {
+        if (content.some((line) => /^\s+\^woev-(?!rec-)[a-zA-Z0-9]+/.test(line))) {
           return element;
         }
         const contentString = content.map((item) => item.trim()).join("|");
@@ -4406,12 +4404,30 @@ function setEventIds(elements, year, week) {
 }
 
 // src/lib/commands/process-file.ts
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function getWeekFileInfo(filePath, weekFolder) {
+  const matcher = new RegExp(
+    `^${escapeRegExp(weekFolder)}/(\\d{4})/weeks/W(\\d{1,2})(?:\\s|$)`
+  );
+  const match2 = filePath.match(matcher);
+  if (!match2) return null;
+  const year = Number(match2[1]);
+  const week = Number(match2[2]);
+  if (!Number.isInteger(year) || !Number.isInteger(week) || week < 1 || week > 53) {
+    return null;
+  }
+  return { year, week };
+}
 function processFile(fileContent, file, settings) {
-  const regex = new RegExp(`^${settings.paths.weekFolder}/([0-9]+)/weeks/W([0-9])`);
-  const [, year, week] = file.path.match(regex) ?? [];
-  const structuredFile = parseWo(fileContent);
+  const weekFileInfo = getWeekFileInfo(file.path, settings.paths.weekFolder);
+  if (!weekFileInfo) return "";
+  const structuredFile = parseWo(fileContent, settings);
   const originalContent = stringifyWo(structuredFile);
-  const changedFileContent = stringifyWo(setEventIds(structuredFile, Number(year), Number(week)));
+  const changedFileContent = stringifyWo(
+    setEventIds(structuredFile, weekFileInfo.year, weekFileInfo.week)
+  );
   if (originalContent === changedFileContent) {
     return "";
   }
@@ -4440,7 +4456,9 @@ var import_obsidian7 = require("obsidian");
 var processAll = (app, settings) => async () => {
   let numb = 0;
   const files = app.vault.getMarkdownFiles();
-  const woFiles = files.filter((file) => WO_FILE_REGEX.test(file.path));
+  const woFiles = files.filter(
+    (file) => getWeekFileInfo(file.path, settings.paths.weekFolder) !== null
+  );
   await Promise.all(
     woFiles.map(async (file) => {
       const fileContent = await app.vault.read(file);
@@ -4519,7 +4537,7 @@ async function propagateRecurrenceChanges(app, settings, recurringEvents) {
 var modifyWeekFileEvent = (app, modifyEvents, actualFileChanged$, settings, ignoredFiles = /* @__PURE__ */ new Set()) => modifyEvents.pipe(
   filter((file) => file instanceof import_obsidian8.TFile),
   filter((file) => !ignoredFiles.has(file.path)),
-  filter((file) => WO_FILE_REGEX.test(file.path)),
+  filter((file) => getWeekFileInfo(file.path, settings.paths.weekFolder) !== null),
   filter((file) => file.extension === "md"),
   switchMap(
     (file) => from(app.vault.read(file)).pipe(map((fileContent) => [file, fileContent]))
@@ -4688,4 +4706,3 @@ var WeekCalendartPlugin = class extends import_obsidian10.Plugin {
     this.subscription.unsubscribe();
   }
 };
-//# sourceMappingURL=main.js.map
