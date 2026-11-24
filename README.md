@@ -205,12 +205,12 @@ ETag conflicts should trigger refetch + retry.
 
 CalDAV settings are saved through Obsidian's plugin settings, not the YAML example below.
 The server URL, username and password are retained. `caldav.calendar` stores the
-target calendar's URL (not its display name). Server-based calendar selection and
-actual synchronization are not implemented yet; this step makes no network requests.
+target calendar's URL (not its display name). Server-based calendar selection is
+available in step 3 below. Actual appointment synchronization is not implemented yet.
 
 Use a dedicated calendar. The new `caldav.managedCalendarConfirmed` option defaults
 to `false`: enabling it explicitly permits the future sync to remove entries that
-do not exist in the weekly files. Changing the server URL, username or target
+do not exist in the weekly files. Changing the server URL, username, password or target
 calendar resets this permission. Older settings receive missing defaults on load.
 
 The password input is masked, but credentials are stored **unencrypted** in the
@@ -252,6 +252,30 @@ kept as text by both paths, not treated as appointments.
 - On any read or validation error, returns `ok: false` with errors and **no partial
   event list**. A successful empty collection remains distinguishable and will
   require the planned additional confirmation before any calendar is emptied.
+
+### CalDAV connection and calendar selection (step 3)
+
+1. Open the plugin settings and enter the HTTPS server URL, username and password.
+   For iCloud, use `https://caldav.icloud.com` and an app-specific password.
+2. Click **Verbindung prüfen**. Calendar discovery uses the existing `tsdav` library
+   via Obsidian's native `requestUrl` transport, avoiding browser CORS restrictions.
+3. Select a dedicated calendar in **Zielkalender**. Only calendars supporting
+   appointments (`VEVENT`) are listed; labels include the URL to distinguish
+   calendars with identical names. Nothing is selected or created automatically.
+4. Explicitly enable **Exklusiven Zielkalender freigeben** for that calendar.
+
+The connection test fetches only discovery and calendar metadata, not appointments.
+The transport rejects write methods. No notes or server entries are changed.
+Existing calendar URLs remain saved, but are only shown as selected if returned
+by the connection test. Missing calendars must be selected again; there is no
+automatic fallback to a different calendar. Read-only calendars may still appear:
+listing calendars does not prove that the account can write to them.
+
+Changing credentials clears the displayed server list and revokes calendar consent.
+Late responses after credentials change, a view refresh or closing settings are
+ignored. Authentication and network errors are shown without raw server responses
+or credentials. Discovery follows the server's HTTPS CalDAV endpoints; only use a
+server you trust. The underlying native HTTP client handles redirects.
 
 ### Original architecture proposal (not yet implemented)
 

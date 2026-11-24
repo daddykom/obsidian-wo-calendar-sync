@@ -1,8 +1,13 @@
 "use strict";
+var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __commonJS = (cb, mod) => function __require() {
+  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -15,7 +20,3444 @@ var __copyProps = (to, from2, except, desc) => {
   }
   return to;
 };
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// node_modules/ms/index.js
+var require_ms = __commonJS({
+  "node_modules/ms/index.js"(exports, module2) {
+    var s = 1e3;
+    var m = s * 60;
+    var h = m * 60;
+    var d = h * 24;
+    var w = d * 7;
+    var y = d * 365.25;
+    module2.exports = function(val, options) {
+      options = options || {};
+      var type = typeof val;
+      if (type === "string" && val.length > 0) {
+        return parse(val);
+      } else if (type === "number" && isFinite(val)) {
+        return options.long ? fmtLong(val) : fmtShort(val);
+      }
+      throw new Error(
+        "val is not a non-empty string or a valid number. val=" + JSON.stringify(val)
+      );
+    };
+    function parse(str) {
+      str = String(str);
+      if (str.length > 100) {
+        return;
+      }
+      var match2 = /^(-?(?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i.exec(
+        str
+      );
+      if (!match2) {
+        return;
+      }
+      var n = parseFloat(match2[1]);
+      var type = (match2[2] || "ms").toLowerCase();
+      switch (type) {
+        case "years":
+        case "year":
+        case "yrs":
+        case "yr":
+        case "y":
+          return n * y;
+        case "weeks":
+        case "week":
+        case "w":
+          return n * w;
+        case "days":
+        case "day":
+        case "d":
+          return n * d;
+        case "hours":
+        case "hour":
+        case "hrs":
+        case "hr":
+        case "h":
+          return n * h;
+        case "minutes":
+        case "minute":
+        case "mins":
+        case "min":
+        case "m":
+          return n * m;
+        case "seconds":
+        case "second":
+        case "secs":
+        case "sec":
+        case "s":
+          return n * s;
+        case "milliseconds":
+        case "millisecond":
+        case "msecs":
+        case "msec":
+        case "ms":
+          return n;
+        default:
+          return void 0;
+      }
+    }
+    function fmtShort(ms) {
+      var msAbs = Math.abs(ms);
+      if (msAbs >= d) {
+        return Math.round(ms / d) + "d";
+      }
+      if (msAbs >= h) {
+        return Math.round(ms / h) + "h";
+      }
+      if (msAbs >= m) {
+        return Math.round(ms / m) + "m";
+      }
+      if (msAbs >= s) {
+        return Math.round(ms / s) + "s";
+      }
+      return ms + "ms";
+    }
+    function fmtLong(ms) {
+      var msAbs = Math.abs(ms);
+      if (msAbs >= d) {
+        return plural(ms, msAbs, d, "day");
+      }
+      if (msAbs >= h) {
+        return plural(ms, msAbs, h, "hour");
+      }
+      if (msAbs >= m) {
+        return plural(ms, msAbs, m, "minute");
+      }
+      if (msAbs >= s) {
+        return plural(ms, msAbs, s, "second");
+      }
+      return ms + " ms";
+    }
+    function plural(ms, msAbs, n, name) {
+      var isPlural = msAbs >= n * 1.5;
+      return Math.round(ms / n) + " " + name + (isPlural ? "s" : "");
+    }
+  }
+});
+
+// node_modules/debug/src/common.js
+var require_common = __commonJS({
+  "node_modules/debug/src/common.js"(exports, module2) {
+    function setup(env) {
+      createDebug.debug = createDebug;
+      createDebug.default = createDebug;
+      createDebug.coerce = coerce;
+      createDebug.disable = disable;
+      createDebug.enable = enable;
+      createDebug.enabled = enabled;
+      createDebug.humanize = require_ms();
+      createDebug.destroy = destroy;
+      Object.keys(env).forEach((key) => {
+        createDebug[key] = env[key];
+      });
+      createDebug.names = [];
+      createDebug.skips = [];
+      createDebug.formatters = {};
+      function selectColor(namespace) {
+        let hash = 0;
+        for (let i = 0; i < namespace.length; i++) {
+          hash = (hash << 5) - hash + namespace.charCodeAt(i);
+          hash |= 0;
+        }
+        return createDebug.colors[Math.abs(hash) % createDebug.colors.length];
+      }
+      createDebug.selectColor = selectColor;
+      function createDebug(namespace) {
+        let prevTime;
+        let enableOverride = null;
+        let namespacesCache;
+        let enabledCache;
+        function debug2(...args) {
+          if (!debug2.enabled) {
+            return;
+          }
+          const self2 = debug2;
+          const curr = Number(/* @__PURE__ */ new Date());
+          const ms = curr - (prevTime || curr);
+          self2.diff = ms;
+          self2.prev = prevTime;
+          self2.curr = curr;
+          prevTime = curr;
+          args[0] = createDebug.coerce(args[0]);
+          if (typeof args[0] !== "string") {
+            args.unshift("%O");
+          }
+          let index2 = 0;
+          args[0] = args[0].replace(/%([a-zA-Z%])/g, (match2, format2) => {
+            if (match2 === "%%") {
+              return "%";
+            }
+            index2++;
+            const formatter = createDebug.formatters[format2];
+            if (typeof formatter === "function") {
+              const val = args[index2];
+              match2 = formatter.call(self2, val);
+              args.splice(index2, 1);
+              index2--;
+            }
+            return match2;
+          });
+          createDebug.formatArgs.call(self2, args);
+          const logFn = self2.log || createDebug.log;
+          logFn.apply(self2, args);
+        }
+        debug2.namespace = namespace;
+        debug2.useColors = createDebug.useColors();
+        debug2.color = createDebug.selectColor(namespace);
+        debug2.extend = extend;
+        debug2.destroy = createDebug.destroy;
+        Object.defineProperty(debug2, "enabled", {
+          enumerable: true,
+          configurable: false,
+          get: () => {
+            if (enableOverride !== null) {
+              return enableOverride;
+            }
+            if (namespacesCache !== createDebug.namespaces) {
+              namespacesCache = createDebug.namespaces;
+              enabledCache = createDebug.enabled(namespace);
+            }
+            return enabledCache;
+          },
+          set: (v) => {
+            enableOverride = v;
+          }
+        });
+        if (typeof createDebug.init === "function") {
+          createDebug.init(debug2);
+        }
+        return debug2;
+      }
+      function extend(namespace, delimiter) {
+        const newDebug = createDebug(this.namespace + (typeof delimiter === "undefined" ? ":" : delimiter) + namespace);
+        newDebug.log = this.log;
+        return newDebug;
+      }
+      function enable(namespaces) {
+        createDebug.save(namespaces);
+        createDebug.namespaces = namespaces;
+        createDebug.names = [];
+        createDebug.skips = [];
+        const split = (typeof namespaces === "string" ? namespaces : "").trim().replace(/\s+/g, ",").split(",").filter(Boolean);
+        for (const ns of split) {
+          if (ns[0] === "-") {
+            createDebug.skips.push(ns.slice(1));
+          } else {
+            createDebug.names.push(ns);
+          }
+        }
+      }
+      function matchesTemplate(search, template) {
+        let searchIndex = 0;
+        let templateIndex = 0;
+        let starIndex = -1;
+        let matchIndex = 0;
+        while (searchIndex < search.length) {
+          if (templateIndex < template.length && (template[templateIndex] === search[searchIndex] || template[templateIndex] === "*")) {
+            if (template[templateIndex] === "*") {
+              starIndex = templateIndex;
+              matchIndex = searchIndex;
+              templateIndex++;
+            } else {
+              searchIndex++;
+              templateIndex++;
+            }
+          } else if (starIndex !== -1) {
+            templateIndex = starIndex + 1;
+            matchIndex++;
+            searchIndex = matchIndex;
+          } else {
+            return false;
+          }
+        }
+        while (templateIndex < template.length && template[templateIndex] === "*") {
+          templateIndex++;
+        }
+        return templateIndex === template.length;
+      }
+      function disable() {
+        const namespaces = [
+          ...createDebug.names,
+          ...createDebug.skips.map((namespace) => "-" + namespace)
+        ].join(",");
+        createDebug.enable("");
+        return namespaces;
+      }
+      function enabled(name) {
+        for (const skip of createDebug.skips) {
+          if (matchesTemplate(name, skip)) {
+            return false;
+          }
+        }
+        for (const ns of createDebug.names) {
+          if (matchesTemplate(name, ns)) {
+            return true;
+          }
+        }
+        return false;
+      }
+      function coerce(val) {
+        if (val instanceof Error) {
+          return val.stack || val.message;
+        }
+        return val;
+      }
+      function destroy() {
+        console.warn("Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.");
+      }
+      createDebug.enable(createDebug.load());
+      return createDebug;
+    }
+    module2.exports = setup;
+  }
+});
+
+// node_modules/debug/src/browser.js
+var require_browser = __commonJS({
+  "node_modules/debug/src/browser.js"(exports, module2) {
+    exports.formatArgs = formatArgs;
+    exports.save = save;
+    exports.load = load;
+    exports.useColors = useColors;
+    exports.storage = localstorage();
+    exports.destroy = /* @__PURE__ */ (() => {
+      let warned = false;
+      return () => {
+        if (!warned) {
+          warned = true;
+          console.warn("Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.");
+        }
+      };
+    })();
+    exports.colors = [
+      "#0000CC",
+      "#0000FF",
+      "#0033CC",
+      "#0033FF",
+      "#0066CC",
+      "#0066FF",
+      "#0099CC",
+      "#0099FF",
+      "#00CC00",
+      "#00CC33",
+      "#00CC66",
+      "#00CC99",
+      "#00CCCC",
+      "#00CCFF",
+      "#3300CC",
+      "#3300FF",
+      "#3333CC",
+      "#3333FF",
+      "#3366CC",
+      "#3366FF",
+      "#3399CC",
+      "#3399FF",
+      "#33CC00",
+      "#33CC33",
+      "#33CC66",
+      "#33CC99",
+      "#33CCCC",
+      "#33CCFF",
+      "#6600CC",
+      "#6600FF",
+      "#6633CC",
+      "#6633FF",
+      "#66CC00",
+      "#66CC33",
+      "#9900CC",
+      "#9900FF",
+      "#9933CC",
+      "#9933FF",
+      "#99CC00",
+      "#99CC33",
+      "#CC0000",
+      "#CC0033",
+      "#CC0066",
+      "#CC0099",
+      "#CC00CC",
+      "#CC00FF",
+      "#CC3300",
+      "#CC3333",
+      "#CC3366",
+      "#CC3399",
+      "#CC33CC",
+      "#CC33FF",
+      "#CC6600",
+      "#CC6633",
+      "#CC9900",
+      "#CC9933",
+      "#CCCC00",
+      "#CCCC33",
+      "#FF0000",
+      "#FF0033",
+      "#FF0066",
+      "#FF0099",
+      "#FF00CC",
+      "#FF00FF",
+      "#FF3300",
+      "#FF3333",
+      "#FF3366",
+      "#FF3399",
+      "#FF33CC",
+      "#FF33FF",
+      "#FF6600",
+      "#FF6633",
+      "#FF9900",
+      "#FF9933",
+      "#FFCC00",
+      "#FFCC33"
+    ];
+    function useColors() {
+      if (typeof window !== "undefined" && window.process && (window.process.type === "renderer" || window.process.__nwjs)) {
+        return true;
+      }
+      if (typeof navigator !== "undefined" && navigator.userAgent && navigator.userAgent.toLowerCase().match(/(edge|trident)\/(\d+)/)) {
+        return false;
+      }
+      let m;
+      return typeof document !== "undefined" && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance || // Is firebug? http://stackoverflow.com/a/398120/376773
+      typeof window !== "undefined" && window.console && (window.console.firebug || window.console.exception && window.console.table) || // Is firefox >= v31?
+      // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
+      typeof navigator !== "undefined" && navigator.userAgent && (m = navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/)) && parseInt(m[1], 10) >= 31 || // Double check webkit in userAgent just in case we are in a worker
+      typeof navigator !== "undefined" && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/);
+    }
+    function formatArgs(args) {
+      args[0] = (this.useColors ? "%c" : "") + this.namespace + (this.useColors ? " %c" : " ") + args[0] + (this.useColors ? "%c " : " ") + "+" + module2.exports.humanize(this.diff);
+      if (!this.useColors) {
+        return;
+      }
+      const c = "color: " + this.color;
+      args.splice(1, 0, c, "color: inherit");
+      let index2 = 0;
+      let lastC = 0;
+      args[0].replace(/%[a-zA-Z%]/g, (match2) => {
+        if (match2 === "%%") {
+          return;
+        }
+        index2++;
+        if (match2 === "%c") {
+          lastC = index2;
+        }
+      });
+      args.splice(lastC, 0, c);
+    }
+    exports.log = console.debug || console.log || (() => {
+    });
+    function save(namespaces) {
+      try {
+        if (namespaces) {
+          exports.storage.setItem("debug", namespaces);
+        } else {
+          exports.storage.removeItem("debug");
+        }
+      } catch (error) {
+      }
+    }
+    function load() {
+      let r;
+      try {
+        r = exports.storage.getItem("debug") || exports.storage.getItem("DEBUG");
+      } catch (error) {
+      }
+      if (!r && typeof process !== "undefined" && "env" in process) {
+        r = process.env.DEBUG;
+      }
+      return r;
+    }
+    function localstorage() {
+      try {
+        return localStorage;
+      } catch (error) {
+      }
+    }
+    module2.exports = require_common()(exports);
+    var { formatters: formatters2 } = module2.exports;
+    formatters2.j = function(v) {
+      try {
+        return JSON.stringify(v);
+      } catch (error) {
+        return "[UnexpectedJSONParseError]: " + error.message;
+      }
+    };
+  }
+});
+
+// node_modules/sax/lib/sax.js
+var require_sax = __commonJS({
+  "node_modules/sax/lib/sax.js"(exports) {
+    (function(sax) {
+      sax.parser = function(strict, opt) {
+        return new SAXParser(strict, opt);
+      };
+      sax.SAXParser = SAXParser;
+      sax.SAXStream = SAXStream;
+      sax.createStream = createStream;
+      sax.MAX_BUFFER_LENGTH = 64 * 1024;
+      var buffers = [
+        "comment",
+        "sgmlDecl",
+        "textNode",
+        "tagName",
+        "doctype",
+        "procInstName",
+        "procInstBody",
+        "entity",
+        "attribName",
+        "attribValue",
+        "cdata",
+        "script"
+      ];
+      sax.EVENTS = [
+        "text",
+        "processinginstruction",
+        "sgmldeclaration",
+        "doctype",
+        "comment",
+        "opentagstart",
+        "attribute",
+        "opentag",
+        "closetag",
+        "opencdata",
+        "cdata",
+        "closecdata",
+        "error",
+        "end",
+        "ready",
+        "script",
+        "opennamespace",
+        "closenamespace"
+      ];
+      function SAXParser(strict, opt) {
+        if (!(this instanceof SAXParser)) {
+          return new SAXParser(strict, opt);
+        }
+        var parser = this;
+        clearBuffers(parser);
+        parser.q = parser.c = "";
+        parser.bufferCheckPosition = sax.MAX_BUFFER_LENGTH;
+        parser.opt = opt || {};
+        parser.opt.lowercase = parser.opt.lowercase || parser.opt.lowercasetags;
+        parser.looseCase = parser.opt.lowercase ? "toLowerCase" : "toUpperCase";
+        parser.opt.maxEntityCount = parser.opt.maxEntityCount || 512;
+        parser.opt.maxEntityDepth = parser.opt.maxEntityDepth || 4;
+        parser.entityCount = parser.entityDepth = 0;
+        parser.tags = [];
+        parser.closed = parser.closedRoot = parser.sawRoot = false;
+        parser.tag = parser.error = null;
+        parser.strict = !!strict;
+        parser.noscript = !!(strict || parser.opt.noscript);
+        parser.state = S.BEGIN;
+        parser.strictEntities = parser.opt.strictEntities;
+        parser.ENTITIES = parser.strictEntities ? Object.create(sax.XML_ENTITIES) : Object.create(sax.ENTITIES);
+        parser.attribList = [];
+        if (parser.opt.xmlns) {
+          parser.ns = Object.create(rootNS);
+        }
+        if (parser.opt.unquotedAttributeValues === void 0) {
+          parser.opt.unquotedAttributeValues = !strict;
+        }
+        parser.trackPosition = parser.opt.position !== false;
+        if (parser.trackPosition) {
+          parser.position = parser.line = parser.column = 0;
+        }
+        emit(parser, "onready");
+      }
+      if (!Object.create) {
+        Object.create = function(o) {
+          function F() {
+          }
+          F.prototype = o;
+          var newf = new F();
+          return newf;
+        };
+      }
+      if (!Object.keys) {
+        Object.keys = function(o) {
+          var a = [];
+          for (var i in o) if (o.hasOwnProperty(i)) a.push(i);
+          return a;
+        };
+      }
+      function checkBufferLength(parser) {
+        var maxAllowed = Math.max(sax.MAX_BUFFER_LENGTH, 10);
+        var maxActual = 0;
+        for (var i = 0, l = buffers.length; i < l; i++) {
+          var len = parser[buffers[i]].length;
+          if (len > maxAllowed) {
+            switch (buffers[i]) {
+              case "textNode":
+                closeText(parser);
+                break;
+              case "cdata":
+                emitNode(parser, "oncdata", parser.cdata);
+                parser.cdata = "";
+                break;
+              case "script":
+                emitNode(parser, "onscript", parser.script);
+                parser.script = "";
+                break;
+              default:
+                error(parser, "Max buffer length exceeded: " + buffers[i]);
+            }
+          }
+          maxActual = Math.max(maxActual, len);
+        }
+        var m = sax.MAX_BUFFER_LENGTH - maxActual;
+        parser.bufferCheckPosition = m + parser.position;
+      }
+      function clearBuffers(parser) {
+        for (var i = 0, l = buffers.length; i < l; i++) {
+          parser[buffers[i]] = "";
+        }
+      }
+      function flushBuffers(parser) {
+        closeText(parser);
+        if (parser.cdata !== "") {
+          emitNode(parser, "oncdata", parser.cdata);
+          parser.cdata = "";
+        }
+        if (parser.script !== "") {
+          emitNode(parser, "onscript", parser.script);
+          parser.script = "";
+        }
+      }
+      SAXParser.prototype = {
+        end: function() {
+          end(this);
+        },
+        write,
+        resume: function() {
+          this.error = null;
+          return this;
+        },
+        close: function() {
+          return this.write(null);
+        },
+        flush: function() {
+          flushBuffers(this);
+        }
+      };
+      var Stream;
+      try {
+        Stream = require("stream").Stream;
+      } catch (ex) {
+        Stream = function() {
+        };
+      }
+      if (!Stream) Stream = function() {
+      };
+      var streamWraps = sax.EVENTS.filter(function(ev) {
+        return ev !== "error" && ev !== "end";
+      });
+      function createStream(strict, opt) {
+        return new SAXStream(strict, opt);
+      }
+      function SAXStream(strict, opt) {
+        if (!(this instanceof SAXStream)) {
+          return new SAXStream(strict, opt);
+        }
+        Stream.apply(this);
+        this._parser = new SAXParser(strict, opt);
+        this.writable = true;
+        this.readable = true;
+        var me = this;
+        this._parser.onend = function() {
+          me.emit("end");
+        };
+        this._parser.onerror = function(er) {
+          me.emit("error", er);
+          me._parser.error = null;
+        };
+        this._decoder = null;
+        streamWraps.forEach(function(ev) {
+          Object.defineProperty(me, "on" + ev, {
+            get: function() {
+              return me._parser["on" + ev];
+            },
+            set: function(h) {
+              if (!h) {
+                me.removeAllListeners(ev);
+                me._parser["on" + ev] = h;
+                return h;
+              }
+              me.on(ev, h);
+            },
+            enumerable: true,
+            configurable: false
+          });
+        });
+      }
+      SAXStream.prototype = Object.create(Stream.prototype, {
+        constructor: {
+          value: SAXStream
+        }
+      });
+      SAXStream.prototype.write = function(data) {
+        if (typeof Buffer === "function" && typeof Buffer.isBuffer === "function" && Buffer.isBuffer(data)) {
+          if (!this._decoder) {
+            this._decoder = new TextDecoder("utf8");
+          }
+          data = this._decoder.decode(data, { stream: true });
+        }
+        this._parser.write(data.toString());
+        this.emit("data", data);
+        return true;
+      };
+      SAXStream.prototype.end = function(chunk) {
+        if (chunk && chunk.length) {
+          this.write(chunk);
+        }
+        if (this._decoder) {
+          var remaining = this._decoder.decode();
+          if (remaining) {
+            this._parser.write(remaining);
+            this.emit("data", remaining);
+          }
+        }
+        this._parser.end();
+        return true;
+      };
+      SAXStream.prototype.on = function(ev, handler) {
+        var me = this;
+        if (!me._parser["on" + ev] && streamWraps.indexOf(ev) !== -1) {
+          me._parser["on" + ev] = function() {
+            var args = arguments.length === 1 ? [arguments[0]] : Array.apply(null, arguments);
+            args.splice(0, 0, ev);
+            me.emit.apply(me, args);
+          };
+        }
+        return Stream.prototype.on.call(me, ev, handler);
+      };
+      var CDATA = "[CDATA[";
+      var DOCTYPE = "DOCTYPE";
+      var XML_NAMESPACE = "http://www.w3.org/XML/1998/namespace";
+      var XMLNS_NAMESPACE = "http://www.w3.org/2000/xmlns/";
+      var rootNS = { xml: XML_NAMESPACE, xmlns: XMLNS_NAMESPACE };
+      var nameStart = /[:_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD]/;
+      var nameBody = /[:_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u00B7\u0300-\u036F\u203F-\u2040.\d-]/;
+      var entityStart = /[#:_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD]/;
+      var entityBody = /[#:_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u00B7\u0300-\u036F\u203F-\u2040.\d-]/;
+      function isWhitespace(c) {
+        return c === " " || c === "\n" || c === "\r" || c === "	";
+      }
+      function isQuote(c) {
+        return c === '"' || c === "'";
+      }
+      function isAttribEnd(c) {
+        return c === ">" || isWhitespace(c);
+      }
+      function isMatch(regex, c) {
+        return regex.test(c);
+      }
+      function notMatch(regex, c) {
+        return !isMatch(regex, c);
+      }
+      var S = 0;
+      sax.STATE = {
+        BEGIN: S++,
+        // leading byte order mark or whitespace
+        BEGIN_WHITESPACE: S++,
+        // leading whitespace
+        TEXT: S++,
+        // general stuff
+        TEXT_ENTITY: S++,
+        // &amp and such.
+        OPEN_WAKA: S++,
+        // <
+        SGML_DECL: S++,
+        // <!BLARG
+        SGML_DECL_QUOTED: S++,
+        // <!BLARG foo "bar
+        DOCTYPE: S++,
+        // <!DOCTYPE
+        DOCTYPE_QUOTED: S++,
+        // <!DOCTYPE "//blah
+        DOCTYPE_DTD: S++,
+        // <!DOCTYPE "//blah" [ ...
+        DOCTYPE_DTD_QUOTED: S++,
+        // <!DOCTYPE "//blah" [ "foo
+        COMMENT_STARTING: S++,
+        // <!-
+        COMMENT: S++,
+        // <!--
+        COMMENT_ENDING: S++,
+        // <!-- blah -
+        COMMENT_ENDED: S++,
+        // <!-- blah --
+        CDATA: S++,
+        // <![CDATA[ something
+        CDATA_ENDING: S++,
+        // ]
+        CDATA_ENDING_2: S++,
+        // ]]
+        PROC_INST: S++,
+        // <?hi
+        PROC_INST_BODY: S++,
+        // <?hi there
+        PROC_INST_ENDING: S++,
+        // <?hi "there" ?
+        OPEN_TAG: S++,
+        // <strong
+        OPEN_TAG_SLASH: S++,
+        // <strong /
+        ATTRIB: S++,
+        // <a
+        ATTRIB_NAME: S++,
+        // <a foo
+        ATTRIB_NAME_SAW_WHITE: S++,
+        // <a foo _
+        ATTRIB_VALUE: S++,
+        // <a foo=
+        ATTRIB_VALUE_QUOTED: S++,
+        // <a foo="bar
+        ATTRIB_VALUE_CLOSED: S++,
+        // <a foo="bar"
+        ATTRIB_VALUE_UNQUOTED: S++,
+        // <a foo=bar
+        ATTRIB_VALUE_ENTITY_Q: S++,
+        // <foo bar="&quot;"
+        ATTRIB_VALUE_ENTITY_U: S++,
+        // <foo bar=&quot
+        CLOSE_TAG: S++,
+        // </a
+        CLOSE_TAG_SAW_WHITE: S++,
+        // </a   >
+        SCRIPT: S++,
+        // <script> ...
+        SCRIPT_ENDING: S++
+        // <script> ... <
+      };
+      sax.XML_ENTITIES = {
+        amp: "&",
+        gt: ">",
+        lt: "<",
+        quot: '"',
+        apos: "'"
+      };
+      sax.ENTITIES = {
+        amp: "&",
+        gt: ">",
+        lt: "<",
+        quot: '"',
+        apos: "'",
+        AElig: 198,
+        Aacute: 193,
+        Acirc: 194,
+        Agrave: 192,
+        Aring: 197,
+        Atilde: 195,
+        Auml: 196,
+        Ccedil: 199,
+        ETH: 208,
+        Eacute: 201,
+        Ecirc: 202,
+        Egrave: 200,
+        Euml: 203,
+        Iacute: 205,
+        Icirc: 206,
+        Igrave: 204,
+        Iuml: 207,
+        Ntilde: 209,
+        Oacute: 211,
+        Ocirc: 212,
+        Ograve: 210,
+        Oslash: 216,
+        Otilde: 213,
+        Ouml: 214,
+        THORN: 222,
+        Uacute: 218,
+        Ucirc: 219,
+        Ugrave: 217,
+        Uuml: 220,
+        Yacute: 221,
+        aacute: 225,
+        acirc: 226,
+        aelig: 230,
+        agrave: 224,
+        aring: 229,
+        atilde: 227,
+        auml: 228,
+        ccedil: 231,
+        eacute: 233,
+        ecirc: 234,
+        egrave: 232,
+        eth: 240,
+        euml: 235,
+        iacute: 237,
+        icirc: 238,
+        igrave: 236,
+        iuml: 239,
+        ntilde: 241,
+        oacute: 243,
+        ocirc: 244,
+        ograve: 242,
+        oslash: 248,
+        otilde: 245,
+        ouml: 246,
+        szlig: 223,
+        thorn: 254,
+        uacute: 250,
+        ucirc: 251,
+        ugrave: 249,
+        uuml: 252,
+        yacute: 253,
+        yuml: 255,
+        copy: 169,
+        reg: 174,
+        nbsp: 160,
+        iexcl: 161,
+        cent: 162,
+        pound: 163,
+        curren: 164,
+        yen: 165,
+        brvbar: 166,
+        sect: 167,
+        uml: 168,
+        ordf: 170,
+        laquo: 171,
+        not: 172,
+        shy: 173,
+        macr: 175,
+        deg: 176,
+        plusmn: 177,
+        sup1: 185,
+        sup2: 178,
+        sup3: 179,
+        acute: 180,
+        micro: 181,
+        para: 182,
+        middot: 183,
+        cedil: 184,
+        ordm: 186,
+        raquo: 187,
+        frac14: 188,
+        frac12: 189,
+        frac34: 190,
+        iquest: 191,
+        times: 215,
+        divide: 247,
+        OElig: 338,
+        oelig: 339,
+        Scaron: 352,
+        scaron: 353,
+        Yuml: 376,
+        fnof: 402,
+        circ: 710,
+        tilde: 732,
+        Alpha: 913,
+        Beta: 914,
+        Gamma: 915,
+        Delta: 916,
+        Epsilon: 917,
+        Zeta: 918,
+        Eta: 919,
+        Theta: 920,
+        Iota: 921,
+        Kappa: 922,
+        Lambda: 923,
+        Mu: 924,
+        Nu: 925,
+        Xi: 926,
+        Omicron: 927,
+        Pi: 928,
+        Rho: 929,
+        Sigma: 931,
+        Tau: 932,
+        Upsilon: 933,
+        Phi: 934,
+        Chi: 935,
+        Psi: 936,
+        Omega: 937,
+        alpha: 945,
+        beta: 946,
+        gamma: 947,
+        delta: 948,
+        epsilon: 949,
+        zeta: 950,
+        eta: 951,
+        theta: 952,
+        iota: 953,
+        kappa: 954,
+        lambda: 955,
+        mu: 956,
+        nu: 957,
+        xi: 958,
+        omicron: 959,
+        pi: 960,
+        rho: 961,
+        sigmaf: 962,
+        sigma: 963,
+        tau: 964,
+        upsilon: 965,
+        phi: 966,
+        chi: 967,
+        psi: 968,
+        omega: 969,
+        thetasym: 977,
+        upsih: 978,
+        piv: 982,
+        ensp: 8194,
+        emsp: 8195,
+        thinsp: 8201,
+        zwnj: 8204,
+        zwj: 8205,
+        lrm: 8206,
+        rlm: 8207,
+        ndash: 8211,
+        mdash: 8212,
+        lsquo: 8216,
+        rsquo: 8217,
+        sbquo: 8218,
+        ldquo: 8220,
+        rdquo: 8221,
+        bdquo: 8222,
+        dagger: 8224,
+        Dagger: 8225,
+        bull: 8226,
+        hellip: 8230,
+        permil: 8240,
+        prime: 8242,
+        Prime: 8243,
+        lsaquo: 8249,
+        rsaquo: 8250,
+        oline: 8254,
+        frasl: 8260,
+        euro: 8364,
+        image: 8465,
+        weierp: 8472,
+        real: 8476,
+        trade: 8482,
+        alefsym: 8501,
+        larr: 8592,
+        uarr: 8593,
+        rarr: 8594,
+        darr: 8595,
+        harr: 8596,
+        crarr: 8629,
+        lArr: 8656,
+        uArr: 8657,
+        rArr: 8658,
+        dArr: 8659,
+        hArr: 8660,
+        forall: 8704,
+        part: 8706,
+        exist: 8707,
+        empty: 8709,
+        nabla: 8711,
+        isin: 8712,
+        notin: 8713,
+        ni: 8715,
+        prod: 8719,
+        sum: 8721,
+        minus: 8722,
+        lowast: 8727,
+        radic: 8730,
+        prop: 8733,
+        infin: 8734,
+        ang: 8736,
+        and: 8743,
+        or: 8744,
+        cap: 8745,
+        cup: 8746,
+        int: 8747,
+        there4: 8756,
+        sim: 8764,
+        cong: 8773,
+        asymp: 8776,
+        ne: 8800,
+        equiv: 8801,
+        le: 8804,
+        ge: 8805,
+        sub: 8834,
+        sup: 8835,
+        nsub: 8836,
+        sube: 8838,
+        supe: 8839,
+        oplus: 8853,
+        otimes: 8855,
+        perp: 8869,
+        sdot: 8901,
+        lceil: 8968,
+        rceil: 8969,
+        lfloor: 8970,
+        rfloor: 8971,
+        lang: 9001,
+        rang: 9002,
+        loz: 9674,
+        spades: 9824,
+        clubs: 9827,
+        hearts: 9829,
+        diams: 9830
+      };
+      Object.keys(sax.ENTITIES).forEach(function(key) {
+        var e = sax.ENTITIES[key];
+        var s2 = typeof e === "number" ? String.fromCharCode(e) : e;
+        sax.ENTITIES[key] = s2;
+      });
+      for (var s in sax.STATE) {
+        sax.STATE[sax.STATE[s]] = s;
+      }
+      S = sax.STATE;
+      function emit(parser, event, data) {
+        parser[event] && parser[event](data);
+      }
+      function emitNode(parser, nodeType, data) {
+        if (parser.textNode) closeText(parser);
+        emit(parser, nodeType, data);
+      }
+      function closeText(parser) {
+        parser.textNode = textopts(parser.opt, parser.textNode);
+        if (parser.textNode) emit(parser, "ontext", parser.textNode);
+        parser.textNode = "";
+      }
+      function textopts(opt, text) {
+        if (opt.trim) text = text.trim();
+        if (opt.normalize) text = text.replace(/\s+/g, " ");
+        return text;
+      }
+      function error(parser, er) {
+        closeText(parser);
+        if (parser.trackPosition) {
+          er += "\nLine: " + parser.line + "\nColumn: " + parser.column + "\nChar: " + parser.c;
+        }
+        er = new Error(er);
+        parser.error = er;
+        emit(parser, "onerror", er);
+        return parser;
+      }
+      function end(parser) {
+        if (parser.sawRoot && !parser.closedRoot)
+          strictFail(parser, "Unclosed root tag");
+        if (parser.state !== S.BEGIN && parser.state !== S.BEGIN_WHITESPACE && parser.state !== S.TEXT) {
+          error(parser, "Unexpected end");
+        }
+        closeText(parser);
+        parser.c = "";
+        parser.closed = true;
+        emit(parser, "onend");
+        SAXParser.call(parser, parser.strict, parser.opt);
+        return parser;
+      }
+      function strictFail(parser, message2) {
+        if (typeof parser !== "object" || !(parser instanceof SAXParser)) {
+          throw new Error("bad call to strictFail");
+        }
+        if (parser.strict) {
+          error(parser, message2);
+        }
+      }
+      function newTag(parser) {
+        if (!parser.strict) parser.tagName = parser.tagName[parser.looseCase]();
+        var parent = parser.tags[parser.tags.length - 1] || parser;
+        var tag = parser.tag = { name: parser.tagName, attributes: {} };
+        if (parser.opt.xmlns) {
+          tag.ns = parent.ns;
+        }
+        parser.attribList.length = 0;
+        emitNode(parser, "onopentagstart", tag);
+      }
+      function qname(name, attribute) {
+        var i = name.indexOf(":");
+        var qualName = i < 0 ? ["", name] : name.split(":");
+        var prefix = qualName[0];
+        var local = qualName[1];
+        if (attribute && name === "xmlns") {
+          prefix = "xmlns";
+          local = "";
+        }
+        return { prefix, local };
+      }
+      function attrib(parser) {
+        if (!parser.strict) {
+          parser.attribName = parser.attribName[parser.looseCase]();
+        }
+        if (parser.attribList.indexOf(parser.attribName) !== -1 || parser.tag.attributes.hasOwnProperty(parser.attribName)) {
+          parser.attribName = parser.attribValue = "";
+          return;
+        }
+        if (parser.opt.xmlns) {
+          var qn = qname(parser.attribName, true);
+          var prefix = qn.prefix;
+          var local = qn.local;
+          if (prefix === "xmlns") {
+            if (local === "xml" && parser.attribValue !== XML_NAMESPACE) {
+              strictFail(
+                parser,
+                "xml: prefix must be bound to " + XML_NAMESPACE + "\nActual: " + parser.attribValue
+              );
+            } else if (local === "xmlns" && parser.attribValue !== XMLNS_NAMESPACE) {
+              strictFail(
+                parser,
+                "xmlns: prefix must be bound to " + XMLNS_NAMESPACE + "\nActual: " + parser.attribValue
+              );
+            } else {
+              var tag = parser.tag;
+              var parent = parser.tags[parser.tags.length - 1] || parser;
+              if (tag.ns === parent.ns) {
+                tag.ns = Object.create(parent.ns);
+              }
+              tag.ns[local] = parser.attribValue;
+            }
+          }
+          parser.attribList.push([parser.attribName, parser.attribValue]);
+        } else {
+          parser.tag.attributes[parser.attribName] = parser.attribValue;
+          emitNode(parser, "onattribute", {
+            name: parser.attribName,
+            value: parser.attribValue
+          });
+        }
+        parser.attribName = parser.attribValue = "";
+      }
+      function openTag(parser, selfClosing) {
+        if (parser.opt.xmlns) {
+          var tag = parser.tag;
+          var qn = qname(parser.tagName);
+          tag.prefix = qn.prefix;
+          tag.local = qn.local;
+          tag.uri = tag.ns[qn.prefix] || "";
+          if (tag.prefix && !tag.uri) {
+            strictFail(
+              parser,
+              "Unbound namespace prefix: " + JSON.stringify(parser.tagName)
+            );
+            tag.uri = qn.prefix;
+          }
+          var parent = parser.tags[parser.tags.length - 1] || parser;
+          if (tag.ns && parent.ns !== tag.ns) {
+            Object.keys(tag.ns).forEach(function(p) {
+              emitNode(parser, "onopennamespace", {
+                prefix: p,
+                uri: tag.ns[p]
+              });
+            });
+          }
+          for (var i = 0, l = parser.attribList.length; i < l; i++) {
+            var nv = parser.attribList[i];
+            var name = nv[0];
+            var value = nv[1];
+            var qualName = qname(name, true);
+            var prefix = qualName.prefix;
+            var local = qualName.local;
+            var uri = prefix === "" ? "" : tag.ns[prefix] || "";
+            var a = {
+              name,
+              value,
+              prefix,
+              local,
+              uri
+            };
+            if (prefix && prefix !== "xmlns" && !uri) {
+              strictFail(
+                parser,
+                "Unbound namespace prefix: " + JSON.stringify(prefix)
+              );
+              a.uri = prefix;
+            }
+            parser.tag.attributes[name] = a;
+            emitNode(parser, "onattribute", a);
+          }
+          parser.attribList.length = 0;
+        }
+        parser.tag.isSelfClosing = !!selfClosing;
+        parser.sawRoot = true;
+        parser.tags.push(parser.tag);
+        emitNode(parser, "onopentag", parser.tag);
+        if (!selfClosing) {
+          if (!parser.noscript && parser.tagName.toLowerCase() === "script") {
+            parser.state = S.SCRIPT;
+          } else {
+            parser.state = S.TEXT;
+          }
+          parser.tag = null;
+          parser.tagName = "";
+        }
+        parser.attribName = parser.attribValue = "";
+        parser.attribList.length = 0;
+      }
+      function closeTag(parser) {
+        if (!parser.tagName) {
+          strictFail(parser, "Weird empty close tag.");
+          parser.textNode += "</>";
+          parser.state = S.TEXT;
+          return;
+        }
+        if (parser.script) {
+          if (parser.tagName !== "script") {
+            parser.script += "</" + parser.tagName + ">";
+            parser.tagName = "";
+            parser.state = S.SCRIPT;
+            return;
+          }
+          emitNode(parser, "onscript", parser.script);
+          parser.script = "";
+        }
+        var t = parser.tags.length;
+        var tagName = parser.tagName;
+        if (!parser.strict) {
+          tagName = tagName[parser.looseCase]();
+        }
+        var closeTo = tagName;
+        while (t--) {
+          var close = parser.tags[t];
+          if (close.name !== closeTo) {
+            strictFail(parser, "Unexpected close tag");
+          } else {
+            break;
+          }
+        }
+        if (t < 0) {
+          strictFail(parser, "Unmatched closing tag: " + parser.tagName);
+          parser.textNode += "</" + parser.tagName + ">";
+          parser.state = S.TEXT;
+          return;
+        }
+        parser.tagName = tagName;
+        var s2 = parser.tags.length;
+        while (s2-- > t) {
+          var tag = parser.tag = parser.tags.pop();
+          parser.tagName = parser.tag.name;
+          emitNode(parser, "onclosetag", parser.tagName);
+          var x = {};
+          for (var i in tag.ns) {
+            x[i] = tag.ns[i];
+          }
+          var parent = parser.tags[parser.tags.length - 1] || parser;
+          if (parser.opt.xmlns && tag.ns !== parent.ns) {
+            Object.keys(tag.ns).forEach(function(p) {
+              var n = tag.ns[p];
+              emitNode(parser, "onclosenamespace", { prefix: p, uri: n });
+            });
+          }
+        }
+        if (t === 0) parser.closedRoot = true;
+        parser.tagName = parser.attribValue = parser.attribName = "";
+        parser.attribList.length = 0;
+        parser.state = S.TEXT;
+      }
+      function parseEntity(parser) {
+        var entity = parser.entity;
+        var entityLC = entity.toLowerCase();
+        var num;
+        var numStr = "";
+        if (parser.ENTITIES[entity]) {
+          return parser.ENTITIES[entity];
+        }
+        if (parser.ENTITIES[entityLC]) {
+          return parser.ENTITIES[entityLC];
+        }
+        entity = entityLC;
+        if (entity.charAt(0) === "#") {
+          if (entity.charAt(1) === "x") {
+            entity = entity.slice(2);
+            num = parseInt(entity, 16);
+            numStr = num.toString(16);
+          } else {
+            entity = entity.slice(1);
+            num = parseInt(entity, 10);
+            numStr = num.toString(10);
+          }
+        }
+        entity = entity.replace(/^0+/, "");
+        if (isNaN(num) || numStr.toLowerCase() !== entity || num < 0 || num > 1114111) {
+          strictFail(parser, "Invalid character entity");
+          return "&" + parser.entity + ";";
+        }
+        return String.fromCodePoint(num);
+      }
+      function beginWhiteSpace(parser, c) {
+        if (c === "<") {
+          parser.state = S.OPEN_WAKA;
+          parser.startTagPosition = parser.position;
+        } else if (!isWhitespace(c)) {
+          strictFail(parser, "Non-whitespace before first tag.");
+          parser.textNode = c;
+          parser.state = S.TEXT;
+        }
+      }
+      function charAt(chunk, i) {
+        var result = "";
+        if (i < chunk.length) {
+          result = chunk.charAt(i);
+        }
+        return result;
+      }
+      function write(chunk) {
+        var parser = this;
+        if (this.error) {
+          throw this.error;
+        }
+        if (parser.closed) {
+          return error(
+            parser,
+            "Cannot write after close. Assign an onready handler."
+          );
+        }
+        if (chunk === null) {
+          return end(parser);
+        }
+        if (typeof chunk === "object") {
+          chunk = chunk.toString();
+        }
+        var i = 0;
+        var c = "";
+        while (true) {
+          c = charAt(chunk, i++);
+          parser.c = c;
+          if (!c) {
+            break;
+          }
+          if (parser.trackPosition) {
+            parser.position++;
+            if (c === "\n") {
+              parser.line++;
+              parser.column = 0;
+            } else {
+              parser.column++;
+            }
+          }
+          switch (parser.state) {
+            case S.BEGIN:
+              parser.state = S.BEGIN_WHITESPACE;
+              if (c === "\uFEFF") {
+                continue;
+              }
+              beginWhiteSpace(parser, c);
+              continue;
+            case S.BEGIN_WHITESPACE:
+              beginWhiteSpace(parser, c);
+              continue;
+            case S.TEXT:
+              if (parser.sawRoot && !parser.closedRoot) {
+                var starti = i - 1;
+                while (c && c !== "<" && c !== "&") {
+                  c = charAt(chunk, i++);
+                  if (c && parser.trackPosition) {
+                    parser.position++;
+                    if (c === "\n") {
+                      parser.line++;
+                      parser.column = 0;
+                    } else {
+                      parser.column++;
+                    }
+                  }
+                }
+                parser.textNode += chunk.substring(starti, i - 1);
+              }
+              if (c === "<" && !(parser.sawRoot && parser.closedRoot && !parser.strict)) {
+                parser.state = S.OPEN_WAKA;
+                parser.startTagPosition = parser.position;
+              } else {
+                if (!isWhitespace(c) && (!parser.sawRoot || parser.closedRoot)) {
+                  strictFail(parser, "Text data outside of root node.");
+                }
+                if (c === "&") {
+                  parser.state = S.TEXT_ENTITY;
+                } else {
+                  parser.textNode += c;
+                }
+              }
+              continue;
+            case S.SCRIPT:
+              if (c === "<") {
+                parser.state = S.SCRIPT_ENDING;
+              } else {
+                parser.script += c;
+              }
+              continue;
+            case S.SCRIPT_ENDING:
+              if (c === "/") {
+                parser.state = S.CLOSE_TAG;
+              } else {
+                parser.script += "<" + c;
+                parser.state = S.SCRIPT;
+              }
+              continue;
+            case S.OPEN_WAKA:
+              if (c === "!") {
+                parser.state = S.SGML_DECL;
+                parser.sgmlDecl = "";
+              } else if (isWhitespace(c)) {
+              } else if (isMatch(nameStart, c)) {
+                parser.state = S.OPEN_TAG;
+                parser.tagName = c;
+              } else if (c === "/") {
+                parser.state = S.CLOSE_TAG;
+                parser.tagName = "";
+              } else if (c === "?") {
+                parser.state = S.PROC_INST;
+                parser.procInstName = parser.procInstBody = "";
+              } else {
+                strictFail(parser, "Unencoded <");
+                if (parser.startTagPosition + 1 < parser.position) {
+                  var pad = parser.position - parser.startTagPosition;
+                  c = new Array(pad).join(" ") + c;
+                }
+                parser.textNode += "<" + c;
+                parser.state = S.TEXT;
+              }
+              continue;
+            case S.SGML_DECL:
+              if (parser.sgmlDecl + c === "--") {
+                parser.state = S.COMMENT;
+                parser.comment = "";
+                parser.sgmlDecl = "";
+                continue;
+              }
+              if (parser.doctype && parser.doctype !== true && parser.sgmlDecl) {
+                parser.state = S.DOCTYPE_DTD;
+                parser.doctype += "<!" + parser.sgmlDecl + c;
+                parser.sgmlDecl = "";
+              } else if ((parser.sgmlDecl + c).toUpperCase() === CDATA) {
+                emitNode(parser, "onopencdata");
+                parser.state = S.CDATA;
+                parser.sgmlDecl = "";
+                parser.cdata = "";
+              } else if ((parser.sgmlDecl + c).toUpperCase() === DOCTYPE) {
+                parser.state = S.DOCTYPE;
+                if (parser.doctype || parser.sawRoot) {
+                  strictFail(
+                    parser,
+                    "Inappropriately located doctype declaration"
+                  );
+                }
+                parser.doctype = "";
+                parser.sgmlDecl = "";
+              } else if (c === ">") {
+                emitNode(parser, "onsgmldeclaration", parser.sgmlDecl);
+                parser.sgmlDecl = "";
+                parser.state = S.TEXT;
+              } else if (isQuote(c)) {
+                parser.state = S.SGML_DECL_QUOTED;
+                parser.sgmlDecl += c;
+              } else {
+                parser.sgmlDecl += c;
+              }
+              continue;
+            case S.SGML_DECL_QUOTED:
+              if (c === parser.q) {
+                parser.state = S.SGML_DECL;
+                parser.q = "";
+              }
+              parser.sgmlDecl += c;
+              continue;
+            case S.DOCTYPE:
+              if (c === ">") {
+                parser.state = S.TEXT;
+                emitNode(parser, "ondoctype", parser.doctype);
+                parser.doctype = true;
+              } else {
+                parser.doctype += c;
+                if (c === "[") {
+                  parser.state = S.DOCTYPE_DTD;
+                } else if (isQuote(c)) {
+                  parser.state = S.DOCTYPE_QUOTED;
+                  parser.q = c;
+                }
+              }
+              continue;
+            case S.DOCTYPE_QUOTED:
+              parser.doctype += c;
+              if (c === parser.q) {
+                parser.q = "";
+                parser.state = S.DOCTYPE;
+              }
+              continue;
+            case S.DOCTYPE_DTD:
+              if (c === "]") {
+                parser.doctype += c;
+                parser.state = S.DOCTYPE;
+              } else if (c === "<") {
+                parser.state = S.OPEN_WAKA;
+                parser.startTagPosition = parser.position;
+              } else if (isQuote(c)) {
+                parser.doctype += c;
+                parser.state = S.DOCTYPE_DTD_QUOTED;
+                parser.q = c;
+              } else {
+                parser.doctype += c;
+              }
+              continue;
+            case S.DOCTYPE_DTD_QUOTED:
+              parser.doctype += c;
+              if (c === parser.q) {
+                parser.state = S.DOCTYPE_DTD;
+                parser.q = "";
+              }
+              continue;
+            case S.COMMENT:
+              if (c === "-") {
+                parser.state = S.COMMENT_ENDING;
+              } else {
+                parser.comment += c;
+              }
+              continue;
+            case S.COMMENT_ENDING:
+              if (c === "-") {
+                parser.state = S.COMMENT_ENDED;
+                parser.comment = textopts(parser.opt, parser.comment);
+                if (parser.comment) {
+                  emitNode(parser, "oncomment", parser.comment);
+                }
+                parser.comment = "";
+              } else {
+                parser.comment += "-" + c;
+                parser.state = S.COMMENT;
+              }
+              continue;
+            case S.COMMENT_ENDED:
+              if (c !== ">") {
+                strictFail(parser, "Malformed comment");
+                parser.comment += "--" + c;
+                parser.state = S.COMMENT;
+              } else if (parser.doctype && parser.doctype !== true) {
+                parser.state = S.DOCTYPE_DTD;
+              } else {
+                parser.state = S.TEXT;
+              }
+              continue;
+            case S.CDATA:
+              var starti = i - 1;
+              while (c && c !== "]") {
+                c = charAt(chunk, i++);
+                if (c && parser.trackPosition) {
+                  parser.position++;
+                  if (c === "\n") {
+                    parser.line++;
+                    parser.column = 0;
+                  } else {
+                    parser.column++;
+                  }
+                }
+              }
+              parser.cdata += chunk.substring(starti, i - 1);
+              if (c === "]") {
+                parser.state = S.CDATA_ENDING;
+              }
+              continue;
+            case S.CDATA_ENDING:
+              if (c === "]") {
+                parser.state = S.CDATA_ENDING_2;
+              } else {
+                parser.cdata += "]" + c;
+                parser.state = S.CDATA;
+              }
+              continue;
+            case S.CDATA_ENDING_2:
+              if (c === ">") {
+                if (parser.cdata) {
+                  emitNode(parser, "oncdata", parser.cdata);
+                }
+                emitNode(parser, "onclosecdata");
+                parser.cdata = "";
+                parser.state = S.TEXT;
+              } else if (c === "]") {
+                parser.cdata += "]";
+              } else {
+                parser.cdata += "]]" + c;
+                parser.state = S.CDATA;
+              }
+              continue;
+            case S.PROC_INST:
+              if (c === "?") {
+                parser.state = S.PROC_INST_ENDING;
+              } else if (isWhitespace(c)) {
+                parser.state = S.PROC_INST_BODY;
+              } else {
+                parser.procInstName += c;
+              }
+              continue;
+            case S.PROC_INST_BODY:
+              if (!parser.procInstBody && isWhitespace(c)) {
+                continue;
+              } else if (c === "?") {
+                parser.state = S.PROC_INST_ENDING;
+              } else {
+                parser.procInstBody += c;
+              }
+              continue;
+            case S.PROC_INST_ENDING:
+              if (c === ">") {
+                emitNode(parser, "onprocessinginstruction", {
+                  name: parser.procInstName,
+                  body: parser.procInstBody
+                });
+                parser.procInstName = parser.procInstBody = "";
+                parser.state = S.TEXT;
+              } else {
+                parser.procInstBody += "?" + c;
+                parser.state = S.PROC_INST_BODY;
+              }
+              continue;
+            case S.OPEN_TAG:
+              if (isMatch(nameBody, c)) {
+                parser.tagName += c;
+              } else {
+                newTag(parser);
+                if (c === ">") {
+                  openTag(parser);
+                } else if (c === "/") {
+                  parser.state = S.OPEN_TAG_SLASH;
+                } else {
+                  if (!isWhitespace(c)) {
+                    strictFail(parser, "Invalid character in tag name");
+                  }
+                  parser.state = S.ATTRIB;
+                }
+              }
+              continue;
+            case S.OPEN_TAG_SLASH:
+              if (c === ">") {
+                openTag(parser, true);
+                closeTag(parser);
+              } else {
+                strictFail(
+                  parser,
+                  "Forward-slash in opening tag not followed by >"
+                );
+                parser.state = S.ATTRIB;
+              }
+              continue;
+            case S.ATTRIB:
+              if (isWhitespace(c)) {
+                continue;
+              } else if (c === ">") {
+                openTag(parser);
+              } else if (c === "/") {
+                parser.state = S.OPEN_TAG_SLASH;
+              } else if (isMatch(nameStart, c)) {
+                parser.attribName = c;
+                parser.attribValue = "";
+                parser.state = S.ATTRIB_NAME;
+              } else {
+                strictFail(parser, "Invalid attribute name");
+              }
+              continue;
+            case S.ATTRIB_NAME:
+              if (c === "=") {
+                parser.state = S.ATTRIB_VALUE;
+              } else if (c === ">") {
+                strictFail(parser, "Attribute without value");
+                parser.attribValue = parser.attribName;
+                attrib(parser);
+                openTag(parser);
+              } else if (isWhitespace(c)) {
+                parser.state = S.ATTRIB_NAME_SAW_WHITE;
+              } else if (isMatch(nameBody, c)) {
+                parser.attribName += c;
+              } else {
+                strictFail(parser, "Invalid attribute name");
+              }
+              continue;
+            case S.ATTRIB_NAME_SAW_WHITE:
+              if (c === "=") {
+                parser.state = S.ATTRIB_VALUE;
+              } else if (isWhitespace(c)) {
+                continue;
+              } else {
+                strictFail(parser, "Attribute without value");
+                parser.tag.attributes[parser.attribName] = "";
+                parser.attribValue = "";
+                emitNode(parser, "onattribute", {
+                  name: parser.attribName,
+                  value: ""
+                });
+                parser.attribName = "";
+                if (c === ">") {
+                  openTag(parser);
+                } else if (isMatch(nameStart, c)) {
+                  parser.attribName = c;
+                  parser.state = S.ATTRIB_NAME;
+                } else {
+                  strictFail(parser, "Invalid attribute name");
+                  parser.state = S.ATTRIB;
+                }
+              }
+              continue;
+            case S.ATTRIB_VALUE:
+              if (isWhitespace(c)) {
+                continue;
+              } else if (isQuote(c)) {
+                parser.q = c;
+                parser.state = S.ATTRIB_VALUE_QUOTED;
+              } else {
+                if (!parser.opt.unquotedAttributeValues) {
+                  error(parser, "Unquoted attribute value");
+                }
+                parser.state = S.ATTRIB_VALUE_UNQUOTED;
+                parser.attribValue = c;
+              }
+              continue;
+            case S.ATTRIB_VALUE_QUOTED:
+              if (c !== parser.q) {
+                if (c === "&") {
+                  parser.state = S.ATTRIB_VALUE_ENTITY_Q;
+                } else {
+                  parser.attribValue += c;
+                }
+                continue;
+              }
+              attrib(parser);
+              parser.q = "";
+              parser.state = S.ATTRIB_VALUE_CLOSED;
+              continue;
+            case S.ATTRIB_VALUE_CLOSED:
+              if (isWhitespace(c)) {
+                parser.state = S.ATTRIB;
+              } else if (c === ">") {
+                openTag(parser);
+              } else if (c === "/") {
+                parser.state = S.OPEN_TAG_SLASH;
+              } else if (isMatch(nameStart, c)) {
+                strictFail(parser, "No whitespace between attributes");
+                parser.attribName = c;
+                parser.attribValue = "";
+                parser.state = S.ATTRIB_NAME;
+              } else {
+                strictFail(parser, "Invalid attribute name");
+              }
+              continue;
+            case S.ATTRIB_VALUE_UNQUOTED:
+              if (!isAttribEnd(c)) {
+                if (c === "&") {
+                  parser.state = S.ATTRIB_VALUE_ENTITY_U;
+                } else {
+                  parser.attribValue += c;
+                }
+                continue;
+              }
+              attrib(parser);
+              if (c === ">") {
+                openTag(parser);
+              } else {
+                parser.state = S.ATTRIB;
+              }
+              continue;
+            case S.CLOSE_TAG:
+              if (!parser.tagName) {
+                if (isWhitespace(c)) {
+                  continue;
+                } else if (notMatch(nameStart, c)) {
+                  if (parser.script) {
+                    parser.script += "</" + c;
+                    parser.state = S.SCRIPT;
+                  } else {
+                    strictFail(parser, "Invalid tagname in closing tag.");
+                  }
+                } else {
+                  parser.tagName = c;
+                }
+              } else if (c === ">") {
+                closeTag(parser);
+              } else if (isMatch(nameBody, c)) {
+                parser.tagName += c;
+              } else if (parser.script) {
+                parser.script += "</" + parser.tagName + c;
+                parser.tagName = "";
+                parser.state = S.SCRIPT;
+              } else {
+                if (!isWhitespace(c)) {
+                  strictFail(parser, "Invalid tagname in closing tag");
+                }
+                parser.state = S.CLOSE_TAG_SAW_WHITE;
+              }
+              continue;
+            case S.CLOSE_TAG_SAW_WHITE:
+              if (isWhitespace(c)) {
+                continue;
+              }
+              if (c === ">") {
+                closeTag(parser);
+              } else {
+                strictFail(parser, "Invalid characters in closing tag");
+              }
+              continue;
+            case S.TEXT_ENTITY:
+            case S.ATTRIB_VALUE_ENTITY_Q:
+            case S.ATTRIB_VALUE_ENTITY_U:
+              var returnState;
+              var buffer;
+              switch (parser.state) {
+                case S.TEXT_ENTITY:
+                  returnState = S.TEXT;
+                  buffer = "textNode";
+                  break;
+                case S.ATTRIB_VALUE_ENTITY_Q:
+                  returnState = S.ATTRIB_VALUE_QUOTED;
+                  buffer = "attribValue";
+                  break;
+                case S.ATTRIB_VALUE_ENTITY_U:
+                  returnState = S.ATTRIB_VALUE_UNQUOTED;
+                  buffer = "attribValue";
+                  break;
+              }
+              if (c === ";") {
+                var parsedEntity = parseEntity(parser);
+                if (parser.opt.unparsedEntities && !Object.values(sax.XML_ENTITIES).includes(parsedEntity)) {
+                  if ((parser.entityCount += 1) > parser.opt.maxEntityCount) {
+                    error(
+                      parser,
+                      "Parsed entity count exceeds max entity count"
+                    );
+                  }
+                  if ((parser.entityDepth += 1) > parser.opt.maxEntityDepth) {
+                    error(
+                      parser,
+                      "Parsed entity depth exceeds max entity depth"
+                    );
+                  }
+                  parser.entity = "";
+                  parser.state = returnState;
+                  parser.write(parsedEntity);
+                  parser.entityDepth -= 1;
+                } else {
+                  parser[buffer] += parsedEntity;
+                  parser.entity = "";
+                  parser.state = returnState;
+                }
+              } else if (isMatch(parser.entity.length ? entityBody : entityStart, c)) {
+                parser.entity += c;
+              } else {
+                strictFail(parser, "Invalid character in entity name");
+                parser[buffer] += "&" + parser.entity + c;
+                parser.entity = "";
+                parser.state = returnState;
+              }
+              continue;
+            default: {
+              throw new Error(parser, "Unknown state: " + parser.state);
+            }
+          }
+        }
+        if (parser.position >= parser.bufferCheckPosition) {
+          checkBufferLength(parser);
+        }
+        return parser;
+      }
+      if (!String.fromCodePoint) {
+        ;
+        (function() {
+          var stringFromCharCode = String.fromCharCode;
+          var floor = Math.floor;
+          var fromCodePoint = function() {
+            var MAX_SIZE = 16384;
+            var codeUnits = [];
+            var highSurrogate;
+            var lowSurrogate;
+            var index2 = -1;
+            var length = arguments.length;
+            if (!length) {
+              return "";
+            }
+            var result = "";
+            while (++index2 < length) {
+              var codePoint = Number(arguments[index2]);
+              if (!isFinite(codePoint) || // `NaN`, `+Infinity`, or `-Infinity`
+              codePoint < 0 || // not a valid Unicode code point
+              codePoint > 1114111 || // not a valid Unicode code point
+              floor(codePoint) !== codePoint) {
+                throw RangeError("Invalid code point: " + codePoint);
+              }
+              if (codePoint <= 65535) {
+                codeUnits.push(codePoint);
+              } else {
+                codePoint -= 65536;
+                highSurrogate = (codePoint >> 10) + 55296;
+                lowSurrogate = codePoint % 1024 + 56320;
+                codeUnits.push(highSurrogate, lowSurrogate);
+              }
+              if (index2 + 1 === length || codeUnits.length > MAX_SIZE) {
+                result += stringFromCharCode.apply(null, codeUnits);
+                codeUnits.length = 0;
+              }
+            }
+            return result;
+          };
+          if (Object.defineProperty) {
+            Object.defineProperty(String, "fromCodePoint", {
+              value: fromCodePoint,
+              configurable: true,
+              writable: true
+            });
+          } else {
+            String.fromCodePoint = fromCodePoint;
+          }
+        })();
+      }
+    })(typeof exports === "undefined" ? exports.sax = {} : exports);
+  }
+});
+
+// node_modules/xml-js/lib/array-helper.js
+var require_array_helper = __commonJS({
+  "node_modules/xml-js/lib/array-helper.js"(exports, module2) {
+    module2.exports = {
+      isArray: function(value) {
+        if (Array.isArray) {
+          return Array.isArray(value);
+        }
+        return Object.prototype.toString.call(value) === "[object Array]";
+      }
+    };
+  }
+});
+
+// node_modules/xml-js/lib/options-helper.js
+var require_options_helper = __commonJS({
+  "node_modules/xml-js/lib/options-helper.js"(exports, module2) {
+    var isArray3 = require_array_helper().isArray;
+    module2.exports = {
+      copyOptions: function(options) {
+        var key, copy = {};
+        for (key in options) {
+          if (options.hasOwnProperty(key)) {
+            copy[key] = options[key];
+          }
+        }
+        return copy;
+      },
+      ensureFlagExists: function(item, options) {
+        if (!(item in options) || typeof options[item] !== "boolean") {
+          options[item] = false;
+        }
+      },
+      ensureSpacesExists: function(options) {
+        if (!("spaces" in options) || typeof options.spaces !== "number" && typeof options.spaces !== "string") {
+          options.spaces = 0;
+        }
+      },
+      ensureAlwaysArrayExists: function(options) {
+        if (!("alwaysArray" in options) || typeof options.alwaysArray !== "boolean" && !isArray3(options.alwaysArray)) {
+          options.alwaysArray = false;
+        }
+      },
+      ensureKeyExists: function(key, options) {
+        if (!(key + "Key" in options) || typeof options[key + "Key"] !== "string") {
+          options[key + "Key"] = options.compact ? "_" + key : key;
+        }
+      },
+      checkFnExists: function(key, options) {
+        return key + "Fn" in options;
+      }
+    };
+  }
+});
+
+// node_modules/xml-js/lib/xml2js.js
+var require_xml2js = __commonJS({
+  "node_modules/xml-js/lib/xml2js.js"(exports, module2) {
+    var sax = require_sax();
+    var expat = { on: function() {
+    }, parse: function() {
+    } };
+    var helper = require_options_helper();
+    var isArray3 = require_array_helper().isArray;
+    var options;
+    var pureJsParser = true;
+    var currentElement;
+    function validateOptions(userOptions) {
+      options = helper.copyOptions(userOptions);
+      helper.ensureFlagExists("ignoreDeclaration", options);
+      helper.ensureFlagExists("ignoreInstruction", options);
+      helper.ensureFlagExists("ignoreAttributes", options);
+      helper.ensureFlagExists("ignoreText", options);
+      helper.ensureFlagExists("ignoreComment", options);
+      helper.ensureFlagExists("ignoreCdata", options);
+      helper.ensureFlagExists("ignoreDoctype", options);
+      helper.ensureFlagExists("compact", options);
+      helper.ensureFlagExists("alwaysChildren", options);
+      helper.ensureFlagExists("addParent", options);
+      helper.ensureFlagExists("trim", options);
+      helper.ensureFlagExists("nativeType", options);
+      helper.ensureFlagExists("nativeTypeAttributes", options);
+      helper.ensureFlagExists("sanitize", options);
+      helper.ensureFlagExists("instructionHasAttributes", options);
+      helper.ensureFlagExists("captureSpacesBetweenElements", options);
+      helper.ensureAlwaysArrayExists(options);
+      helper.ensureKeyExists("declaration", options);
+      helper.ensureKeyExists("instruction", options);
+      helper.ensureKeyExists("attributes", options);
+      helper.ensureKeyExists("text", options);
+      helper.ensureKeyExists("comment", options);
+      helper.ensureKeyExists("cdata", options);
+      helper.ensureKeyExists("doctype", options);
+      helper.ensureKeyExists("type", options);
+      helper.ensureKeyExists("name", options);
+      helper.ensureKeyExists("elements", options);
+      helper.ensureKeyExists("parent", options);
+      helper.checkFnExists("doctype", options);
+      helper.checkFnExists("instruction", options);
+      helper.checkFnExists("cdata", options);
+      helper.checkFnExists("comment", options);
+      helper.checkFnExists("text", options);
+      helper.checkFnExists("instructionName", options);
+      helper.checkFnExists("elementName", options);
+      helper.checkFnExists("attributeName", options);
+      helper.checkFnExists("attributeValue", options);
+      helper.checkFnExists("attributes", options);
+      return options;
+    }
+    function nativeType2(value) {
+      var nValue = Number(value);
+      if (!isNaN(nValue)) {
+        return nValue;
+      }
+      var bValue = value.toLowerCase();
+      if (bValue === "true") {
+        return true;
+      } else if (bValue === "false") {
+        return false;
+      }
+      return value;
+    }
+    function addField(type, value) {
+      var key;
+      if (options.compact) {
+        if (!currentElement[options[type + "Key"]] && (isArray3(options.alwaysArray) ? options.alwaysArray.indexOf(options[type + "Key"]) !== -1 : options.alwaysArray)) {
+          currentElement[options[type + "Key"]] = [];
+        }
+        if (currentElement[options[type + "Key"]] && !isArray3(currentElement[options[type + "Key"]])) {
+          currentElement[options[type + "Key"]] = [currentElement[options[type + "Key"]]];
+        }
+        if (type + "Fn" in options && typeof value === "string") {
+          value = options[type + "Fn"](value, currentElement);
+        }
+        if (type === "instruction" && ("instructionFn" in options || "instructionNameFn" in options)) {
+          for (key in value) {
+            if (value.hasOwnProperty(key)) {
+              if ("instructionFn" in options) {
+                value[key] = options.instructionFn(value[key], key, currentElement);
+              } else {
+                var temp = value[key];
+                delete value[key];
+                value[options.instructionNameFn(key, temp, currentElement)] = temp;
+              }
+            }
+          }
+        }
+        if (isArray3(currentElement[options[type + "Key"]])) {
+          currentElement[options[type + "Key"]].push(value);
+        } else {
+          currentElement[options[type + "Key"]] = value;
+        }
+      } else {
+        if (!currentElement[options.elementsKey]) {
+          currentElement[options.elementsKey] = [];
+        }
+        var element = {};
+        element[options.typeKey] = type;
+        if (type === "instruction") {
+          for (key in value) {
+            if (value.hasOwnProperty(key)) {
+              break;
+            }
+          }
+          element[options.nameKey] = "instructionNameFn" in options ? options.instructionNameFn(key, value, currentElement) : key;
+          if (options.instructionHasAttributes) {
+            element[options.attributesKey] = value[key][options.attributesKey];
+            if ("instructionFn" in options) {
+              element[options.attributesKey] = options.instructionFn(element[options.attributesKey], key, currentElement);
+            }
+          } else {
+            if ("instructionFn" in options) {
+              value[key] = options.instructionFn(value[key], key, currentElement);
+            }
+            element[options.instructionKey] = value[key];
+          }
+        } else {
+          if (type + "Fn" in options) {
+            value = options[type + "Fn"](value, currentElement);
+          }
+          element[options[type + "Key"]] = value;
+        }
+        if (options.addParent) {
+          element[options.parentKey] = currentElement;
+        }
+        currentElement[options.elementsKey].push(element);
+      }
+    }
+    function manipulateAttributes(attributes) {
+      if ("attributesFn" in options && attributes) {
+        attributes = options.attributesFn(attributes, currentElement);
+      }
+      if ((options.trim || "attributeValueFn" in options || "attributeNameFn" in options || options.nativeTypeAttributes) && attributes) {
+        var key;
+        for (key in attributes) {
+          if (attributes.hasOwnProperty(key)) {
+            if (options.trim) attributes[key] = attributes[key].trim();
+            if (options.nativeTypeAttributes) {
+              attributes[key] = nativeType2(attributes[key]);
+            }
+            if ("attributeValueFn" in options) attributes[key] = options.attributeValueFn(attributes[key], key, currentElement);
+            if ("attributeNameFn" in options) {
+              var temp = attributes[key];
+              delete attributes[key];
+              attributes[options.attributeNameFn(key, attributes[key], currentElement)] = temp;
+            }
+          }
+        }
+      }
+      return attributes;
+    }
+    function onInstruction(instruction) {
+      var attributes = {};
+      if (instruction.body && (instruction.name.toLowerCase() === "xml" || options.instructionHasAttributes)) {
+        var attrsRegExp = /([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|(\w+))\s*/g;
+        var match2;
+        while ((match2 = attrsRegExp.exec(instruction.body)) !== null) {
+          attributes[match2[1]] = match2[2] || match2[3] || match2[4];
+        }
+        attributes = manipulateAttributes(attributes);
+      }
+      if (instruction.name.toLowerCase() === "xml") {
+        if (options.ignoreDeclaration) {
+          return;
+        }
+        currentElement[options.declarationKey] = {};
+        if (Object.keys(attributes).length) {
+          currentElement[options.declarationKey][options.attributesKey] = attributes;
+        }
+        if (options.addParent) {
+          currentElement[options.declarationKey][options.parentKey] = currentElement;
+        }
+      } else {
+        if (options.ignoreInstruction) {
+          return;
+        }
+        if (options.trim) {
+          instruction.body = instruction.body.trim();
+        }
+        var value = {};
+        if (options.instructionHasAttributes && Object.keys(attributes).length) {
+          value[instruction.name] = {};
+          value[instruction.name][options.attributesKey] = attributes;
+        } else {
+          value[instruction.name] = instruction.body;
+        }
+        addField("instruction", value);
+      }
+    }
+    function onStartElement(name, attributes) {
+      var element;
+      if (typeof name === "object") {
+        attributes = name.attributes;
+        name = name.name;
+      }
+      attributes = manipulateAttributes(attributes);
+      if ("elementNameFn" in options) {
+        name = options.elementNameFn(name, currentElement);
+      }
+      if (options.compact) {
+        element = {};
+        if (!options.ignoreAttributes && attributes && Object.keys(attributes).length) {
+          element[options.attributesKey] = {};
+          var key;
+          for (key in attributes) {
+            if (attributes.hasOwnProperty(key)) {
+              element[options.attributesKey][key] = attributes[key];
+            }
+          }
+        }
+        if (!(name in currentElement) && (isArray3(options.alwaysArray) ? options.alwaysArray.indexOf(name) !== -1 : options.alwaysArray)) {
+          currentElement[name] = [];
+        }
+        if (currentElement[name] && !isArray3(currentElement[name])) {
+          currentElement[name] = [currentElement[name]];
+        }
+        if (isArray3(currentElement[name])) {
+          currentElement[name].push(element);
+        } else {
+          currentElement[name] = element;
+        }
+      } else {
+        if (!currentElement[options.elementsKey]) {
+          currentElement[options.elementsKey] = [];
+        }
+        element = {};
+        element[options.typeKey] = "element";
+        element[options.nameKey] = name;
+        if (!options.ignoreAttributes && attributes && Object.keys(attributes).length) {
+          element[options.attributesKey] = attributes;
+        }
+        if (options.alwaysChildren) {
+          element[options.elementsKey] = [];
+        }
+        currentElement[options.elementsKey].push(element);
+      }
+      element[options.parentKey] = currentElement;
+      currentElement = element;
+    }
+    function onText(text) {
+      if (options.ignoreText) {
+        return;
+      }
+      if (!text.trim() && !options.captureSpacesBetweenElements) {
+        return;
+      }
+      if (options.trim) {
+        text = text.trim();
+      }
+      if (options.nativeType) {
+        text = nativeType2(text);
+      }
+      if (options.sanitize) {
+        text = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      }
+      addField("text", text);
+    }
+    function onComment(comment) {
+      if (options.ignoreComment) {
+        return;
+      }
+      if (options.trim) {
+        comment = comment.trim();
+      }
+      addField("comment", comment);
+    }
+    function onEndElement(name) {
+      var parentElement = currentElement[options.parentKey];
+      if (!options.addParent) {
+        delete currentElement[options.parentKey];
+      }
+      currentElement = parentElement;
+    }
+    function onCdata(cdata) {
+      if (options.ignoreCdata) {
+        return;
+      }
+      if (options.trim) {
+        cdata = cdata.trim();
+      }
+      addField("cdata", cdata);
+    }
+    function onDoctype(doctype) {
+      if (options.ignoreDoctype) {
+        return;
+      }
+      doctype = doctype.replace(/^ /, "");
+      if (options.trim) {
+        doctype = doctype.trim();
+      }
+      addField("doctype", doctype);
+    }
+    function onError(error) {
+      error.note = error;
+    }
+    module2.exports = function(xml, userOptions) {
+      var parser = pureJsParser ? sax.parser(true, {}) : parser = new expat.Parser("UTF-8");
+      var result = {};
+      currentElement = result;
+      options = validateOptions(userOptions);
+      if (pureJsParser) {
+        parser.opt = { strictEntities: true };
+        parser.onopentag = onStartElement;
+        parser.ontext = onText;
+        parser.oncomment = onComment;
+        parser.onclosetag = onEndElement;
+        parser.onerror = onError;
+        parser.oncdata = onCdata;
+        parser.ondoctype = onDoctype;
+        parser.onprocessinginstruction = onInstruction;
+      } else {
+        parser.on("startElement", onStartElement);
+        parser.on("text", onText);
+        parser.on("comment", onComment);
+        parser.on("endElement", onEndElement);
+        parser.on("error", onError);
+      }
+      if (pureJsParser) {
+        parser.write(xml).close();
+      } else {
+        if (!parser.parse(xml)) {
+          throw new Error("XML parsing error: " + parser.getError());
+        }
+      }
+      if (result[options.elementsKey]) {
+        var temp = result[options.elementsKey];
+        delete result[options.elementsKey];
+        result[options.elementsKey] = temp;
+        delete result.text;
+      }
+      return result;
+    };
+  }
+});
+
+// node_modules/xml-js/lib/xml2json.js
+var require_xml2json = __commonJS({
+  "node_modules/xml-js/lib/xml2json.js"(exports, module2) {
+    var helper = require_options_helper();
+    var xml2js = require_xml2js();
+    function validateOptions(userOptions) {
+      var options = helper.copyOptions(userOptions);
+      helper.ensureSpacesExists(options);
+      return options;
+    }
+    module2.exports = function(xml, userOptions) {
+      var options, js, json, parentKey;
+      options = validateOptions(userOptions);
+      js = xml2js(xml, options);
+      parentKey = "compact" in options && options.compact ? "_parent" : "parent";
+      if ("addParent" in options && options.addParent) {
+        json = JSON.stringify(js, function(k, v) {
+          return k === parentKey ? "_" : v;
+        }, options.spaces);
+      } else {
+        json = JSON.stringify(js, null, options.spaces);
+      }
+      return json.replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
+    };
+  }
+});
+
+// node_modules/xml-js/lib/js2xml.js
+var require_js2xml = __commonJS({
+  "node_modules/xml-js/lib/js2xml.js"(exports, module2) {
+    var helper = require_options_helper();
+    var isArray3 = require_array_helper().isArray;
+    var currentElement;
+    var currentElementName;
+    function validateOptions(userOptions) {
+      var options = helper.copyOptions(userOptions);
+      helper.ensureFlagExists("ignoreDeclaration", options);
+      helper.ensureFlagExists("ignoreInstruction", options);
+      helper.ensureFlagExists("ignoreAttributes", options);
+      helper.ensureFlagExists("ignoreText", options);
+      helper.ensureFlagExists("ignoreComment", options);
+      helper.ensureFlagExists("ignoreCdata", options);
+      helper.ensureFlagExists("ignoreDoctype", options);
+      helper.ensureFlagExists("compact", options);
+      helper.ensureFlagExists("indentText", options);
+      helper.ensureFlagExists("indentCdata", options);
+      helper.ensureFlagExists("indentAttributes", options);
+      helper.ensureFlagExists("indentInstruction", options);
+      helper.ensureFlagExists("fullTagEmptyElement", options);
+      helper.ensureFlagExists("noQuotesForNativeAttributes", options);
+      helper.ensureSpacesExists(options);
+      if (typeof options.spaces === "number") {
+        options.spaces = Array(options.spaces + 1).join(" ");
+      }
+      helper.ensureKeyExists("declaration", options);
+      helper.ensureKeyExists("instruction", options);
+      helper.ensureKeyExists("attributes", options);
+      helper.ensureKeyExists("text", options);
+      helper.ensureKeyExists("comment", options);
+      helper.ensureKeyExists("cdata", options);
+      helper.ensureKeyExists("doctype", options);
+      helper.ensureKeyExists("type", options);
+      helper.ensureKeyExists("name", options);
+      helper.ensureKeyExists("elements", options);
+      helper.checkFnExists("doctype", options);
+      helper.checkFnExists("instruction", options);
+      helper.checkFnExists("cdata", options);
+      helper.checkFnExists("comment", options);
+      helper.checkFnExists("text", options);
+      helper.checkFnExists("instructionName", options);
+      helper.checkFnExists("elementName", options);
+      helper.checkFnExists("attributeName", options);
+      helper.checkFnExists("attributeValue", options);
+      helper.checkFnExists("attributes", options);
+      helper.checkFnExists("fullTagEmptyElement", options);
+      return options;
+    }
+    function writeIndentation(options, depth, firstLine) {
+      return (!firstLine && options.spaces ? "\n" : "") + Array(depth + 1).join(options.spaces);
+    }
+    function writeAttributes(attributes, options, depth) {
+      if (options.ignoreAttributes) {
+        return "";
+      }
+      if ("attributesFn" in options) {
+        attributes = options.attributesFn(attributes, currentElementName, currentElement);
+      }
+      var key, attr, attrName, quote, result = [];
+      for (key in attributes) {
+        if (attributes.hasOwnProperty(key) && attributes[key] !== null && attributes[key] !== void 0) {
+          quote = options.noQuotesForNativeAttributes && typeof attributes[key] !== "string" ? "" : '"';
+          attr = "" + attributes[key];
+          attr = attr.replace(/"/g, "&quot;");
+          attrName = "attributeNameFn" in options ? options.attributeNameFn(key, attr, currentElementName, currentElement) : key;
+          result.push(options.spaces && options.indentAttributes ? writeIndentation(options, depth + 1, false) : " ");
+          result.push(attrName + "=" + quote + ("attributeValueFn" in options ? options.attributeValueFn(attr, key, currentElementName, currentElement) : attr) + quote);
+        }
+      }
+      if (attributes && Object.keys(attributes).length && options.spaces && options.indentAttributes) {
+        result.push(writeIndentation(options, depth, false));
+      }
+      return result.join("");
+    }
+    function writeDeclaration(declaration, options, depth) {
+      currentElement = declaration;
+      currentElementName = "xml";
+      return options.ignoreDeclaration ? "" : "<?xml" + writeAttributes(declaration[options.attributesKey], options, depth) + "?>";
+    }
+    function writeInstruction(instruction, options, depth) {
+      if (options.ignoreInstruction) {
+        return "";
+      }
+      var key;
+      for (key in instruction) {
+        if (instruction.hasOwnProperty(key)) {
+          break;
+        }
+      }
+      var instructionName = "instructionNameFn" in options ? options.instructionNameFn(key, instruction[key], currentElementName, currentElement) : key;
+      if (typeof instruction[key] === "object") {
+        currentElement = instruction;
+        currentElementName = instructionName;
+        return "<?" + instructionName + writeAttributes(instruction[key][options.attributesKey], options, depth) + "?>";
+      } else {
+        var instructionValue = instruction[key] ? instruction[key] : "";
+        if ("instructionFn" in options) instructionValue = options.instructionFn(instructionValue, key, currentElementName, currentElement);
+        return "<?" + instructionName + (instructionValue ? " " + instructionValue : "") + "?>";
+      }
+    }
+    function writeComment(comment, options) {
+      return options.ignoreComment ? "" : "<!--" + ("commentFn" in options ? options.commentFn(comment, currentElementName, currentElement) : comment) + "-->";
+    }
+    function writeCdata(cdata, options) {
+      return options.ignoreCdata ? "" : "<![CDATA[" + ("cdataFn" in options ? options.cdataFn(cdata, currentElementName, currentElement) : cdata.replace("]]>", "]]]]><![CDATA[>")) + "]]>";
+    }
+    function writeDoctype(doctype, options) {
+      return options.ignoreDoctype ? "" : "<!DOCTYPE " + ("doctypeFn" in options ? options.doctypeFn(doctype, currentElementName, currentElement) : doctype) + ">";
+    }
+    function writeText(text, options) {
+      if (options.ignoreText) return "";
+      text = "" + text;
+      text = text.replace(/&amp;/g, "&");
+      text = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      return "textFn" in options ? options.textFn(text, currentElementName, currentElement) : text;
+    }
+    function hasContent(element, options) {
+      var i;
+      if (element.elements && element.elements.length) {
+        for (i = 0; i < element.elements.length; ++i) {
+          switch (element.elements[i][options.typeKey]) {
+            case "text":
+              if (options.indentText) {
+                return true;
+              }
+              break;
+            // skip to next key
+            case "cdata":
+              if (options.indentCdata) {
+                return true;
+              }
+              break;
+            // skip to next key
+            case "instruction":
+              if (options.indentInstruction) {
+                return true;
+              }
+              break;
+            // skip to next key
+            case "doctype":
+            case "comment":
+            case "element":
+              return true;
+            default:
+              return true;
+          }
+        }
+      }
+      return false;
+    }
+    function writeElement(element, options, depth) {
+      currentElement = element;
+      currentElementName = element.name;
+      var xml = [], elementName = "elementNameFn" in options ? options.elementNameFn(element.name, element) : element.name;
+      xml.push("<" + elementName);
+      if (element[options.attributesKey]) {
+        xml.push(writeAttributes(element[options.attributesKey], options, depth));
+      }
+      var withClosingTag = element[options.elementsKey] && element[options.elementsKey].length || element[options.attributesKey] && element[options.attributesKey]["xml:space"] === "preserve";
+      if (!withClosingTag) {
+        if ("fullTagEmptyElementFn" in options) {
+          withClosingTag = options.fullTagEmptyElementFn(element.name, element);
+        } else {
+          withClosingTag = options.fullTagEmptyElement;
+        }
+      }
+      if (withClosingTag) {
+        xml.push(">");
+        if (element[options.elementsKey] && element[options.elementsKey].length) {
+          xml.push(writeElements(element[options.elementsKey], options, depth + 1));
+          currentElement = element;
+          currentElementName = element.name;
+        }
+        xml.push(options.spaces && hasContent(element, options) ? "\n" + Array(depth + 1).join(options.spaces) : "");
+        xml.push("</" + elementName + ">");
+      } else {
+        xml.push("/>");
+      }
+      return xml.join("");
+    }
+    function writeElements(elements, options, depth, firstLine) {
+      return elements.reduce(function(xml, element) {
+        var indent = writeIndentation(options, depth, firstLine && !xml);
+        switch (element.type) {
+          case "element":
+            return xml + indent + writeElement(element, options, depth);
+          case "comment":
+            return xml + indent + writeComment(element[options.commentKey], options);
+          case "doctype":
+            return xml + indent + writeDoctype(element[options.doctypeKey], options);
+          case "cdata":
+            return xml + (options.indentCdata ? indent : "") + writeCdata(element[options.cdataKey], options);
+          case "text":
+            return xml + (options.indentText ? indent : "") + writeText(element[options.textKey], options);
+          case "instruction":
+            var instruction = {};
+            instruction[element[options.nameKey]] = element[options.attributesKey] ? element : element[options.instructionKey];
+            return xml + (options.indentInstruction ? indent : "") + writeInstruction(instruction, options, depth);
+        }
+      }, "");
+    }
+    function hasContentCompact(element, options, anyContent) {
+      var key;
+      for (key in element) {
+        if (element.hasOwnProperty(key)) {
+          switch (key) {
+            case options.parentKey:
+            case options.attributesKey:
+              break;
+            // skip to next key
+            case options.textKey:
+              if (options.indentText || anyContent) {
+                return true;
+              }
+              break;
+            // skip to next key
+            case options.cdataKey:
+              if (options.indentCdata || anyContent) {
+                return true;
+              }
+              break;
+            // skip to next key
+            case options.instructionKey:
+              if (options.indentInstruction || anyContent) {
+                return true;
+              }
+              break;
+            // skip to next key
+            case options.doctypeKey:
+            case options.commentKey:
+              return true;
+            default:
+              return true;
+          }
+        }
+      }
+      return false;
+    }
+    function writeElementCompact(element, name, options, depth, indent) {
+      currentElement = element;
+      currentElementName = name;
+      var elementName = "elementNameFn" in options ? options.elementNameFn(name, element) : name;
+      if (typeof element === "undefined" || element === null || element === "") {
+        return "fullTagEmptyElementFn" in options && options.fullTagEmptyElementFn(name, element) || options.fullTagEmptyElement ? "<" + elementName + "></" + elementName + ">" : "<" + elementName + "/>";
+      }
+      var xml = [];
+      if (name) {
+        xml.push("<" + elementName);
+        if (typeof element !== "object") {
+          xml.push(">" + writeText(element, options) + "</" + elementName + ">");
+          return xml.join("");
+        }
+        if (element[options.attributesKey]) {
+          xml.push(writeAttributes(element[options.attributesKey], options, depth));
+        }
+        var withClosingTag = hasContentCompact(element, options, true) || element[options.attributesKey] && element[options.attributesKey]["xml:space"] === "preserve";
+        if (!withClosingTag) {
+          if ("fullTagEmptyElementFn" in options) {
+            withClosingTag = options.fullTagEmptyElementFn(name, element);
+          } else {
+            withClosingTag = options.fullTagEmptyElement;
+          }
+        }
+        if (withClosingTag) {
+          xml.push(">");
+        } else {
+          xml.push("/>");
+          return xml.join("");
+        }
+      }
+      xml.push(writeElementsCompact(element, options, depth + 1, false));
+      currentElement = element;
+      currentElementName = name;
+      if (name) {
+        xml.push((indent ? writeIndentation(options, depth, false) : "") + "</" + elementName + ">");
+      }
+      return xml.join("");
+    }
+    function writeElementsCompact(element, options, depth, firstLine) {
+      var i, key, nodes, xml = [];
+      for (key in element) {
+        if (element.hasOwnProperty(key)) {
+          nodes = isArray3(element[key]) ? element[key] : [element[key]];
+          for (i = 0; i < nodes.length; ++i) {
+            switch (key) {
+              case options.declarationKey:
+                xml.push(writeDeclaration(nodes[i], options, depth));
+                break;
+              case options.instructionKey:
+                xml.push((options.indentInstruction ? writeIndentation(options, depth, firstLine) : "") + writeInstruction(nodes[i], options, depth));
+                break;
+              case options.attributesKey:
+              case options.parentKey:
+                break;
+              // skip
+              case options.textKey:
+                xml.push((options.indentText ? writeIndentation(options, depth, firstLine) : "") + writeText(nodes[i], options));
+                break;
+              case options.cdataKey:
+                xml.push((options.indentCdata ? writeIndentation(options, depth, firstLine) : "") + writeCdata(nodes[i], options));
+                break;
+              case options.doctypeKey:
+                xml.push(writeIndentation(options, depth, firstLine) + writeDoctype(nodes[i], options));
+                break;
+              case options.commentKey:
+                xml.push(writeIndentation(options, depth, firstLine) + writeComment(nodes[i], options));
+                break;
+              default:
+                xml.push(writeIndentation(options, depth, firstLine) + writeElementCompact(nodes[i], key, options, depth, hasContentCompact(nodes[i], options)));
+            }
+            firstLine = firstLine && !xml.length;
+          }
+        }
+      }
+      return xml.join("");
+    }
+    module2.exports = function(js, options) {
+      options = validateOptions(options);
+      var xml = [];
+      currentElement = js;
+      currentElementName = "_root_";
+      if (options.compact) {
+        xml.push(writeElementsCompact(js, options, 0, true));
+      } else {
+        if (js[options.declarationKey]) {
+          xml.push(writeDeclaration(js[options.declarationKey], options, 0));
+        }
+        if (js[options.elementsKey] && js[options.elementsKey].length) {
+          xml.push(writeElements(js[options.elementsKey], options, 0, !xml.length));
+        }
+      }
+      return xml.join("");
+    };
+  }
+});
+
+// node_modules/xml-js/lib/json2xml.js
+var require_json2xml = __commonJS({
+  "node_modules/xml-js/lib/json2xml.js"(exports, module2) {
+    var js2xml = require_js2xml();
+    module2.exports = function(json, options) {
+      if (json instanceof Buffer) {
+        json = json.toString();
+      }
+      var js = null;
+      if (typeof json === "string") {
+        try {
+          js = JSON.parse(json);
+        } catch (e) {
+          throw new Error("The JSON structure is invalid");
+        }
+      } else {
+        js = json;
+      }
+      return js2xml(js, options);
+    };
+  }
+});
+
+// node_modules/xml-js/lib/index.js
+var require_lib = __commonJS({
+  "node_modules/xml-js/lib/index.js"(exports, module2) {
+    var xml2js = require_xml2js();
+    var xml2json = require_xml2json();
+    var js2xml = require_js2xml();
+    var json2xml = require_json2xml();
+    module2.exports = {
+      xml2js,
+      xml2json,
+      js2xml,
+      json2xml
+    };
+  }
+});
+
+// node_modules/cross-fetch/dist/browser-ponyfill.js
+var require_browser_ponyfill = __commonJS({
+  "node_modules/cross-fetch/dist/browser-ponyfill.js"(exports, module2) {
+    var __global__ = typeof globalThis !== "undefined" && globalThis || typeof self !== "undefined" && self || typeof global !== "undefined" && global;
+    var __globalThis__ = (function() {
+      function F() {
+        this.fetch = false;
+        this.DOMException = __global__.DOMException;
+      }
+      F.prototype = __global__;
+      return new F();
+    })();
+    (function(globalThis2) {
+      var irrelevant = (function(exports2) {
+        var g = typeof globalThis2 !== "undefined" && globalThis2 || typeof self !== "undefined" && self || // eslint-disable-next-line no-undef
+        typeof global !== "undefined" && global || {};
+        var support = {
+          searchParams: "URLSearchParams" in g,
+          iterable: "Symbol" in g && "iterator" in Symbol,
+          blob: "FileReader" in g && "Blob" in g && (function() {
+            try {
+              new Blob();
+              return true;
+            } catch (e) {
+              return false;
+            }
+          })(),
+          formData: "FormData" in g,
+          arrayBuffer: "ArrayBuffer" in g
+        };
+        function isDataView(obj) {
+          return obj && DataView.prototype.isPrototypeOf(obj);
+        }
+        if (support.arrayBuffer) {
+          var viewClasses = [
+            "[object Int8Array]",
+            "[object Uint8Array]",
+            "[object Uint8ClampedArray]",
+            "[object Int16Array]",
+            "[object Uint16Array]",
+            "[object Int32Array]",
+            "[object Uint32Array]",
+            "[object Float32Array]",
+            "[object Float64Array]"
+          ];
+          var isArrayBufferView = ArrayBuffer.isView || function(obj) {
+            return obj && viewClasses.indexOf(Object.prototype.toString.call(obj)) > -1;
+          };
+        }
+        function normalizeName(name) {
+          if (typeof name !== "string") {
+            name = String(name);
+          }
+          if (/[^a-z0-9\-#$%&'*+.^_`|~!]/i.test(name) || name === "") {
+            throw new TypeError('Invalid character in header field name: "' + name + '"');
+          }
+          return name.toLowerCase();
+        }
+        function normalizeValue(value) {
+          if (typeof value !== "string") {
+            value = String(value);
+          }
+          return value;
+        }
+        function iteratorFor(items) {
+          var iterator2 = {
+            next: function() {
+              var value = items.shift();
+              return { done: value === void 0, value };
+            }
+          };
+          if (support.iterable) {
+            iterator2[Symbol.iterator] = function() {
+              return iterator2;
+            };
+          }
+          return iterator2;
+        }
+        function Headers2(headers) {
+          this.map = {};
+          if (headers instanceof Headers2) {
+            headers.forEach(function(value, name) {
+              this.append(name, value);
+            }, this);
+          } else if (Array.isArray(headers)) {
+            headers.forEach(function(header) {
+              if (header.length != 2) {
+                throw new TypeError("Headers constructor: expected name/value pair to be length 2, found" + header.length);
+              }
+              this.append(header[0], header[1]);
+            }, this);
+          } else if (headers) {
+            Object.getOwnPropertyNames(headers).forEach(function(name) {
+              this.append(name, headers[name]);
+            }, this);
+          }
+        }
+        Headers2.prototype.append = function(name, value) {
+          name = normalizeName(name);
+          value = normalizeValue(value);
+          var oldValue = this.map[name];
+          this.map[name] = oldValue ? oldValue + ", " + value : value;
+        };
+        Headers2.prototype["delete"] = function(name) {
+          delete this.map[normalizeName(name)];
+        };
+        Headers2.prototype.get = function(name) {
+          name = normalizeName(name);
+          return this.has(name) ? this.map[name] : null;
+        };
+        Headers2.prototype.has = function(name) {
+          return this.map.hasOwnProperty(normalizeName(name));
+        };
+        Headers2.prototype.set = function(name, value) {
+          this.map[normalizeName(name)] = normalizeValue(value);
+        };
+        Headers2.prototype.forEach = function(callback, thisArg) {
+          for (var name in this.map) {
+            if (this.map.hasOwnProperty(name)) {
+              callback.call(thisArg, this.map[name], name, this);
+            }
+          }
+        };
+        Headers2.prototype.keys = function() {
+          var items = [];
+          this.forEach(function(value, name) {
+            items.push(name);
+          });
+          return iteratorFor(items);
+        };
+        Headers2.prototype.values = function() {
+          var items = [];
+          this.forEach(function(value) {
+            items.push(value);
+          });
+          return iteratorFor(items);
+        };
+        Headers2.prototype.entries = function() {
+          var items = [];
+          this.forEach(function(value, name) {
+            items.push([name, value]);
+          });
+          return iteratorFor(items);
+        };
+        if (support.iterable) {
+          Headers2.prototype[Symbol.iterator] = Headers2.prototype.entries;
+        }
+        function consumed(body) {
+          if (body._noBody) return;
+          if (body.bodyUsed) {
+            return Promise.reject(new TypeError("Already read"));
+          }
+          body.bodyUsed = true;
+        }
+        function fileReaderReady(reader) {
+          return new Promise(function(resolve, reject) {
+            reader.onload = function() {
+              resolve(reader.result);
+            };
+            reader.onerror = function() {
+              reject(reader.error);
+            };
+          });
+        }
+        function readBlobAsArrayBuffer(blob) {
+          var reader = new FileReader();
+          var promise = fileReaderReady(reader);
+          reader.readAsArrayBuffer(blob);
+          return promise;
+        }
+        function readBlobAsText(blob) {
+          var reader = new FileReader();
+          var promise = fileReaderReady(reader);
+          var match2 = /charset=([A-Za-z0-9_-]+)/.exec(blob.type);
+          var encoding = match2 ? match2[1] : "utf-8";
+          reader.readAsText(blob, encoding);
+          return promise;
+        }
+        function readArrayBufferAsText(buf) {
+          var view = new Uint8Array(buf);
+          var chars = new Array(view.length);
+          for (var i = 0; i < view.length; i++) {
+            chars[i] = String.fromCharCode(view[i]);
+          }
+          return chars.join("");
+        }
+        function bufferClone(buf) {
+          if (buf.slice) {
+            return buf.slice(0);
+          } else {
+            var view = new Uint8Array(buf.byteLength);
+            view.set(new Uint8Array(buf));
+            return view.buffer;
+          }
+        }
+        function Body() {
+          this.bodyUsed = false;
+          this._initBody = function(body) {
+            this.bodyUsed = this.bodyUsed;
+            this._bodyInit = body;
+            if (!body) {
+              this._noBody = true;
+              this._bodyText = "";
+            } else if (typeof body === "string") {
+              this._bodyText = body;
+            } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {
+              this._bodyBlob = body;
+            } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {
+              this._bodyFormData = body;
+            } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
+              this._bodyText = body.toString();
+            } else if (support.arrayBuffer && support.blob && isDataView(body)) {
+              this._bodyArrayBuffer = bufferClone(body.buffer);
+              this._bodyInit = new Blob([this._bodyArrayBuffer]);
+            } else if (support.arrayBuffer && (ArrayBuffer.prototype.isPrototypeOf(body) || isArrayBufferView(body))) {
+              this._bodyArrayBuffer = bufferClone(body);
+            } else {
+              this._bodyText = body = Object.prototype.toString.call(body);
+            }
+            if (!this.headers.get("content-type")) {
+              if (typeof body === "string") {
+                this.headers.set("content-type", "text/plain;charset=UTF-8");
+              } else if (this._bodyBlob && this._bodyBlob.type) {
+                this.headers.set("content-type", this._bodyBlob.type);
+              } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
+                this.headers.set("content-type", "application/x-www-form-urlencoded;charset=UTF-8");
+              }
+            }
+          };
+          if (support.blob) {
+            this.blob = function() {
+              var rejected = consumed(this);
+              if (rejected) {
+                return rejected;
+              }
+              if (this._bodyBlob) {
+                return Promise.resolve(this._bodyBlob);
+              } else if (this._bodyArrayBuffer) {
+                return Promise.resolve(new Blob([this._bodyArrayBuffer]));
+              } else if (this._bodyFormData) {
+                throw new Error("could not read FormData body as blob");
+              } else {
+                return Promise.resolve(new Blob([this._bodyText]));
+              }
+            };
+          }
+          this.arrayBuffer = function() {
+            if (this._bodyArrayBuffer) {
+              var isConsumed = consumed(this);
+              if (isConsumed) {
+                return isConsumed;
+              } else if (ArrayBuffer.isView(this._bodyArrayBuffer)) {
+                return Promise.resolve(
+                  this._bodyArrayBuffer.buffer.slice(
+                    this._bodyArrayBuffer.byteOffset,
+                    this._bodyArrayBuffer.byteOffset + this._bodyArrayBuffer.byteLength
+                  )
+                );
+              } else {
+                return Promise.resolve(this._bodyArrayBuffer);
+              }
+            } else if (support.blob) {
+              return this.blob().then(readBlobAsArrayBuffer);
+            } else {
+              throw new Error("could not read as ArrayBuffer");
+            }
+          };
+          this.text = function() {
+            var rejected = consumed(this);
+            if (rejected) {
+              return rejected;
+            }
+            if (this._bodyBlob) {
+              return readBlobAsText(this._bodyBlob);
+            } else if (this._bodyArrayBuffer) {
+              return Promise.resolve(readArrayBufferAsText(this._bodyArrayBuffer));
+            } else if (this._bodyFormData) {
+              throw new Error("could not read FormData body as text");
+            } else {
+              return Promise.resolve(this._bodyText);
+            }
+          };
+          if (support.formData) {
+            this.formData = function() {
+              return this.text().then(decode);
+            };
+          }
+          this.json = function() {
+            return this.text().then(JSON.parse);
+          };
+          return this;
+        }
+        var methods = ["CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE"];
+        function normalizeMethod(method) {
+          var upcased = method.toUpperCase();
+          return methods.indexOf(upcased) > -1 ? upcased : method;
+        }
+        function Request2(input, options) {
+          if (!(this instanceof Request2)) {
+            throw new TypeError('Please use the "new" operator, this DOM object constructor cannot be called as a function.');
+          }
+          options = options || {};
+          var body = options.body;
+          if (input instanceof Request2) {
+            if (input.bodyUsed) {
+              throw new TypeError("Already read");
+            }
+            this.url = input.url;
+            this.credentials = input.credentials;
+            if (!options.headers) {
+              this.headers = new Headers2(input.headers);
+            }
+            this.method = input.method;
+            this.mode = input.mode;
+            this.signal = input.signal;
+            if (!body && input._bodyInit != null) {
+              body = input._bodyInit;
+              input.bodyUsed = true;
+            }
+          } else {
+            this.url = String(input);
+          }
+          this.credentials = options.credentials || this.credentials || "same-origin";
+          if (options.headers || !this.headers) {
+            this.headers = new Headers2(options.headers);
+          }
+          this.method = normalizeMethod(options.method || this.method || "GET");
+          this.mode = options.mode || this.mode || null;
+          this.signal = options.signal || this.signal || (function() {
+            if ("AbortController" in g) {
+              var ctrl = new AbortController();
+              return ctrl.signal;
+            }
+          })();
+          this.referrer = null;
+          if ((this.method === "GET" || this.method === "HEAD") && body) {
+            throw new TypeError("Body not allowed for GET or HEAD requests");
+          }
+          this._initBody(body);
+          if (this.method === "GET" || this.method === "HEAD") {
+            if (options.cache === "no-store" || options.cache === "no-cache") {
+              var reParamSearch = /([?&])_=[^&]*/;
+              if (reParamSearch.test(this.url)) {
+                this.url = this.url.replace(reParamSearch, "$1_=" + (/* @__PURE__ */ new Date()).getTime());
+              } else {
+                var reQueryString = /\?/;
+                this.url += (reQueryString.test(this.url) ? "&" : "?") + "_=" + (/* @__PURE__ */ new Date()).getTime();
+              }
+            }
+          }
+        }
+        Request2.prototype.clone = function() {
+          return new Request2(this, { body: this._bodyInit });
+        };
+        function decode(body) {
+          var form = new FormData();
+          body.trim().split("&").forEach(function(bytes) {
+            if (bytes) {
+              var split = bytes.split("=");
+              var name = split.shift().replace(/\+/g, " ");
+              var value = split.join("=").replace(/\+/g, " ");
+              form.append(decodeURIComponent(name), decodeURIComponent(value));
+            }
+          });
+          return form;
+        }
+        function parseHeaders(rawHeaders) {
+          var headers = new Headers2();
+          var preProcessedHeaders = rawHeaders.replace(/\r?\n[\t ]+/g, " ");
+          preProcessedHeaders.split("\r").map(function(header) {
+            return header.indexOf("\n") === 0 ? header.substr(1, header.length) : header;
+          }).forEach(function(line) {
+            var parts = line.split(":");
+            var key = parts.shift().trim();
+            if (key) {
+              var value = parts.join(":").trim();
+              try {
+                headers.append(key, value);
+              } catch (error) {
+                console.warn("Response " + error.message);
+              }
+            }
+          });
+          return headers;
+        }
+        Body.call(Request2.prototype);
+        function Response2(bodyInit, options) {
+          if (!(this instanceof Response2)) {
+            throw new TypeError('Please use the "new" operator, this DOM object constructor cannot be called as a function.');
+          }
+          if (!options) {
+            options = {};
+          }
+          this.type = "default";
+          this.status = options.status === void 0 ? 200 : options.status;
+          if (this.status < 200 || this.status > 599) {
+            throw new RangeError("Failed to construct 'Response': The status provided (0) is outside the range [200, 599].");
+          }
+          this.ok = this.status >= 200 && this.status < 300;
+          this.statusText = options.statusText === void 0 ? "" : "" + options.statusText;
+          this.headers = new Headers2(options.headers);
+          this.url = options.url || "";
+          this._initBody(bodyInit);
+        }
+        Body.call(Response2.prototype);
+        Response2.prototype.clone = function() {
+          return new Response2(this._bodyInit, {
+            status: this.status,
+            statusText: this.statusText,
+            headers: new Headers2(this.headers),
+            url: this.url
+          });
+        };
+        Response2.error = function() {
+          var response = new Response2(null, { status: 200, statusText: "" });
+          response.ok = false;
+          response.status = 0;
+          response.type = "error";
+          return response;
+        };
+        var redirectStatuses = [301, 302, 303, 307, 308];
+        Response2.redirect = function(url, status) {
+          if (redirectStatuses.indexOf(status) === -1) {
+            throw new RangeError("Invalid status code");
+          }
+          return new Response2(null, { status, headers: { location: url } });
+        };
+        exports2.DOMException = g.DOMException;
+        try {
+          new exports2.DOMException();
+        } catch (err) {
+          exports2.DOMException = function(message2, name) {
+            this.message = message2;
+            this.name = name;
+            var error = Error(message2);
+            this.stack = error.stack;
+          };
+          exports2.DOMException.prototype = Object.create(Error.prototype);
+          exports2.DOMException.prototype.constructor = exports2.DOMException;
+        }
+        function fetch2(input, init) {
+          return new Promise(function(resolve, reject) {
+            var request2 = new Request2(input, init);
+            if (request2.signal && request2.signal.aborted) {
+              return reject(new exports2.DOMException("Aborted", "AbortError"));
+            }
+            var xhr = new XMLHttpRequest();
+            function abortXhr() {
+              xhr.abort();
+            }
+            xhr.onload = function() {
+              var options = {
+                statusText: xhr.statusText,
+                headers: parseHeaders(xhr.getAllResponseHeaders() || "")
+              };
+              if (request2.url.indexOf("file://") === 0 && (xhr.status < 200 || xhr.status > 599)) {
+                options.status = 200;
+              } else {
+                options.status = xhr.status;
+              }
+              options.url = "responseURL" in xhr ? xhr.responseURL : options.headers.get("X-Request-URL");
+              var body = "response" in xhr ? xhr.response : xhr.responseText;
+              setTimeout(function() {
+                resolve(new Response2(body, options));
+              }, 0);
+            };
+            xhr.onerror = function() {
+              setTimeout(function() {
+                reject(new TypeError("Network request failed"));
+              }, 0);
+            };
+            xhr.ontimeout = function() {
+              setTimeout(function() {
+                reject(new TypeError("Network request timed out"));
+              }, 0);
+            };
+            xhr.onabort = function() {
+              setTimeout(function() {
+                reject(new exports2.DOMException("Aborted", "AbortError"));
+              }, 0);
+            };
+            function fixUrl(url) {
+              try {
+                return url === "" && g.location.href ? g.location.href : url;
+              } catch (e) {
+                return url;
+              }
+            }
+            xhr.open(request2.method, fixUrl(request2.url), true);
+            if (request2.credentials === "include") {
+              xhr.withCredentials = true;
+            } else if (request2.credentials === "omit") {
+              xhr.withCredentials = false;
+            }
+            if ("responseType" in xhr) {
+              if (support.blob) {
+                xhr.responseType = "blob";
+              } else if (support.arrayBuffer) {
+                xhr.responseType = "arraybuffer";
+              }
+            }
+            if (init && typeof init.headers === "object" && !(init.headers instanceof Headers2 || g.Headers && init.headers instanceof g.Headers)) {
+              var names = [];
+              Object.getOwnPropertyNames(init.headers).forEach(function(name) {
+                names.push(normalizeName(name));
+                xhr.setRequestHeader(name, normalizeValue(init.headers[name]));
+              });
+              request2.headers.forEach(function(value, name) {
+                if (names.indexOf(name) === -1) {
+                  xhr.setRequestHeader(name, value);
+                }
+              });
+            } else {
+              request2.headers.forEach(function(value, name) {
+                xhr.setRequestHeader(name, value);
+              });
+            }
+            if (request2.signal) {
+              request2.signal.addEventListener("abort", abortXhr);
+              xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                  request2.signal.removeEventListener("abort", abortXhr);
+                }
+              };
+            }
+            xhr.send(typeof request2._bodyInit === "undefined" ? null : request2._bodyInit);
+          });
+        }
+        fetch2.polyfill = true;
+        if (!g.fetch) {
+          g.fetch = fetch2;
+          g.Headers = Headers2;
+          g.Request = Request2;
+          g.Response = Response2;
+        }
+        exports2.Headers = Headers2;
+        exports2.Request = Request2;
+        exports2.Response = Response2;
+        exports2.fetch = fetch2;
+        return exports2;
+      })({});
+    })(__globalThis__);
+    __globalThis__.fetch.ponyfill = true;
+    delete __globalThis__.fetch.polyfill;
+    var ctx = __global__.fetch ? __global__ : __globalThis__;
+    exports = ctx.fetch;
+    exports.default = ctx.fetch;
+    exports.fetch = ctx.fetch;
+    exports.Headers = ctx.Headers;
+    exports.Request = ctx.Request;
+    exports.Response = ctx.Response;
+    module2.exports = exports;
+  }
+});
+
+// node_modules/base-64/base64.js
+var require_base64 = __commonJS({
+  "node_modules/base-64/base64.js"(exports, module2) {
+    (function(root) {
+      var freeExports = typeof exports == "object" && exports;
+      var freeModule = typeof module2 == "object" && module2 && module2.exports == freeExports && module2;
+      var freeGlobal = typeof global == "object" && global;
+      if (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal) {
+        root = freeGlobal;
+      }
+      var InvalidCharacterError = function(message2) {
+        this.message = message2;
+      };
+      InvalidCharacterError.prototype = new Error();
+      InvalidCharacterError.prototype.name = "InvalidCharacterError";
+      var error = function(message2) {
+        throw new InvalidCharacterError(message2);
+      };
+      var TABLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+      var REGEX_SPACE_CHARACTERS = /[\t\n\f\r ]/g;
+      var decode = function(input) {
+        input = String(input).replace(REGEX_SPACE_CHARACTERS, "");
+        var length = input.length;
+        if (length % 4 == 0) {
+          input = input.replace(/==?$/, "");
+          length = input.length;
+        }
+        if (length % 4 == 1 || // http://whatwg.org/C#alphanumeric-ascii-characters
+        /[^+a-zA-Z0-9/]/.test(input)) {
+          error(
+            "Invalid character: the string to be decoded is not correctly encoded."
+          );
+        }
+        var bitCounter = 0;
+        var bitStorage;
+        var buffer;
+        var output = "";
+        var position = -1;
+        while (++position < length) {
+          buffer = TABLE.indexOf(input.charAt(position));
+          bitStorage = bitCounter % 4 ? bitStorage * 64 + buffer : buffer;
+          if (bitCounter++ % 4) {
+            output += String.fromCharCode(
+              255 & bitStorage >> (-2 * bitCounter & 6)
+            );
+          }
+        }
+        return output;
+      };
+      var encode2 = function(input) {
+        input = String(input);
+        if (/[^\0-\xFF]/.test(input)) {
+          error(
+            "The string to be encoded contains characters outside of the Latin1 range."
+          );
+        }
+        var padding = input.length % 3;
+        var output = "";
+        var position = -1;
+        var a;
+        var b;
+        var c;
+        var buffer;
+        var length = input.length - padding;
+        while (++position < length) {
+          a = input.charCodeAt(position) << 16;
+          b = input.charCodeAt(++position) << 8;
+          c = input.charCodeAt(++position);
+          buffer = a + b + c;
+          output += TABLE.charAt(buffer >> 18 & 63) + TABLE.charAt(buffer >> 12 & 63) + TABLE.charAt(buffer >> 6 & 63) + TABLE.charAt(buffer & 63);
+        }
+        if (padding == 2) {
+          a = input.charCodeAt(position) << 8;
+          b = input.charCodeAt(++position);
+          buffer = a + b;
+          output += TABLE.charAt(buffer >> 10) + TABLE.charAt(buffer >> 4 & 63) + TABLE.charAt(buffer << 2 & 63) + "=";
+        } else if (padding == 1) {
+          buffer = input.charCodeAt(position);
+          output += TABLE.charAt(buffer >> 2) + TABLE.charAt(buffer << 4 & 63) + "==";
+        }
+        return output;
+      };
+      var base64 = {
+        "encode": encode2,
+        "decode": decode,
+        "version": "1.0.0"
+      };
+      if (typeof define == "function" && typeof define.amd == "object" && define.amd) {
+        define(function() {
+          return base64;
+        });
+      } else if (freeExports && !freeExports.nodeType) {
+        if (freeModule) {
+          freeModule.exports = base64;
+        } else {
+          for (var key in base64) {
+            base64.hasOwnProperty(key) && (freeExports[key] = base64[key]);
+          }
+        }
+      } else {
+        root.base64 = base64;
+      }
+    })(exports);
+  }
+});
 
 // src/main.ts
 var main_exports = {};
@@ -23,7 +3465,7 @@ __export(main_exports, {
   default: () => WeekCalendartPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian10 = require("obsidian");
+var import_obsidian11 = require("obsidian");
 
 // node_modules/tslib/tslib.es6.mjs
 var extendStatics = function(d, b) {
@@ -272,8 +3714,8 @@ var UnsubscriptionError = createErrorClass(function(_super) {
 // node_modules/rxjs/dist/esm5/internal/util/arrRemove.js
 function arrRemove(arr, item) {
   if (arr) {
-    var index = arr.indexOf(item);
-    0 <= index && arr.splice(index, 1);
+    var index2 = arr.indexOf(item);
+    0 <= index2 && arr.splice(index2, 1);
   }
 }
 
@@ -1217,7 +4659,7 @@ function fromIterable(iterable) {
 }
 function fromAsyncIterable(asyncIterable) {
   return new Observable(function(subscriber) {
-    process(asyncIterable, subscriber).catch(function(err) {
+    process2(asyncIterable, subscriber).catch(function(err) {
       return subscriber.error(err);
     });
   });
@@ -1225,7 +4667,7 @@ function fromAsyncIterable(asyncIterable) {
 function fromReadableStreamLike(readableStream) {
   return fromAsyncIterable(readableStreamLikeToAsyncGenerator(readableStream));
 }
-function process(asyncIterable, subscriber) {
+function process2(asyncIterable, subscriber) {
   var asyncIterable_1, asyncIterable_1_1;
   var e_2, _a;
   return __awaiter(this, void 0, void 0, function() {
@@ -1462,9 +4904,9 @@ function isValidDate(value) {
 // node_modules/rxjs/dist/esm5/internal/operators/map.js
 function map(project, thisArg) {
   return operate(function(source, subscriber) {
-    var index = 0;
+    var index2 = 0;
     source.subscribe(createOperatorSubscriber(subscriber, function(value) {
-      subscriber.next(project.call(thisArg, value, index++));
+      subscriber.next(project.call(thisArg, value, index2++));
     }));
   });
 }
@@ -1484,7 +4926,7 @@ function mapOneOrManyArgs(fn) {
 function mergeInternals(source, subscriber, project, concurrent, onBeforeNext, expand, innerSubScheduler, additionalFinalizer) {
   var buffer = [];
   var active = 0;
-  var index = 0;
+  var index2 = 0;
   var isComplete = false;
   var checkComplete = function() {
     if (isComplete && !buffer.length && !active) {
@@ -1498,7 +4940,7 @@ function mergeInternals(source, subscriber, project, concurrent, onBeforeNext, e
     expand && subscriber.next(value);
     active++;
     var innerComplete = false;
-    innerFrom(project(value, index++)).subscribe(createOperatorSubscriber(subscriber, function(innerValue) {
+    innerFrom(project(value, index2++)).subscribe(createOperatorSubscriber(subscriber, function(innerValue) {
       onBeforeNext === null || onBeforeNext === void 0 ? void 0 : onBeforeNext(innerValue);
       if (expand) {
         outerNext(innerValue);
@@ -1661,9 +5103,9 @@ function argsOrArgArray(args) {
 // node_modules/rxjs/dist/esm5/internal/operators/filter.js
 function filter(predicate, thisArg) {
   return operate(function(source, subscriber) {
-    var index = 0;
+    var index2 = 0;
     source.subscribe(createOperatorSubscriber(subscriber, function(value) {
-      return predicate.call(thisArg, value, index++) && subscriber.next(value);
+      return predicate.call(thisArg, value, index2++) && subscriber.next(value);
     }));
   });
 }
@@ -1756,7 +5198,7 @@ function debounce(durationSelector) {
 function switchMap(project, resultSelector) {
   return operate(function(source, subscriber) {
     var innerSubscriber = null;
-    var index = 0;
+    var index2 = 0;
     var isComplete = false;
     var checkComplete = function() {
       return isComplete && !innerSubscriber && subscriber.complete();
@@ -1764,7 +5206,7 @@ function switchMap(project, resultSelector) {
     source.subscribe(createOperatorSubscriber(subscriber, function(value) {
       innerSubscriber === null || innerSubscriber === void 0 ? void 0 : innerSubscriber.unsubscribe();
       var innerIndex = 0;
-      var outerIndex = index++;
+      var outerIndex = index2++;
       innerFrom(project(value, outerIndex)).subscribe(innerSubscriber = createOperatorSubscriber(subscriber, function(innerValue) {
         return subscriber.next(resultSelector ? resultSelector(value, innerValue, outerIndex, innerIndex++) : innerValue);
       }, function() {
@@ -1989,8 +5431,8 @@ function buildLocalizeFn(args) {
       const width = options?.width ? String(options.width) : args.defaultWidth;
       valuesArray = args.values[width] || args.values[defaultWidth];
     }
-    const index = args.argumentCallback ? args.argumentCallback(value) : value;
-    return valuesArray[index];
+    const index2 = args.argumentCallback ? args.argumentCallback(value) : value;
+    return valuesArray[index2];
   };
 }
 
@@ -2310,7 +5752,7 @@ var match = {
     defaultMatchWidth: "wide",
     parsePatterns: parseQuarterPatterns,
     defaultParseWidth: "any",
-    valueCallback: (index) => index + 1
+    valueCallback: (index2) => index2 + 1
   }),
   month: buildMatchFn({
     matchPatterns: matchMonthPatterns,
@@ -3568,17 +7010,17 @@ function prepareElementStructure(settings, monday) {
 // src/lib/commands/create-year/prepare-weeks.ts
 function prepareWeeks(yyyy, weeks, settings) {
   const dirPath = settings.paths.weekFolder;
-  return weeks.map((week, index) => {
+  return weeks.map((week, index2) => {
     if (week.yyyy !== yyyy) {
       return null;
     }
     const template = prepareElementStructure(settings, week.monday);
-    const lastWeekNo = weeks[index - 1].week.toString().padStart(2, "0");
-    const weekNo = index.toString().padStart(2, "0");
-    const nextWeekNo = weeks[index + 1].week.toString().padStart(2, "0");
-    const backLink = `${dirPath}/${weeks[index - 1].yyyy}/weeks/W${lastWeekNo} ${format(week.lastMonday, "dd.MM.yy")}.md`;
+    const lastWeekNo = weeks[index2 - 1].week.toString().padStart(2, "0");
+    const weekNo = index2.toString().padStart(2, "0");
+    const nextWeekNo = weeks[index2 + 1].week.toString().padStart(2, "0");
+    const backLink = `${dirPath}/${weeks[index2 - 1].yyyy}/weeks/W${lastWeekNo} ${format(week.lastMonday, "dd.MM.yy")}.md`;
     const fileName = `W${weekNo} ${format(week.monday, "dd.MM.yy")}.md`;
-    const nextLink = `${dirPath}/${weeks[index + 1].yyyy}/weeks/W${nextWeekNo} ${format(week.nextMonday, "dd.MM.yy")}.md`;
+    const nextLink = `${dirPath}/${weeks[index2 + 1].yyyy}/weeks/W${nextWeekNo} ${format(week.nextMonday, "dd.MM.yy")}.md`;
     const linkText = `[[${backLink}|W${lastWeekNo}]] [[${nextLink}|W${nextWeekNo}]]`;
     return [fileName, { ...template, links: [{ type: "text", content: [linkText] }] }];
   });
@@ -4058,12 +7500,12 @@ function parseWoWithDiagnostics(wochenFile, settings = DEFAULT_SETTINGS) {
     else elements.push(createElement("text", line));
     activeEvent = void 0;
   };
-  for (let index = 0; index < lines.length; index++) {
-    const line = lines[index].trimEnd();
-    const lineNumber = index + 1;
+  for (let index2 = 0; index2 < lines.length; index2++) {
+    const line = lines[index2].trimEnd();
+    const lineNumber = index2 + 1;
     if (frontmatter) {
       appendText(line);
-      if (index > 0 && /^(---|\.\.\.)\s*$/.test(line)) frontmatter = false;
+      if (index2 > 0 && /^(---|\.\.\.)\s*$/.test(line)) frontmatter = false;
       continue;
     }
     const fenceMatch = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
@@ -4109,10 +7551,10 @@ function parseWoWithDiagnostics(wochenFile, settings = DEFAULT_SETTINGS) {
     }
   }
   for (const event of events) {
-    event.eventIds = event.element.content.flatMap((line, index) => {
+    event.eventIds = event.element.content.flatMap((line, index2) => {
       const match2 = line.match(EVENT_ID_PATTERN);
       if (/^\s+\^woev-(?!rec-)/.test(line) && !match2) {
-        diagnostics.push({ line: event.line + index, message: "Ung\xFCltige ^woev-ID." });
+        diagnostics.push({ line: event.line + index2, message: "Ung\xFCltige ^woev-ID." });
       }
       return match2 ? [match2[1]] : [];
     });
@@ -4351,9 +7793,9 @@ function migrateWeekHeadings(content, filePath, settings) {
   }
   let frontmatter = false;
   let fence = null;
-  return content.split("\n").map((line, index) => {
+  return content.split("\n").map((line, index2) => {
     const text = line.endsWith("\r") ? line.slice(0, -1) : line;
-    if (index === 0 && /^\uFEFF?---$/.test(text)) {
+    if (index2 === 0 && /^\uFEFF?---$/.test(text)) {
       frontmatter = true;
       return line;
     }
@@ -4616,29 +8058,2021 @@ function mergeSettings(saved = null) {
 }
 
 // src/lib/settings/week-calendar-settings-tab.ts
+var import_obsidian10 = require("obsidian");
+
+// node_modules/tsdav/dist/tsdav.esm.js
+var import_debug = __toESM(require_browser());
+var import_xml_js = __toESM(require_lib());
+var import_cross_fetch = __toESM(require_browser_ponyfill());
+var import_base_64 = __toESM(require_base64());
+var DAVNamespace;
+(function(DAVNamespace2) {
+  DAVNamespace2["CALENDAR_SERVER"] = "http://calendarserver.org/ns/";
+  DAVNamespace2["CALDAV_APPLE"] = "http://apple.com/ns/ical/";
+  DAVNamespace2["CALDAV"] = "urn:ietf:params:xml:ns:caldav";
+  DAVNamespace2["CARDDAV"] = "urn:ietf:params:xml:ns:carddav";
+  DAVNamespace2["DAV"] = "DAV:";
+})(DAVNamespace || (DAVNamespace = {}));
+var DAVAttributeMap = {
+  [DAVNamespace.CALDAV]: "xmlns:c",
+  [DAVNamespace.CARDDAV]: "xmlns:card",
+  [DAVNamespace.CALENDAR_SERVER]: "xmlns:cs",
+  [DAVNamespace.CALDAV_APPLE]: "xmlns:ca",
+  [DAVNamespace.DAV]: "xmlns:d"
+};
+var DAVNamespaceShort;
+(function(DAVNamespaceShort2) {
+  DAVNamespaceShort2["CALDAV"] = "c";
+  DAVNamespaceShort2["CARDDAV"] = "card";
+  DAVNamespaceShort2["CALENDAR_SERVER"] = "cs";
+  DAVNamespaceShort2["CALDAV_APPLE"] = "ca";
+  DAVNamespaceShort2["DAV"] = "d";
+})(DAVNamespaceShort || (DAVNamespaceShort = {}));
+var ICALObjects;
+(function(ICALObjects2) {
+  ICALObjects2["VEVENT"] = "VEVENT";
+  ICALObjects2["VTODO"] = "VTODO";
+  ICALObjects2["VJOURNAL"] = "VJOURNAL";
+  ICALObjects2["VFREEBUSY"] = "VFREEBUSY";
+  ICALObjects2["VTIMEZONE"] = "VTIMEZONE";
+  ICALObjects2["VALARM"] = "VALARM";
+})(ICALObjects || (ICALObjects = {}));
+var camelCase = (str) => str.replace(/([-_]\w)/g, (g) => g[1].toUpperCase());
+var getFetch = () => {
+  if (typeof globalThis !== "undefined" && typeof globalThis.fetch === "function") {
+    return globalThis.fetch.bind(globalThis);
+  }
+  return import_cross_fetch.default;
+};
+var fetch = getFetch();
+var nativeType = (value) => {
+  const nValue = Number(value);
+  if (!Number.isNaN(nValue)) {
+    return nValue;
+  }
+  const bValue = value.toLowerCase();
+  if (bValue === "true") {
+    return true;
+  }
+  if (bValue === "false") {
+    return false;
+  }
+  return value;
+};
+var urlEquals = (urlA, urlB) => {
+  if (!urlA && !urlB) {
+    return true;
+  }
+  if (!urlA || !urlB) {
+    return false;
+  }
+  const trimmedUrlA = urlA.trim();
+  const trimmedUrlB = urlB.trim();
+  if (Math.abs(trimmedUrlA.length - trimmedUrlB.length) > 1) {
+    return false;
+  }
+  const strippedUrlA = trimmedUrlA.slice(-1) === "/" ? trimmedUrlA.slice(0, -1) : trimmedUrlA;
+  const strippedUrlB = trimmedUrlB.slice(-1) === "/" ? trimmedUrlB.slice(0, -1) : trimmedUrlB;
+  return urlA.includes(strippedUrlB) || urlB.includes(strippedUrlA);
+};
+var urlContains = (urlA, urlB) => {
+  if (!urlA && !urlB) {
+    return true;
+  }
+  if (!urlA || !urlB) {
+    return false;
+  }
+  const trimmedUrlA = urlA.trim();
+  const trimmedUrlB = urlB.trim();
+  const strippedUrlA = trimmedUrlA.slice(-1) === "/" ? trimmedUrlA.slice(0, -1) : trimmedUrlA;
+  const strippedUrlB = trimmedUrlB.slice(-1) === "/" ? trimmedUrlB.slice(0, -1) : trimmedUrlB;
+  return urlA.includes(strippedUrlB) || urlB.includes(strippedUrlA);
+};
+var getDAVAttribute = (nsArr) => nsArr.reduce((prev, curr) => ({ ...prev, [DAVAttributeMap[curr]]: curr }), {});
+var cleanupFalsy = (obj) => Object.entries(obj).reduce((prev, [key, value]) => {
+  if (value)
+    return { ...prev, [key]: value };
+  return prev;
+}, {});
+var conditionalParam = (key, param) => {
+  if (param) {
+    return {
+      [key]: param
+    };
+  }
+  return {};
+};
+var excludeHeaders = (headers, headersToExclude) => {
+  if (!headers) {
+    return {};
+  }
+  if (!headersToExclude || headersToExclude.length === 0) {
+    return headers;
+  }
+  return Object.fromEntries(Object.entries(headers).filter(([key]) => !headersToExclude.includes(key)));
+};
+var requestHelpers = /* @__PURE__ */ Object.freeze({
+  __proto__: null,
+  cleanupFalsy,
+  conditionalParam,
+  excludeHeaders,
+  getDAVAttribute,
+  urlContains,
+  urlEquals
+});
+var debug$5 = (0, import_debug.default)("tsdav:request");
+var davRequest = async (params) => {
+  var _a;
+  const { url, init, convertIncoming = true, parseOutgoing = true, fetchOptions = {}, fetch: fetchOverride } = params;
+  const requestFetch = fetchOverride !== null && fetchOverride !== void 0 ? fetchOverride : fetch;
+  const { headers = {}, body, namespace, method, attributes } = init;
+  const xmlBody = convertIncoming ? import_xml_js.default.js2xml({
+    _declaration: { _attributes: { version: "1.0", encoding: "utf-8" } },
+    ...body,
+    _attributes: attributes
+  }, {
+    compact: true,
+    spaces: 2,
+    elementNameFn: (name) => {
+      if (namespace && !/^.+:.+/.test(name)) {
+        return `${namespace}:${name}`;
+      }
+      return name;
+    }
+  }) : body;
+  const fetchOptionsWithoutHeaders = {
+    ...fetchOptions
+  };
+  delete fetchOptionsWithoutHeaders.headers;
+  const davResponse = await requestFetch(url, {
+    headers: {
+      "Content-Type": "text/xml;charset=UTF-8",
+      ...cleanupFalsy(headers),
+      ...fetchOptions.headers || {}
+    },
+    body: xmlBody,
+    method,
+    ...fetchOptionsWithoutHeaders
+  });
+  const resText = await davResponse.text();
+  if (!davResponse.ok || !((_a = davResponse.headers.get("content-type")) === null || _a === void 0 ? void 0 : _a.includes("xml")) || !parseOutgoing || !resText) {
+    return [
+      {
+        href: davResponse.url,
+        ok: davResponse.ok,
+        status: davResponse.status,
+        statusText: davResponse.statusText,
+        raw: resText
+      }
+    ];
+  }
+  const result = import_xml_js.default.xml2js(resText, {
+    compact: true,
+    trim: true,
+    textFn: (value, parentElement) => {
+      try {
+        const parentOfParent = parentElement._parent;
+        const pOpKeys = Object.keys(parentOfParent);
+        const keyNo = pOpKeys.length;
+        const keyName = pOpKeys[keyNo - 1];
+        const arrOfKey = parentOfParent[keyName];
+        const arrOfKeyLen = arrOfKey.length;
+        if (arrOfKeyLen > 0) {
+          const arr = arrOfKey;
+          const arrIndex = arrOfKey.length - 1;
+          arr[arrIndex] = nativeType(value);
+        } else {
+          parentOfParent[keyName] = nativeType(value);
+        }
+      } catch (e) {
+        debug$5(e.stack);
+      }
+    },
+    // remove namespace & camelCase
+    elementNameFn: (attributeName) => camelCase(attributeName.replace(/^.+:/, "")),
+    attributesFn: (value) => {
+      const newVal = { ...value };
+      delete newVal.xmlns;
+      return newVal;
+    },
+    ignoreDeclaration: true
+  });
+  const responseBodies = Array.isArray(result.multistatus.response) ? result.multistatus.response : [result.multistatus.response];
+  return responseBodies.map((responseBody) => {
+    var _a2, _b;
+    const statusRegex = /^\S+\s(?<status>\d+)\s(?<statusText>.+)$/;
+    if (!responseBody) {
+      return {
+        status: davResponse.status,
+        statusText: davResponse.statusText,
+        ok: davResponse.ok
+      };
+    }
+    const matchArr = statusRegex.exec(responseBody.status);
+    return {
+      raw: result,
+      href: responseBody.href,
+      status: (matchArr === null || matchArr === void 0 ? void 0 : matchArr.groups) ? Number.parseInt(matchArr === null || matchArr === void 0 ? void 0 : matchArr.groups.status, 10) : davResponse.status,
+      statusText: (_b = (_a2 = matchArr === null || matchArr === void 0 ? void 0 : matchArr.groups) === null || _a2 === void 0 ? void 0 : _a2.statusText) !== null && _b !== void 0 ? _b : davResponse.statusText,
+      ok: !responseBody.error,
+      error: responseBody.error,
+      responsedescription: responseBody.responsedescription,
+      props: (Array.isArray(responseBody.propstat) ? responseBody.propstat : [responseBody.propstat]).reduce((prev, curr) => {
+        return {
+          ...prev,
+          ...curr === null || curr === void 0 ? void 0 : curr.prop
+        };
+      }, {})
+    };
+  });
+};
+var propfind = async (params) => {
+  const { url, props, depth, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  return davRequest({
+    url,
+    init: {
+      method: "PROPFIND",
+      headers: excludeHeaders(cleanupFalsy({ depth, ...headers }), headersToExclude),
+      namespace: DAVNamespaceShort.DAV,
+      body: {
+        propfind: {
+          _attributes: getDAVAttribute([
+            DAVNamespace.CALDAV,
+            DAVNamespace.CALDAV_APPLE,
+            DAVNamespace.CALENDAR_SERVER,
+            DAVNamespace.CARDDAV,
+            DAVNamespace.DAV
+          ]),
+          prop: props
+        }
+      }
+    },
+    fetchOptions,
+    fetch: fetchOverride
+  });
+};
+var createObject = async (params) => {
+  const { url, data, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  const requestFetch = fetchOverride !== null && fetchOverride !== void 0 ? fetchOverride : fetch;
+  return requestFetch(url, {
+    method: "PUT",
+    body: data,
+    headers: excludeHeaders(headers, headersToExclude),
+    ...fetchOptions
+  });
+};
+var updateObject = async (params) => {
+  const { url, data, etag, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  const requestFetch = fetchOverride !== null && fetchOverride !== void 0 ? fetchOverride : fetch;
+  return requestFetch(url, {
+    method: "PUT",
+    body: data,
+    headers: excludeHeaders(cleanupFalsy({ "If-Match": etag, ...headers }), headersToExclude),
+    ...fetchOptions
+  });
+};
+var deleteObject = async (params) => {
+  const { url, headers, etag, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  const requestFetch = fetchOverride !== null && fetchOverride !== void 0 ? fetchOverride : fetch;
+  return requestFetch(url, {
+    method: "DELETE",
+    headers: excludeHeaders(cleanupFalsy({ "If-Match": etag, ...headers }), headersToExclude),
+    ...fetchOptions
+  });
+};
+var request = /* @__PURE__ */ Object.freeze({
+  __proto__: null,
+  createObject,
+  davRequest,
+  deleteObject,
+  propfind,
+  updateObject
+});
+function hasFields(obj, fields) {
+  const inObj = (object) => fields.every((f) => object[f]);
+  if (Array.isArray(obj)) {
+    return obj.every((o) => inObj(o));
+  }
+  return inObj(obj);
+}
+var findMissingFieldNames = (obj, fields) => fields.reduce((prev, curr) => obj[curr] ? prev : `${prev.length ? `${prev},` : ""}${curr.toString()}`, "");
+var debug$4 = (0, import_debug.default)("tsdav:collection");
+var collectionQuery = async (params) => {
+  const { url, body, depth, defaultNamespace = DAVNamespaceShort.DAV, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  const queryResults = await davRequest({
+    url,
+    init: {
+      method: "REPORT",
+      headers: excludeHeaders(cleanupFalsy({ depth, ...headers }), headersToExclude),
+      namespace: defaultNamespace,
+      body
+    },
+    fetchOptions,
+    fetch: fetchOverride
+  });
+  const errorResponse = queryResults.find((res) => !res.ok || res.status && res.status >= 400);
+  if (errorResponse) {
+    throw new Error(`Collection query failed: ${errorResponse.status} ${errorResponse.statusText}. ${errorResponse.raw ? `Raw response: ${errorResponse.raw}` : ""}`);
+  }
+  if (queryResults.length === 1 && !queryResults[0].raw && queryResults[0].status && queryResults[0].status < 300) {
+    return [];
+  }
+  return queryResults;
+};
+var makeCollection = async (params) => {
+  const { url, props, depth, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  return davRequest({
+    url,
+    init: {
+      method: "MKCOL",
+      headers: excludeHeaders(cleanupFalsy({ depth, ...headers }), headersToExclude),
+      namespace: DAVNamespaceShort.DAV,
+      body: props ? {
+        mkcol: {
+          set: {
+            prop: props
+          }
+        }
+      } : void 0
+    },
+    fetchOptions,
+    fetch: fetchOverride
+  });
+};
+var supportedReportSet = async (params) => {
+  var _a, _b, _c, _d, _e;
+  const { collection: collection2, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  const res = await propfind({
+    url: collection2.url,
+    props: {
+      [`${DAVNamespaceShort.DAV}:supported-report-set`]: {}
+    },
+    depth: "0",
+    headers: excludeHeaders(headers, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+  return (_e = (_d = (_c = (_b = (_a = res[0]) === null || _a === void 0 ? void 0 : _a.props) === null || _b === void 0 ? void 0 : _b.supportedReportSet) === null || _c === void 0 ? void 0 : _c.supportedReport) === null || _d === void 0 ? void 0 : _d.map((sr) => Object.keys(sr.report)[0])) !== null && _e !== void 0 ? _e : [];
+};
+var isCollectionDirty = async (params) => {
+  var _a, _b, _c;
+  const { collection: collection2, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  const responses = await propfind({
+    url: collection2.url,
+    props: {
+      [`${DAVNamespaceShort.CALENDAR_SERVER}:getctag`]: {}
+    },
+    depth: "0",
+    headers: excludeHeaders(headers, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+  const res = responses.filter((r) => urlContains(collection2.url, r.href))[0];
+  if (!res) {
+    throw new Error("Collection does not exist on server");
+  }
+  return {
+    isDirty: `${collection2.ctag}` !== `${(_a = res.props) === null || _a === void 0 ? void 0 : _a.getctag}`,
+    newCtag: (_c = (_b = res.props) === null || _b === void 0 ? void 0 : _b.getctag) === null || _c === void 0 ? void 0 : _c.toString()
+  };
+};
+var syncCollection = (params) => {
+  const { url, props, headers, syncLevel, syncToken, headersToExclude, fetchOptions, fetch: fetchOverride } = params;
+  return davRequest({
+    url,
+    init: {
+      method: "REPORT",
+      namespace: DAVNamespaceShort.DAV,
+      headers: excludeHeaders({ ...headers }, headersToExclude),
+      body: {
+        "sync-collection": {
+          _attributes: getDAVAttribute([
+            DAVNamespace.CALDAV,
+            DAVNamespace.CARDDAV,
+            DAVNamespace.DAV
+          ]),
+          "sync-level": syncLevel,
+          "sync-token": syncToken,
+          [`${DAVNamespaceShort.DAV}:prop`]: props
+        }
+      }
+    },
+    fetchOptions,
+    fetch: fetchOverride
+  });
+};
+var smartCollectionSync = async (params) => {
+  var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+  const { collection: collection2, method, headers, headersToExclude, account: account2, detailedResult, fetchOptions = {}, fetch: fetchOverride } = params;
+  const requiredFields = ["accountType", "homeUrl"];
+  if (!account2 || !hasFields(account2, requiredFields)) {
+    if (!account2) {
+      throw new Error("no account for smartCollectionSync");
+    }
+    throw new Error(`account must have ${findMissingFieldNames(account2, requiredFields)} before smartCollectionSync`);
+  }
+  const syncMethod = method !== null && method !== void 0 ? method : ((_a = collection2.reports) === null || _a === void 0 ? void 0 : _a.includes("syncCollection")) ? "webdav" : "basic";
+  debug$4(`smart collection sync with type ${account2.accountType} and method ${syncMethod}`);
+  if (syncMethod === "webdav") {
+    const result = await syncCollection({
+      url: collection2.url,
+      props: {
+        [`${DAVNamespaceShort.DAV}:getetag`]: {},
+        [`${account2.accountType === "caldav" ? DAVNamespaceShort.CALDAV : DAVNamespaceShort.CARDDAV}:${account2.accountType === "caldav" ? "calendar-data" : "address-data"}`]: {},
+        [`${DAVNamespaceShort.DAV}:displayname`]: {}
+      },
+      syncLevel: 1,
+      syncToken: collection2.syncToken,
+      headers: excludeHeaders(headers, headersToExclude),
+      fetchOptions,
+      fetch: fetchOverride
+    });
+    const objectResponses = result.filter((r) => {
+      var _a2;
+      const extName = account2.accountType === "caldav" ? ".ics" : ".vcf";
+      return ((_a2 = r.href) === null || _a2 === void 0 ? void 0 : _a2.slice(-4)) === extName;
+    });
+    const changedObjectUrls = objectResponses.filter((o) => o.status !== 404).map((r) => r.href);
+    const deletedObjectUrls = objectResponses.filter((o) => o.status === 404).map((r) => r.href);
+    const multiGetObjectResponse = changedObjectUrls.length ? (_c = await ((_b = collection2 === null || collection2 === void 0 ? void 0 : collection2.objectMultiGet) === null || _b === void 0 ? void 0 : _b.call(collection2, {
+      url: collection2.url,
+      props: {
+        [`${DAVNamespaceShort.DAV}:getetag`]: {},
+        [`${account2.accountType === "caldav" ? DAVNamespaceShort.CALDAV : DAVNamespaceShort.CARDDAV}:${account2.accountType === "caldav" ? "calendar-data" : "address-data"}`]: {}
+      },
+      objectUrls: changedObjectUrls,
+      depth: "1",
+      headers: excludeHeaders(headers, headersToExclude),
+      fetchOptions,
+      fetch: fetchOverride
+    }))) !== null && _c !== void 0 ? _c : [] : [];
+    const remoteObjects = multiGetObjectResponse.map((res) => {
+      var _a2, _b2, _c2, _d2, _e2, _f2, _g2, _h2, _j2, _k2;
+      return {
+        url: (_a2 = res.href) !== null && _a2 !== void 0 ? _a2 : "",
+        etag: (_b2 = res.props) === null || _b2 === void 0 ? void 0 : _b2.getetag,
+        data: (account2 === null || account2 === void 0 ? void 0 : account2.accountType) === "caldav" ? (_e2 = (_d2 = (_c2 = res.props) === null || _c2 === void 0 ? void 0 : _c2.calendarData) === null || _d2 === void 0 ? void 0 : _d2._cdata) !== null && _e2 !== void 0 ? _e2 : (_f2 = res.props) === null || _f2 === void 0 ? void 0 : _f2.calendarData : (_j2 = (_h2 = (_g2 = res.props) === null || _g2 === void 0 ? void 0 : _g2.addressData) === null || _h2 === void 0 ? void 0 : _h2._cdata) !== null && _j2 !== void 0 ? _j2 : (_k2 = res.props) === null || _k2 === void 0 ? void 0 : _k2.addressData
+      };
+    });
+    const localObjects = (_d = collection2.objects) !== null && _d !== void 0 ? _d : [];
+    const created = remoteObjects.filter((o) => localObjects.every((lo) => !urlContains(lo.url, o.url)));
+    const updated = localObjects.reduce((prev, curr) => {
+      const found = remoteObjects.find((ro) => urlContains(ro.url, curr.url));
+      if (found && found.etag && found.etag !== curr.etag) {
+        return [...prev, found];
+      }
+      return prev;
+    }, []);
+    const deleted = deletedObjectUrls.map((o) => ({
+      url: o,
+      etag: ""
+    }));
+    const unchanged = localObjects.filter((lo) => remoteObjects.some((ro) => urlContains(lo.url, ro.url) && ro.etag === lo.etag));
+    return {
+      ...collection2,
+      objects: detailedResult ? { created, updated, deleted } : [...unchanged, ...created, ...updated],
+      // all syncToken in the results are the same so we use the first one here
+      syncToken: (_h = (_g = (_f = (_e = result[0]) === null || _e === void 0 ? void 0 : _e.raw) === null || _f === void 0 ? void 0 : _f.multistatus) === null || _g === void 0 ? void 0 : _g.syncToken) !== null && _h !== void 0 ? _h : collection2.syncToken
+    };
+  }
+  if (syncMethod === "basic") {
+    const { isDirty, newCtag } = await isCollectionDirty({
+      collection: collection2,
+      headers: excludeHeaders(headers, headersToExclude),
+      fetchOptions,
+      fetch: fetchOverride
+    });
+    const localObjects = (_j = collection2.objects) !== null && _j !== void 0 ? _j : [];
+    const remoteObjects = (_m = await ((_l = (_k = collection2).fetchObjects) === null || _l === void 0 ? void 0 : _l.call(_k, {
+      collection: collection2,
+      headers: excludeHeaders(headers, headersToExclude),
+      fetchOptions,
+      fetch: fetchOverride
+    }))) !== null && _m !== void 0 ? _m : [];
+    const created = remoteObjects.filter((ro) => localObjects.every((lo) => !urlContains(lo.url, ro.url)));
+    const updated = localObjects.reduce((prev, curr) => {
+      const found = remoteObjects.find((ro) => urlContains(ro.url, curr.url));
+      if (found && found.etag && found.etag !== curr.etag) {
+        return [...prev, found];
+      }
+      return prev;
+    }, []);
+    const deleted = localObjects.filter((cal) => remoteObjects.every((ro) => !urlContains(ro.url, cal.url)));
+    const unchanged = localObjects.filter((lo) => remoteObjects.some((ro) => urlContains(lo.url, ro.url) && ro.etag === lo.etag));
+    if (isDirty) {
+      return {
+        ...collection2,
+        objects: detailedResult ? { created, updated, deleted } : [...unchanged, ...created, ...updated],
+        ctag: newCtag
+      };
+    }
+  }
+  return detailedResult ? {
+    ...collection2,
+    objects: {
+      created: [],
+      updated: [],
+      deleted: []
+    }
+  } : collection2;
+};
+var collection = /* @__PURE__ */ Object.freeze({
+  __proto__: null,
+  collectionQuery,
+  isCollectionDirty,
+  makeCollection,
+  smartCollectionSync,
+  supportedReportSet,
+  syncCollection
+});
+var debug$3 = (0, import_debug.default)("tsdav:addressBook");
+var addressBookQuery = async (params) => {
+  const { url, props, filters, depth, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  return collectionQuery({
+    url,
+    body: {
+      "addressbook-query": cleanupFalsy({
+        _attributes: getDAVAttribute([DAVNamespace.CARDDAV, DAVNamespace.DAV]),
+        [`${DAVNamespaceShort.DAV}:prop`]: props,
+        filter: filters !== null && filters !== void 0 ? filters : {
+          "prop-filter": {
+            _attributes: {
+              name: "FN"
+            }
+          }
+        }
+      })
+    },
+    defaultNamespace: DAVNamespaceShort.CARDDAV,
+    depth,
+    headers: excludeHeaders(headers, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+};
+var addressBookMultiGet = async (params) => {
+  const { url, props, objectUrls, depth, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  return collectionQuery({
+    url,
+    body: {
+      "addressbook-multiget": cleanupFalsy({
+        _attributes: getDAVAttribute([DAVNamespace.DAV, DAVNamespace.CARDDAV]),
+        [`${DAVNamespaceShort.DAV}:prop`]: props,
+        [`${DAVNamespaceShort.DAV}:href`]: objectUrls
+      })
+    },
+    defaultNamespace: DAVNamespaceShort.CARDDAV,
+    depth,
+    headers: excludeHeaders(headers, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+};
+var fetchAddressBooks = async (params) => {
+  const { account: account2, headers, props: customProps, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params !== null && params !== void 0 ? params : {};
+  const requiredFields = ["homeUrl", "rootUrl"];
+  if (!account2 || !hasFields(account2, requiredFields)) {
+    if (!account2) {
+      throw new Error("no account for fetchAddressBooks");
+    }
+    throw new Error(`account must have ${findMissingFieldNames(account2, requiredFields)} before fetchAddressBooks`);
+  }
+  const res = await propfind({
+    url: account2.homeUrl,
+    props: customProps !== null && customProps !== void 0 ? customProps : {
+      [`${DAVNamespaceShort.DAV}:displayname`]: {},
+      [`${DAVNamespaceShort.CALENDAR_SERVER}:getctag`]: {},
+      [`${DAVNamespaceShort.DAV}:resourcetype`]: {},
+      [`${DAVNamespaceShort.DAV}:sync-token`]: {}
+    },
+    depth: "1",
+    headers: excludeHeaders(headers, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+  return Promise.all(res.filter((r) => {
+    var _a, _b;
+    return Object.keys((_b = (_a = r.props) === null || _a === void 0 ? void 0 : _a.resourcetype) !== null && _b !== void 0 ? _b : {}).includes("addressbook");
+  }).map((rs) => {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+    const displayName = (_c = (_b = (_a = rs.props) === null || _a === void 0 ? void 0 : _a.displayname) === null || _b === void 0 ? void 0 : _b._cdata) !== null && _c !== void 0 ? _c : (_d = rs.props) === null || _d === void 0 ? void 0 : _d.displayname;
+    debug$3(`Found address book named ${typeof displayName === "string" ? displayName : ""},
+             props: ${JSON.stringify(rs.props)}`);
+    return {
+      url: new URL((_e = rs.href) !== null && _e !== void 0 ? _e : "", (_f = account2.rootUrl) !== null && _f !== void 0 ? _f : "").href,
+      ctag: (_g = rs.props) === null || _g === void 0 ? void 0 : _g.getctag,
+      displayName: typeof displayName === "string" ? displayName : "",
+      resourcetype: Object.keys((_h = rs.props) === null || _h === void 0 ? void 0 : _h.resourcetype),
+      syncToken: (_j = rs.props) === null || _j === void 0 ? void 0 : _j.syncToken
+    };
+  }).map(async (addr) => ({
+    ...addr,
+    reports: await supportedReportSet({
+      collection: addr,
+      headers: excludeHeaders(headers, headersToExclude),
+      fetchOptions,
+      fetch: fetchOverride
+    })
+  })));
+};
+var fetchVCards = async (params) => {
+  const { addressBook: addressBook2, headers, objectUrls, headersToExclude, urlFilter = (url) => url, useMultiGet = true, fetchOptions = {}, fetch: fetchOverride } = params;
+  debug$3(`Fetching vcards from ${addressBook2 === null || addressBook2 === void 0 ? void 0 : addressBook2.url}`);
+  const requiredFields = ["url"];
+  if (!addressBook2 || !hasFields(addressBook2, requiredFields)) {
+    if (!addressBook2) {
+      throw new Error("cannot fetchVCards for undefined addressBook");
+    }
+    throw new Error(`addressBook must have ${findMissingFieldNames(addressBook2, requiredFields)} before fetchVCards`);
+  }
+  const vcardUrls = (objectUrls !== null && objectUrls !== void 0 ? objectUrls : (
+    // fetch all objects of the calendar
+    (await addressBookQuery({
+      url: addressBook2.url,
+      props: { [`${DAVNamespaceShort.DAV}:getetag`]: {} },
+      depth: "1",
+      headers: excludeHeaders(headers, headersToExclude),
+      fetchOptions,
+      fetch: fetchOverride
+    })).map((res) => {
+      var _a;
+      return (_a = res.href) !== null && _a !== void 0 ? _a : "";
+    })
+  )).map((url) => url.startsWith("http") || !url ? url : new URL(url, addressBook2.url).href).filter((url) => url && !urlEquals(url, addressBook2.url)).filter(urlFilter).map((url) => new URL(url).pathname);
+  let vCardResults = [];
+  if (vcardUrls.length > 0) {
+    if (useMultiGet) {
+      vCardResults = await addressBookMultiGet({
+        url: addressBook2.url,
+        props: {
+          [`${DAVNamespaceShort.DAV}:getetag`]: {},
+          [`${DAVNamespaceShort.CARDDAV}:address-data`]: {}
+        },
+        objectUrls: vcardUrls,
+        depth: "1",
+        headers: excludeHeaders(headers, headersToExclude),
+        fetchOptions,
+        fetch: fetchOverride
+      });
+    } else {
+      vCardResults = await addressBookQuery({
+        url: addressBook2.url,
+        props: {
+          [`${DAVNamespaceShort.DAV}:getetag`]: {},
+          [`${DAVNamespaceShort.CARDDAV}:address-data`]: {}
+        },
+        depth: "1",
+        headers: excludeHeaders(headers, headersToExclude),
+        fetchOptions,
+        fetch: fetchOverride
+      });
+    }
+  }
+  return vCardResults.map((res) => {
+    var _a, _b, _c, _d, _e, _f;
+    return {
+      url: new URL((_a = res.href) !== null && _a !== void 0 ? _a : "", addressBook2.url).href,
+      etag: (_b = res.props) === null || _b === void 0 ? void 0 : _b.getetag,
+      data: (_e = (_d = (_c = res.props) === null || _c === void 0 ? void 0 : _c.addressData) === null || _d === void 0 ? void 0 : _d._cdata) !== null && _e !== void 0 ? _e : (_f = res.props) === null || _f === void 0 ? void 0 : _f.addressData
+    };
+  });
+};
+var createVCard = async (params) => {
+  const { addressBook: addressBook2, vCardString, filename, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  return createObject({
+    url: new URL(filename, addressBook2.url).href,
+    data: vCardString,
+    headers: excludeHeaders({
+      "content-type": "text/vcard; charset=utf-8",
+      "If-None-Match": "*",
+      ...headers
+    }, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+};
+var updateVCard = async (params) => {
+  const { vCard, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  return updateObject({
+    url: vCard.url,
+    data: vCard.data,
+    etag: vCard.etag,
+    headers: excludeHeaders({
+      "content-type": "text/vcard; charset=utf-8",
+      ...headers
+    }, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+};
+var deleteVCard = async (params) => {
+  const { vCard, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  return deleteObject({
+    url: vCard.url,
+    etag: vCard.etag,
+    headers: excludeHeaders(headers, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+};
+var addressBook = /* @__PURE__ */ Object.freeze({
+  __proto__: null,
+  addressBookMultiGet,
+  addressBookQuery,
+  createVCard,
+  deleteVCard,
+  fetchAddressBooks,
+  fetchVCards,
+  updateVCard
+});
+var debug$2 = (0, import_debug.default)("tsdav:calendar");
+var fetchCalendarUserAddresses = async (params) => {
+  var _a, _b, _c;
+  const { account: account2, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  const requiredFields = ["principalUrl", "rootUrl"];
+  if (!hasFields(account2, requiredFields)) {
+    throw new Error(`account must have ${findMissingFieldNames(account2, requiredFields)} before fetchUserAddresses`);
+  }
+  debug$2(`Fetch user addresses from ${account2.principalUrl}`);
+  const responses = await propfind({
+    url: account2.principalUrl,
+    props: { [`${DAVNamespaceShort.CALDAV}:calendar-user-address-set`]: {} },
+    depth: "0",
+    headers: excludeHeaders(headers, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+  const matched = responses.find((r) => urlContains(account2.principalUrl, r.href));
+  if (!matched || !matched.ok) {
+    throw new Error("cannot find calendarUserAddresses");
+  }
+  const addresses = ((_c = (_b = (_a = matched === null || matched === void 0 ? void 0 : matched.props) === null || _a === void 0 ? void 0 : _a.calendarUserAddressSet) === null || _b === void 0 ? void 0 : _b.href) === null || _c === void 0 ? void 0 : _c.filter(Boolean)) || [];
+  debug$2(`Fetched calendar user addresses ${addresses}`);
+  return addresses;
+};
+var calendarQuery = async (params) => {
+  const { url, props, filters, timezone, depth, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  return collectionQuery({
+    url,
+    body: {
+      "calendar-query": cleanupFalsy({
+        _attributes: getDAVAttribute([
+          DAVNamespace.CALDAV,
+          DAVNamespace.CALENDAR_SERVER,
+          DAVNamespace.CALDAV_APPLE,
+          DAVNamespace.DAV
+        ]),
+        [`${DAVNamespaceShort.DAV}:prop`]: props,
+        filter: filters,
+        timezone
+      })
+    },
+    defaultNamespace: DAVNamespaceShort.CALDAV,
+    depth,
+    headers: excludeHeaders(headers, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+};
+var calendarMultiGet = async (params) => {
+  const { url, props, objectUrls, filters, timezone, depth, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  return collectionQuery({
+    url,
+    body: {
+      "calendar-multiget": cleanupFalsy({
+        _attributes: getDAVAttribute([DAVNamespace.DAV, DAVNamespace.CALDAV]),
+        [`${DAVNamespaceShort.DAV}:prop`]: props,
+        [`${DAVNamespaceShort.DAV}:href`]: objectUrls,
+        filter: filters,
+        timezone
+      })
+    },
+    defaultNamespace: DAVNamespaceShort.CALDAV,
+    depth,
+    headers: excludeHeaders(headers, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+};
+var makeCalendar = async (params) => {
+  const { url, props, depth, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  return davRequest({
+    url,
+    init: {
+      method: "MKCALENDAR",
+      headers: excludeHeaders(cleanupFalsy({ depth, ...headers }), headersToExclude),
+      namespace: DAVNamespaceShort.DAV,
+      body: {
+        [`${DAVNamespaceShort.CALDAV}:mkcalendar`]: {
+          _attributes: getDAVAttribute([
+            DAVNamespace.DAV,
+            DAVNamespace.CALDAV,
+            DAVNamespace.CALDAV_APPLE
+          ]),
+          set: {
+            prop: props
+          }
+        }
+      }
+    },
+    fetchOptions,
+    fetch: fetchOverride
+  });
+};
+var fetchCalendars = async (params) => {
+  const { headers, account: account2, props: customProps, projectedProps, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params !== null && params !== void 0 ? params : {};
+  const requiredFields = ["homeUrl", "rootUrl"];
+  if (!account2 || !hasFields(account2, requiredFields)) {
+    if (!account2) {
+      throw new Error("no account for fetchCalendars");
+    }
+    throw new Error(`account must have ${findMissingFieldNames(account2, requiredFields)} before fetchCalendars`);
+  }
+  const res = await propfind({
+    url: account2.homeUrl,
+    props: customProps !== null && customProps !== void 0 ? customProps : {
+      [`${DAVNamespaceShort.CALDAV}:calendar-description`]: {},
+      [`${DAVNamespaceShort.CALDAV}:calendar-timezone`]: {},
+      [`${DAVNamespaceShort.DAV}:displayname`]: {},
+      [`${DAVNamespaceShort.CALDAV_APPLE}:calendar-color`]: {},
+      [`${DAVNamespaceShort.CALENDAR_SERVER}:getctag`]: {},
+      [`${DAVNamespaceShort.DAV}:resourcetype`]: {},
+      [`${DAVNamespaceShort.CALDAV}:supported-calendar-component-set`]: {},
+      [`${DAVNamespaceShort.DAV}:sync-token`]: {}
+    },
+    depth: "1",
+    headers: excludeHeaders(headers, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+  return Promise.all(res.filter((r) => {
+    var _a, _b;
+    return Object.keys((_b = (_a = r.props) === null || _a === void 0 ? void 0 : _a.resourcetype) !== null && _b !== void 0 ? _b : {}).includes("calendar");
+  }).filter((rc) => {
+    var _a, _b, _c, _d, _e, _f;
+    const components = Array.isArray((_b = (_a = rc.props) === null || _a === void 0 ? void 0 : _a.supportedCalendarComponentSet) === null || _b === void 0 ? void 0 : _b.comp) ? (_c = rc.props) === null || _c === void 0 ? void 0 : _c.supportedCalendarComponentSet.comp.map((sc) => sc._attributes.name) : [(_f = (_e = (_d = rc.props) === null || _d === void 0 ? void 0 : _d.supportedCalendarComponentSet) === null || _e === void 0 ? void 0 : _e.comp) === null || _f === void 0 ? void 0 : _f._attributes.name];
+    return components.some((c) => Object.values(ICALObjects).includes(c));
+  }).map((rs) => {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r;
+    const description = (_a = rs.props) === null || _a === void 0 ? void 0 : _a.calendarDescription;
+    const timezone = (_b = rs.props) === null || _b === void 0 ? void 0 : _b.calendarTimezone;
+    return {
+      description: typeof description === "string" ? description : "",
+      timezone: typeof timezone === "string" ? timezone : "",
+      url: new URL((_c = rs.href) !== null && _c !== void 0 ? _c : "", (_d = account2.rootUrl) !== null && _d !== void 0 ? _d : "").href,
+      ctag: (_e = rs.props) === null || _e === void 0 ? void 0 : _e.getctag,
+      calendarColor: (_f = rs.props) === null || _f === void 0 ? void 0 : _f.calendarColor,
+      displayName: (_h = (_g = rs.props) === null || _g === void 0 ? void 0 : _g.displayname._cdata) !== null && _h !== void 0 ? _h : (_j = rs.props) === null || _j === void 0 ? void 0 : _j.displayname,
+      components: Array.isArray((_k = rs.props) === null || _k === void 0 ? void 0 : _k.supportedCalendarComponentSet.comp) ? (_l = rs.props) === null || _l === void 0 ? void 0 : _l.supportedCalendarComponentSet.comp.map((sc) => sc._attributes.name) : [(_o = (_m = rs.props) === null || _m === void 0 ? void 0 : _m.supportedCalendarComponentSet.comp) === null || _o === void 0 ? void 0 : _o._attributes.name],
+      resourcetype: Object.keys((_p = rs.props) === null || _p === void 0 ? void 0 : _p.resourcetype),
+      syncToken: (_q = rs.props) === null || _q === void 0 ? void 0 : _q.syncToken,
+      ...conditionalParam("projectedProps", Object.fromEntries(Object.entries((_r = rs.props) !== null && _r !== void 0 ? _r : {}).filter(([key]) => projectedProps === null || projectedProps === void 0 ? void 0 : projectedProps[key])))
+    };
+  }).map(async (cal) => ({
+    ...cal,
+    reports: await supportedReportSet({
+      collection: cal,
+      headers: excludeHeaders(headers, headersToExclude),
+      fetchOptions,
+      fetch: fetchOverride
+    })
+  })));
+};
+var fetchCalendarObjects = async (params) => {
+  const { calendar: calendar2, objectUrls, filters: customFilters, timeRange, headers, expand, urlFilter = (url) => Boolean(url === null || url === void 0 ? void 0 : url.includes(".ics")), useMultiGet = true, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  if (timeRange) {
+    const ISO_8601 = /^\d{4}(-\d\d(-\d\d(T\d\d:\d\d(:\d\d)?(\.\d+)?(([+-]\d\d:\d\d)|Z)?)?)?)?$/i;
+    const ISO_8601_FULL = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?(([+-]\d\d:\d\d)|Z)?$/i;
+    if ((!ISO_8601.test(timeRange.start) || !ISO_8601.test(timeRange.end)) && (!ISO_8601_FULL.test(timeRange.start) || !ISO_8601_FULL.test(timeRange.end))) {
+      throw new Error("invalid timeRange format, not in ISO8601");
+    }
+  }
+  debug$2(`Fetching calendar objects from ${calendar2 === null || calendar2 === void 0 ? void 0 : calendar2.url}`);
+  const requiredFields = ["url"];
+  if (!calendar2 || !hasFields(calendar2, requiredFields)) {
+    if (!calendar2) {
+      throw new Error("cannot fetchCalendarObjects for undefined calendar");
+    }
+    throw new Error(`calendar must have ${findMissingFieldNames(calendar2, requiredFields)} before fetchCalendarObjects`);
+  }
+  const filters = customFilters !== null && customFilters !== void 0 ? customFilters : [
+    {
+      "comp-filter": {
+        _attributes: {
+          name: "VCALENDAR"
+        },
+        "comp-filter": {
+          _attributes: {
+            name: "VEVENT"
+          },
+          ...timeRange ? {
+            "time-range": {
+              _attributes: {
+                start: `${new Date(timeRange.start).toISOString().slice(0, 19).replace(/[-:.]/g, "")}Z`,
+                end: `${new Date(timeRange.end).toISOString().slice(0, 19).replace(/[-:.]/g, "")}Z`
+              }
+            }
+          } : {}
+        }
+      }
+    }
+  ];
+  let initialResponses = [];
+  const calendarObjectUrls = (objectUrls !== null && objectUrls !== void 0 ? objectUrls : (
+    // fetch all objects of the calendar
+    (initialResponses = await calendarQuery({
+      url: calendar2.url,
+      props: {
+        [`${DAVNamespaceShort.DAV}:getetag`]: {},
+        ...expand && timeRange ? {
+          [`${DAVNamespaceShort.CALDAV}:calendar-data`]: {
+            [`${DAVNamespaceShort.CALDAV}:expand`]: {
+              _attributes: {
+                start: `${new Date(timeRange.start).toISOString().slice(0, 19).replace(/[-:.]/g, "")}Z`,
+                end: `${new Date(timeRange.end).toISOString().slice(0, 19).replace(/[-:.]/g, "")}Z`
+              }
+            }
+          }
+        } : {}
+      },
+      filters,
+      depth: "1",
+      headers: excludeHeaders(headers, headersToExclude),
+      fetchOptions,
+      fetch: fetchOverride
+    })).map((res) => {
+      var _a;
+      return (_a = res.href) !== null && _a !== void 0 ? _a : "";
+    })
+  )).map((url) => url.startsWith("http") || !url ? url : new URL(url, calendar2.url).href).filter(urlFilter).map((url) => new URL(url).pathname);
+  let calendarObjectResults = [];
+  if (calendarObjectUrls.length > 0) {
+    if (expand && !objectUrls) {
+      calendarObjectResults = initialResponses.filter((res) => {
+        var _a, _b;
+        const fullUrl = ((_a = res.href) !== null && _a !== void 0 ? _a : "").startsWith("http") ? res.href : new URL((_b = res.href) !== null && _b !== void 0 ? _b : "", calendar2.url).href;
+        return urlFilter(fullUrl !== null && fullUrl !== void 0 ? fullUrl : "");
+      });
+    } else if (!useMultiGet) {
+      calendarObjectResults = await calendarQuery({
+        url: calendar2.url,
+        props: {
+          [`${DAVNamespaceShort.DAV}:getetag`]: {},
+          [`${DAVNamespaceShort.CALDAV}:calendar-data`]: {
+            ...expand && timeRange ? {
+              [`${DAVNamespaceShort.CALDAV}:expand`]: {
+                _attributes: {
+                  start: `${new Date(timeRange.start).toISOString().slice(0, 19).replace(/[-:.]/g, "")}Z`,
+                  end: `${new Date(timeRange.end).toISOString().slice(0, 19).replace(/[-:.]/g, "")}Z`
+                }
+              }
+            } : {}
+          }
+        },
+        filters,
+        depth: "1",
+        headers: excludeHeaders(headers, headersToExclude),
+        fetchOptions,
+        fetch: fetchOverride
+      });
+    } else {
+      calendarObjectResults = await calendarMultiGet({
+        url: calendar2.url,
+        props: {
+          [`${DAVNamespaceShort.DAV}:getetag`]: {},
+          [`${DAVNamespaceShort.CALDAV}:calendar-data`]: {
+            ...expand && timeRange ? {
+              [`${DAVNamespaceShort.CALDAV}:expand`]: {
+                _attributes: {
+                  start: `${new Date(timeRange.start).toISOString().slice(0, 19).replace(/[-:.]/g, "")}Z`,
+                  end: `${new Date(timeRange.end).toISOString().slice(0, 19).replace(/[-:.]/g, "")}Z`
+                }
+              }
+            } : {}
+          }
+        },
+        objectUrls: calendarObjectUrls,
+        depth: "1",
+        headers: excludeHeaders(headers, headersToExclude),
+        fetchOptions,
+        fetch: fetchOverride
+      });
+    }
+  }
+  return calendarObjectResults.map((res) => {
+    var _a, _b, _c, _d, _e, _f;
+    return {
+      url: new URL((_a = res.href) !== null && _a !== void 0 ? _a : "", calendar2.url).href,
+      etag: `${(_b = res.props) === null || _b === void 0 ? void 0 : _b.getetag}`,
+      data: (_e = (_d = (_c = res.props) === null || _c === void 0 ? void 0 : _c.calendarData) === null || _d === void 0 ? void 0 : _d._cdata) !== null && _e !== void 0 ? _e : (_f = res.props) === null || _f === void 0 ? void 0 : _f.calendarData
+    };
+  });
+};
+var createCalendarObject = async (params) => {
+  const { calendar: calendar2, iCalString, filename, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  return createObject({
+    url: new URL(filename, calendar2.url).href,
+    data: iCalString,
+    headers: excludeHeaders({
+      "content-type": "text/calendar; charset=utf-8",
+      "If-None-Match": "*",
+      ...headers
+    }, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+};
+var updateCalendarObject = async (params) => {
+  const { calendarObject, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  return updateObject({
+    url: calendarObject.url,
+    data: calendarObject.data,
+    etag: calendarObject.etag,
+    headers: excludeHeaders({
+      "content-type": "text/calendar; charset=utf-8",
+      ...headers
+    }, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+};
+var deleteCalendarObject = async (params) => {
+  const { calendarObject, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  return deleteObject({
+    url: calendarObject.url,
+    etag: calendarObject.etag,
+    headers: excludeHeaders(headers, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+};
+var syncCalendars = async (params) => {
+  var _a;
+  const { oldCalendars, account: account2, detailedResult, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  if (!account2) {
+    throw new Error("Must have account before syncCalendars");
+  }
+  const localCalendars = (_a = oldCalendars !== null && oldCalendars !== void 0 ? oldCalendars : account2.calendars) !== null && _a !== void 0 ? _a : [];
+  const remoteCalendars = await fetchCalendars({
+    account: account2,
+    headers: excludeHeaders(headers, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+  const created = remoteCalendars.filter((rc) => localCalendars.every((lc) => !urlContains(lc.url, rc.url)));
+  debug$2(`new calendars: ${created.map((cc) => cc.displayName)}`);
+  const updated = localCalendars.reduce((prev, curr) => {
+    const found = remoteCalendars.find((rc) => urlContains(rc.url, curr.url));
+    if (found && (found.syncToken && `${found.syncToken}` !== `${curr.syncToken}` || found.ctag && `${found.ctag}` !== `${curr.ctag}`)) {
+      return [...prev, found];
+    }
+    return prev;
+  }, []);
+  debug$2(`updated calendars: ${updated.map((cc) => cc.displayName)}`);
+  const updatedWithObjects = await Promise.all(updated.map(async (u) => {
+    const result = await smartCollectionSync({
+      collection: { ...u, objectMultiGet: calendarMultiGet },
+      method: "webdav",
+      headers: excludeHeaders(headers, headersToExclude),
+      account: account2,
+      fetchOptions,
+      fetch: fetchOverride
+    });
+    return result;
+  }));
+  const deleted = localCalendars.filter((cal) => remoteCalendars.every((rc) => !urlContains(rc.url, cal.url)));
+  debug$2(`deleted calendars: ${deleted.map((cc) => cc.displayName)}`);
+  const unchanged = localCalendars.filter((cal) => remoteCalendars.some((rc) => urlContains(rc.url, cal.url) && (rc.syncToken && `${rc.syncToken}` !== `${cal.syncToken}` || rc.ctag && `${rc.ctag}` !== `${cal.ctag}`)));
+  return detailedResult ? {
+    created,
+    updated,
+    deleted
+  } : [...unchanged, ...created, ...updatedWithObjects];
+};
+var freeBusyQuery = async (params) => {
+  const { url, timeRange, depth, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  if (timeRange) {
+    const ISO_8601 = /^\d{4}(-\d\d(-\d\d(T\d\d:\d\d(:\d\d)?(\.\d+)?(([+-]\d\d:\d\d)|Z)?)?)?)?$/i;
+    const ISO_8601_FULL = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?(([+-]\d\d:\d\d)|Z)?$/i;
+    if ((!ISO_8601.test(timeRange.start) || !ISO_8601.test(timeRange.end)) && (!ISO_8601_FULL.test(timeRange.start) || !ISO_8601_FULL.test(timeRange.end))) {
+      throw new Error("invalid timeRange format, not in ISO8601");
+    }
+  } else {
+    throw new Error("timeRange is required");
+  }
+  const result = await collectionQuery({
+    url,
+    body: {
+      "free-busy-query": cleanupFalsy({
+        _attributes: getDAVAttribute([DAVNamespace.CALDAV]),
+        [`${DAVNamespaceShort.CALDAV}:time-range`]: {
+          _attributes: {
+            start: `${new Date(timeRange.start).toISOString().slice(0, 19).replace(/[-:.]/g, "")}Z`,
+            end: `${new Date(timeRange.end).toISOString().slice(0, 19).replace(/[-:.]/g, "")}Z`
+          }
+        }
+      })
+    },
+    defaultNamespace: DAVNamespaceShort.CALDAV,
+    depth,
+    headers: excludeHeaders(headers, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+  return result[0];
+};
+var calendar = /* @__PURE__ */ Object.freeze({
+  __proto__: null,
+  calendarMultiGet,
+  calendarQuery,
+  createCalendarObject,
+  deleteCalendarObject,
+  fetchCalendarObjects,
+  fetchCalendarUserAddresses,
+  fetchCalendars,
+  freeBusyQuery,
+  makeCalendar,
+  syncCalendars,
+  updateCalendarObject
+});
+var debug$1 = (0, import_debug.default)("tsdav:account");
+var serviceDiscovery = async (params) => {
+  var _a, _b;
+  debug$1("Service discovery...");
+  const { account: account2, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  const requestFetch = fetchOverride !== null && fetchOverride !== void 0 ? fetchOverride : fetch;
+  const endpoint = new URL(account2.serverUrl);
+  const uri = new URL(`/.well-known/${account2.accountType}`, endpoint);
+  uri.protocol = (_a = endpoint.protocol) !== null && _a !== void 0 ? _a : "http";
+  try {
+    const response = await requestFetch(uri.href, {
+      headers: {
+        ...excludeHeaders(headers, headersToExclude),
+        "Content-Type": "text/xml;charset=UTF-8"
+      },
+      method: "PROPFIND",
+      body: `<?xml version="1.0" encoding="utf-8" ?>
+<d:propfind xmlns:d="DAV:">
+  <d:prop>
+    <d:resourcetype/>
+  </d:prop>
+</d:propfind>`,
+      redirect: "manual",
+      ...fetchOptions
+    });
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get("Location");
+      if (typeof location === "string" && location.length) {
+        debug$1(`Service discovery redirected to ${location}`);
+        const serviceURL = new URL(location, endpoint);
+        if (serviceURL.hostname === uri.hostname && uri.port && !serviceURL.port) {
+          serviceURL.port = uri.port;
+        }
+        serviceURL.protocol = (_b = endpoint.protocol) !== null && _b !== void 0 ? _b : "http";
+        return serviceURL.href;
+      }
+    }
+  } catch (err) {
+    debug$1(`Service discovery failed: ${err.stack}`);
+  }
+  return endpoint.href;
+};
+var fetchPrincipalUrl = async (params) => {
+  var _a, _b, _c, _d, _e;
+  const { account: account2, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  const requiredFields = ["rootUrl"];
+  if (!hasFields(account2, requiredFields)) {
+    throw new Error(`account must have ${findMissingFieldNames(account2, requiredFields)} before fetchPrincipalUrl`);
+  }
+  debug$1(`Fetching principal url from path ${account2.rootUrl}`);
+  const [response] = await propfind({
+    url: account2.rootUrl,
+    props: {
+      [`${DAVNamespaceShort.DAV}:current-user-principal`]: {}
+    },
+    depth: "0",
+    headers: excludeHeaders(headers, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+  if (!response.ok) {
+    debug$1(`Fetch principal url failed: ${response.statusText}`);
+    if (response.status === 401) {
+      throw new Error("Invalid credentials");
+    }
+  }
+  debug$1(`Fetched principal url ${(_b = (_a = response.props) === null || _a === void 0 ? void 0 : _a.currentUserPrincipal) === null || _b === void 0 ? void 0 : _b.href}`);
+  return new URL((_e = (_d = (_c = response.props) === null || _c === void 0 ? void 0 : _c.currentUserPrincipal) === null || _d === void 0 ? void 0 : _d.href) !== null && _e !== void 0 ? _e : "", account2.rootUrl).href;
+};
+var fetchHomeUrl = async (params) => {
+  var _a, _b;
+  const { account: account2, headers, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  const requiredFields = ["principalUrl", "rootUrl"];
+  if (!hasFields(account2, requiredFields)) {
+    throw new Error(`account must have ${findMissingFieldNames(account2, requiredFields)} before fetchHomeUrl`);
+  }
+  debug$1(`Fetch home url from ${account2.principalUrl}`);
+  const responses = await propfind({
+    url: account2.principalUrl,
+    props: account2.accountType === "caldav" ? { [`${DAVNamespaceShort.CALDAV}:calendar-home-set`]: {} } : { [`${DAVNamespaceShort.CARDDAV}:addressbook-home-set`]: {} },
+    depth: "0",
+    headers: excludeHeaders(headers, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+  const matched = responses.find((r) => urlContains(account2.principalUrl, r.href));
+  if (!matched || !matched.ok) {
+    debug$1(`Fetch home url failed with status ${matched === null || matched === void 0 ? void 0 : matched.statusText} and error ${JSON.stringify(responses.map((r) => r.error))}`);
+    throw new Error("cannot find homeUrl");
+  }
+  const result = new URL(account2.accountType === "caldav" ? (_a = matched === null || matched === void 0 ? void 0 : matched.props) === null || _a === void 0 ? void 0 : _a.calendarHomeSet.href : (_b = matched === null || matched === void 0 ? void 0 : matched.props) === null || _b === void 0 ? void 0 : _b.addressbookHomeSet.href, account2.rootUrl).href;
+  debug$1(`Fetched home url ${result}`);
+  return result;
+};
+var createAccount = async (params) => {
+  const { account: account2, headers, loadCollections = false, loadObjects = false, headersToExclude, fetchOptions = {}, fetch: fetchOverride } = params;
+  const newAccount = { ...account2 };
+  newAccount.rootUrl = await serviceDiscovery({
+    account: account2,
+    headers: excludeHeaders(headers, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+  newAccount.principalUrl = await fetchPrincipalUrl({
+    account: newAccount,
+    headers: excludeHeaders(headers, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+  newAccount.homeUrl = await fetchHomeUrl({
+    account: newAccount,
+    headers: excludeHeaders(headers, headersToExclude),
+    fetchOptions,
+    fetch: fetchOverride
+  });
+  if (loadCollections || loadObjects) {
+    if (account2.accountType === "caldav") {
+      newAccount.calendars = await fetchCalendars({
+        headers: excludeHeaders(headers, headersToExclude),
+        account: newAccount,
+        fetchOptions,
+        fetch: fetchOverride
+      });
+    } else if (account2.accountType === "carddav") {
+      newAccount.addressBooks = await fetchAddressBooks({
+        headers: excludeHeaders(headers, headersToExclude),
+        account: newAccount,
+        fetchOptions,
+        fetch: fetchOverride
+      });
+    }
+  }
+  if (loadObjects) {
+    if (account2.accountType === "caldav" && newAccount.calendars) {
+      newAccount.calendars = await Promise.all(newAccount.calendars.map(async (cal) => ({
+        ...cal,
+        objects: await fetchCalendarObjects({
+          calendar: cal,
+          headers: excludeHeaders(headers, headersToExclude),
+          fetchOptions,
+          fetch: fetchOverride
+        })
+      })));
+    } else if (account2.accountType === "carddav" && newAccount.addressBooks) {
+      newAccount.addressBooks = await Promise.all(newAccount.addressBooks.map(async (addr) => ({
+        ...addr,
+        objects: await fetchVCards({
+          addressBook: addr,
+          headers: excludeHeaders(headers, headersToExclude),
+          fetchOptions,
+          fetch: fetchOverride
+        })
+      })));
+    }
+  }
+  return newAccount;
+};
+var account = /* @__PURE__ */ Object.freeze({
+  __proto__: null,
+  createAccount,
+  fetchHomeUrl,
+  fetchPrincipalUrl,
+  serviceDiscovery
+});
+var debug = (0, import_debug.default)("tsdav:authHelper");
+var defaultParam = (fn, params) => (...args) => {
+  return fn({ ...params, ...args[0] });
+};
+var getBasicAuthHeaders = (credentials) => {
+  debug(`Basic auth token generated: ${(0, import_base_64.encode)(`${credentials.username}:${credentials.password}`)}`);
+  return {
+    authorization: `Basic ${(0, import_base_64.encode)(`${credentials.username}:${credentials.password}`)}`
+  };
+};
+var getBearerAuthHeaders = (credentials) => {
+  return {
+    authorization: `Bearer ${credentials.accessToken}`
+  };
+};
+var fetchOauthTokens = async (credentials, fetchOptions, fetchOverride) => {
+  const requireFields = [
+    "authorizationCode",
+    "redirectUrl",
+    "clientId",
+    "clientSecret",
+    "tokenUrl"
+  ];
+  if (!hasFields(credentials, requireFields)) {
+    throw new Error(`Oauth credentials missing: ${findMissingFieldNames(credentials, requireFields)}`);
+  }
+  const param = new URLSearchParams({
+    grant_type: "authorization_code",
+    code: credentials.authorizationCode,
+    redirect_uri: credentials.redirectUrl,
+    client_id: credentials.clientId,
+    client_secret: credentials.clientSecret
+  });
+  debug(credentials.tokenUrl);
+  debug(param.toString());
+  const requestFetch = fetchOverride !== null && fetchOverride !== void 0 ? fetchOverride : fetch;
+  const response = await requestFetch(credentials.tokenUrl, {
+    method: "POST",
+    body: param.toString(),
+    headers: {
+      "content-length": `${param.toString().length}`,
+      "content-type": "application/x-www-form-urlencoded"
+    },
+    ...fetchOptions !== null && fetchOptions !== void 0 ? fetchOptions : {}
+  });
+  if (response.ok) {
+    const tokens = await response.json();
+    return tokens;
+  }
+  debug(`Fetch Oauth tokens failed: ${await response.text()}`);
+  return {};
+};
+var refreshAccessToken = async (credentials, fetchOptions, fetchOverride) => {
+  const requireFields = [
+    "refreshToken",
+    "clientId",
+    "clientSecret",
+    "tokenUrl"
+  ];
+  if (!hasFields(credentials, requireFields)) {
+    throw new Error(`Oauth credentials missing: ${findMissingFieldNames(credentials, requireFields)}`);
+  }
+  const param = new URLSearchParams({
+    client_id: credentials.clientId,
+    client_secret: credentials.clientSecret,
+    refresh_token: credentials.refreshToken,
+    grant_type: "refresh_token"
+  });
+  const requestFetch = fetchOverride !== null && fetchOverride !== void 0 ? fetchOverride : fetch;
+  const response = await requestFetch(credentials.tokenUrl, {
+    method: "POST",
+    body: param.toString(),
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    ...fetchOptions !== null && fetchOptions !== void 0 ? fetchOptions : {}
+  });
+  if (response.ok) {
+    const tokens = await response.json();
+    return tokens;
+  }
+  debug(`Refresh access token failed: ${await response.text()}`);
+  return {};
+};
+var getOauthHeaders = async (credentials, fetchOptions, fetchOverride) => {
+  var _a;
+  debug("Fetching oauth headers");
+  let tokens = {};
+  if (!credentials.refreshToken) {
+    tokens = await fetchOauthTokens(credentials, fetchOptions, fetchOverride);
+  } else if (credentials.refreshToken && !credentials.accessToken || Date.now() > ((_a = credentials.expiration) !== null && _a !== void 0 ? _a : 0)) {
+    tokens = await refreshAccessToken(credentials, fetchOptions, fetchOverride);
+  }
+  debug(`Oauth tokens fetched: ${tokens.access_token}`);
+  return {
+    tokens,
+    headers: {
+      authorization: `Bearer ${tokens.access_token}`
+    }
+  };
+};
+var authHelpers = /* @__PURE__ */ Object.freeze({
+  __proto__: null,
+  defaultParam,
+  fetchOauthTokens,
+  getBasicAuthHeaders,
+  getBearerAuthHeaders,
+  getOauthHeaders,
+  refreshAccessToken
+});
+var createDAVClient = async (params) => {
+  var _a;
+  const { serverUrl, credentials, authMethod, defaultAccountType, authFunction, fetch: fetchOverride } = params;
+  let authHeaders = {};
+  switch (authMethod) {
+    case "Basic":
+      authHeaders = getBasicAuthHeaders(credentials);
+      break;
+    case "Bearer":
+      authHeaders = getBearerAuthHeaders(credentials);
+      break;
+    case "Oauth":
+      authHeaders = (await getOauthHeaders(credentials, void 0, fetchOverride)).headers;
+      break;
+    case "Digest":
+      authHeaders = {
+        Authorization: `Digest ${credentials.digestString}`
+      };
+      break;
+    case "Custom":
+      authHeaders = (_a = await (authFunction === null || authFunction === void 0 ? void 0 : authFunction(credentials))) !== null && _a !== void 0 ? _a : {};
+      break;
+    default:
+      throw new Error("Invalid auth method");
+  }
+  const defaultAccount = defaultAccountType ? await createAccount({
+    account: { serverUrl, credentials, accountType: defaultAccountType },
+    headers: authHeaders,
+    fetch: fetchOverride
+  }) : void 0;
+  const davRequest$1 = async (params0) => {
+    const { init, fetch: fetchOverride2, ...rest } = params0;
+    const { headers, ...restInit } = init;
+    return davRequest({
+      ...rest,
+      init: {
+        ...restInit,
+        headers: {
+          ...authHeaders,
+          ...headers
+        }
+      },
+      fetch: fetchOverride2 !== null && fetchOverride2 !== void 0 ? fetchOverride2 : fetchOverride
+    });
+  };
+  const createObject$1 = defaultParam(createObject, {
+    url: serverUrl,
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  const updateObject$1 = defaultParam(updateObject, {
+    headers: authHeaders,
+    url: serverUrl,
+    fetch: fetchOverride
+  });
+  const deleteObject$1 = defaultParam(deleteObject, {
+    headers: authHeaders,
+    url: serverUrl,
+    fetch: fetchOverride
+  });
+  const propfind$1 = defaultParam(propfind, { headers: authHeaders, fetch: fetchOverride });
+  const createAccount$1 = async (params0) => {
+    const { account: account2, headers, loadCollections, loadObjects, fetch: fetchOverride2 } = params0;
+    return createAccount({
+      account: { serverUrl, credentials, ...account2 },
+      headers: { ...authHeaders, ...headers },
+      loadCollections,
+      loadObjects,
+      fetch: fetchOverride2 !== null && fetchOverride2 !== void 0 ? fetchOverride2 : fetchOverride
+    });
+  };
+  const collectionQuery$1 = defaultParam(collectionQuery, {
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  const makeCollection$1 = defaultParam(makeCollection, {
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  const syncCollection$1 = defaultParam(syncCollection, {
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  const supportedReportSet$1 = defaultParam(supportedReportSet, {
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  const isCollectionDirty$1 = defaultParam(isCollectionDirty, {
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  const smartCollectionSync$1 = defaultParam(smartCollectionSync, {
+    headers: authHeaders,
+    account: defaultAccount,
+    fetch: fetchOverride
+  });
+  const calendarQuery$1 = defaultParam(calendarQuery, {
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  const calendarMultiGet$1 = defaultParam(calendarMultiGet, {
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  const makeCalendar$1 = defaultParam(makeCalendar, {
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  const fetchCalendars$1 = defaultParam(fetchCalendars, {
+    headers: authHeaders,
+    account: defaultAccount,
+    fetch: fetchOverride
+  });
+  const fetchCalendarUserAddresses$1 = defaultParam(fetchCalendarUserAddresses, {
+    headers: authHeaders,
+    account: defaultAccount,
+    fetch: fetchOverride
+  });
+  const fetchCalendarObjects$1 = defaultParam(fetchCalendarObjects, {
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  const createCalendarObject$1 = defaultParam(createCalendarObject, {
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  const updateCalendarObject$1 = defaultParam(updateCalendarObject, {
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  const deleteCalendarObject$1 = defaultParam(deleteCalendarObject, {
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  const syncCalendars$1 = defaultParam(syncCalendars, {
+    account: defaultAccount,
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  const addressBookQuery$1 = defaultParam(addressBookQuery, {
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  const addressBookMultiGet$1 = defaultParam(addressBookMultiGet, {
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  const fetchAddressBooks$1 = defaultParam(fetchAddressBooks, {
+    account: defaultAccount,
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  const fetchVCards$1 = defaultParam(fetchVCards, {
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  const createVCard$1 = defaultParam(createVCard, {
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  const updateVCard$1 = defaultParam(updateVCard, {
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  const deleteVCard$1 = defaultParam(deleteVCard, {
+    headers: authHeaders,
+    fetch: fetchOverride
+  });
+  return {
+    davRequest: davRequest$1,
+    propfind: propfind$1,
+    createAccount: createAccount$1,
+    createObject: createObject$1,
+    updateObject: updateObject$1,
+    deleteObject: deleteObject$1,
+    calendarQuery: calendarQuery$1,
+    addressBookQuery: addressBookQuery$1,
+    collectionQuery: collectionQuery$1,
+    makeCollection: makeCollection$1,
+    calendarMultiGet: calendarMultiGet$1,
+    makeCalendar: makeCalendar$1,
+    syncCollection: syncCollection$1,
+    supportedReportSet: supportedReportSet$1,
+    isCollectionDirty: isCollectionDirty$1,
+    smartCollectionSync: smartCollectionSync$1,
+    fetchCalendars: fetchCalendars$1,
+    fetchCalendarUserAddresses: fetchCalendarUserAddresses$1,
+    fetchCalendarObjects: fetchCalendarObjects$1,
+    createCalendarObject: createCalendarObject$1,
+    updateCalendarObject: updateCalendarObject$1,
+    deleteCalendarObject: deleteCalendarObject$1,
+    syncCalendars: syncCalendars$1,
+    fetchAddressBooks: fetchAddressBooks$1,
+    addressBookMultiGet: addressBookMultiGet$1,
+    fetchVCards: fetchVCards$1,
+    createVCard: createVCard$1,
+    updateVCard: updateVCard$1,
+    deleteVCard: deleteVCard$1
+  };
+};
+var DAVClient = class {
+  constructor(params) {
+    var _a, _b, _c;
+    this.serverUrl = params.serverUrl;
+    this.credentials = params.credentials;
+    this.authMethod = (_a = params.authMethod) !== null && _a !== void 0 ? _a : "Basic";
+    this.accountType = (_b = params.defaultAccountType) !== null && _b !== void 0 ? _b : "caldav";
+    this.authFunction = params.authFunction;
+    this.fetchOptions = (_c = params.fetchOptions) !== null && _c !== void 0 ? _c : {};
+    this.fetchOverride = params.fetch;
+  }
+  async login() {
+    var _a;
+    switch (this.authMethod) {
+      case "Basic":
+        this.authHeaders = getBasicAuthHeaders(this.credentials);
+        break;
+      case "Bearer":
+        this.authHeaders = getBearerAuthHeaders(this.credentials);
+        break;
+      case "Oauth":
+        this.authHeaders = (await getOauthHeaders(this.credentials, this.fetchOptions, this.fetchOverride)).headers;
+        break;
+      case "Digest":
+        this.authHeaders = {
+          Authorization: `Digest ${this.credentials.digestString}`
+        };
+        break;
+      case "Custom":
+        this.authHeaders = await ((_a = this.authFunction) === null || _a === void 0 ? void 0 : _a.call(this, this.credentials));
+        break;
+      default:
+        throw new Error("Invalid auth method");
+    }
+    this.account = this.accountType ? await createAccount({
+      account: {
+        serverUrl: this.serverUrl,
+        credentials: this.credentials,
+        accountType: this.accountType
+      },
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    }) : void 0;
+  }
+  async davRequest(params0) {
+    const { init, fetch: fetchOverride2, ...rest } = params0;
+    const { headers, ...restInit } = init;
+    return davRequest({
+      ...rest,
+      init: {
+        ...restInit,
+        headers: {
+          ...this.authHeaders,
+          ...headers
+        }
+      },
+      fetchOptions: this.fetchOptions,
+      fetch: fetchOverride2 !== null && fetchOverride2 !== void 0 ? fetchOverride2 : this.fetchOverride
+    });
+  }
+  async createObject(...params) {
+    return defaultParam(createObject, {
+      url: this.serverUrl,
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async updateObject(...params) {
+    return defaultParam(updateObject, {
+      url: this.serverUrl,
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async deleteObject(...params) {
+    return defaultParam(deleteObject, {
+      url: this.serverUrl,
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async propfind(...params) {
+    return defaultParam(propfind, {
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async createAccount(params0) {
+    const { account: account2, headers, loadCollections, loadObjects, fetchOptions, fetch: fetch2 } = params0;
+    return createAccount({
+      account: { serverUrl: this.serverUrl, credentials: this.credentials, ...account2 },
+      headers: { ...this.authHeaders, ...headers },
+      loadCollections,
+      loadObjects,
+      fetchOptions: fetchOptions !== null && fetchOptions !== void 0 ? fetchOptions : this.fetchOptions,
+      fetch: fetch2 !== null && fetch2 !== void 0 ? fetch2 : this.fetchOverride
+    });
+  }
+  async collectionQuery(...params) {
+    return defaultParam(collectionQuery, {
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async makeCollection(...params) {
+    return defaultParam(makeCollection, {
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async syncCollection(...params) {
+    return defaultParam(syncCollection, {
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async supportedReportSet(...params) {
+    return defaultParam(supportedReportSet, {
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async isCollectionDirty(...params) {
+    return defaultParam(isCollectionDirty, {
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async smartCollectionSync(...params) {
+    return defaultParam(smartCollectionSync, {
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride,
+      account: this.account
+    })(params[0]);
+  }
+  async calendarQuery(...params) {
+    return defaultParam(calendarQuery, {
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async makeCalendar(...params) {
+    return defaultParam(makeCalendar, {
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async calendarMultiGet(...params) {
+    return defaultParam(calendarMultiGet, {
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async fetchCalendars(...params) {
+    return defaultParam(fetchCalendars, {
+      headers: this.authHeaders,
+      account: this.account,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params === null || params === void 0 ? void 0 : params[0]);
+  }
+  async fetchCalendarUserAddresses(...params) {
+    return defaultParam(fetchCalendarUserAddresses, {
+      headers: this.authHeaders,
+      account: this.account,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params === null || params === void 0 ? void 0 : params[0]);
+  }
+  async fetchCalendarObjects(...params) {
+    return defaultParam(fetchCalendarObjects, {
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async createCalendarObject(...params) {
+    return defaultParam(createCalendarObject, {
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async updateCalendarObject(...params) {
+    return defaultParam(updateCalendarObject, {
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async deleteCalendarObject(...params) {
+    return defaultParam(deleteCalendarObject, {
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async syncCalendars(...params) {
+    return defaultParam(syncCalendars, {
+      headers: this.authHeaders,
+      account: this.account,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async addressBookQuery(...params) {
+    return defaultParam(addressBookQuery, {
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async addressBookMultiGet(...params) {
+    return defaultParam(addressBookMultiGet, {
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async fetchAddressBooks(...params) {
+    return defaultParam(fetchAddressBooks, {
+      headers: this.authHeaders,
+      account: this.account,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params === null || params === void 0 ? void 0 : params[0]);
+  }
+  async fetchVCards(...params) {
+    return defaultParam(fetchVCards, {
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async createVCard(...params) {
+    return defaultParam(createVCard, {
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async updateVCard(...params) {
+    return defaultParam(updateVCard, {
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+  async deleteVCard(...params) {
+    return defaultParam(deleteVCard, {
+      headers: this.authHeaders,
+      fetchOptions: this.fetchOptions,
+      fetch: this.fetchOverride
+    })(params[0]);
+  }
+};
+var client = /* @__PURE__ */ Object.freeze({
+  __proto__: null,
+  DAVClient,
+  createDAVClient
+});
+var index = {
+  DAVNamespace,
+  DAVNamespaceShort,
+  DAVAttributeMap,
+  ...client,
+  ...request,
+  ...collection,
+  ...account,
+  ...addressBook,
+  ...calendar,
+  ...authHelpers,
+  ...requestHelpers
+};
+
+// src/lib/caldav/transport.ts
 var import_obsidian9 = require("obsidian");
-var WeekCalendartSettingTab = class extends import_obsidian9.PluginSettingTab {
+var CaldavHttpError = class extends Error {
+  constructor(status) {
+    super(`CalDAV HTTP ${status}`);
+    this.status = status;
+  }
+};
+function validateServerUrl(value) {
+  let url;
+  try {
+    url = new URL(value.trim());
+  } catch {
+    throw new Error("Bitte eine g\xFCltige HTTPS-Server-URL eingeben.");
+  }
+  if (url.protocol !== "https:" || url.username || url.password || url.hash) {
+    throw new Error("CalDAV ben\xF6tigt eine HTTPS-URL ohne eingebettete Zugangsdaten oder Fragment.");
+  }
+  return url.href;
+}
+var caldavReadFetch = async (input, init) => {
+  const request2 = input instanceof Request ? input : void 0;
+  const url = validateServerUrl(request2?.url ?? String(input));
+  const method = (init?.method ?? request2?.method ?? "GET").toUpperCase();
+  if (!["GET", "HEAD", "OPTIONS", "PROPFIND", "REPORT"].includes(method)) {
+    throw new Error("Schreibzugriffe sind bei der Kalenderauswahl nicht erlaubt.");
+  }
+  const headers = new Headers(init?.headers ?? request2?.headers);
+  const requestHeaders = {};
+  headers.forEach((value, key) => {
+    requestHeaders[key] = value;
+  });
+  const body = init?.body ?? (request2 ? await request2.text() : void 0);
+  if (body !== void 0 && body !== null && typeof body !== "string") {
+    throw new Error("Nicht unterst\xFCtzter CalDAV-Anfrageinhalt.");
+  }
+  const result = await (0, import_obsidian9.requestUrl)({
+    url,
+    method,
+    headers: requestHeaders,
+    body: body ?? void 0,
+    throw: false
+  }).catch(() => {
+    throw new Error("CalDAV-Netzwerkanfrage fehlgeschlagen.");
+  });
+  if (result.status >= 400) throw new CaldavHttpError(result.status);
+  const response = new Response([204, 205, 304].includes(result.status) || method === "HEAD" ? null : result.text, {
+    status: result.status,
+    headers: result.headers
+  });
+  Object.defineProperty(response, "url", { value: url });
+  return response;
+};
+
+// src/lib/caldav/discover-calendars.ts
+async function discoverCalendars(settings) {
+  const serverUrl = validateServerUrl(settings.url);
+  if (!settings.username.trim() || !settings.password) {
+    throw new Error("Bitte Benutzername und Passwort eingeben.");
+  }
+  try {
+    const client2 = await createDAVClient({
+      serverUrl,
+      credentials: { username: settings.username.trim(), password: settings.password },
+      // tsdav's Basic helper logs the encoded credentials when debug is enabled.
+      authMethod: "Custom",
+      authFunction: async (credentials) => {
+        const bytes = new TextEncoder().encode(`${credentials.username}:${credentials.password}`);
+        return { authorization: `Basic ${btoa(String.fromCharCode(...bytes))}` };
+      },
+      defaultAccountType: "caldav",
+      fetch: caldavReadFetch
+    });
+    const calendars = await client2.fetchCalendars();
+    const result = /* @__PURE__ */ new Map();
+    for (const calendar2 of calendars) {
+      if (!calendar2.components?.includes("VEVENT")) continue;
+      const url = validateServerUrl(calendar2.url);
+      const name = typeof calendar2.displayName === "string" && calendar2.displayName.trim() ? calendar2.displayName.trim() : url;
+      result.set(url, { url, name });
+    }
+    return [...result.values()].sort((a, b) => a.name.localeCompare(b.name) || a.url.localeCompare(b.url));
+  } catch (error) {
+    if (error instanceof CaldavHttpError && [401, 403].includes(error.status)) {
+      throw new Error("CalDAV-Anmeldung fehlgeschlagen oder Zugriff verweigert. Zugangsdaten und app-spezifisches Passwort pr\xFCfen.");
+    }
+    throw new Error("CalDAV-Verbindung fehlgeschlagen. Server-URL, Netzwerk und Zugriffsrechte pr\xFCfen.");
+  }
+}
+
+// src/lib/settings/week-calendar-settings-tab.ts
+var WeekCalendartSettingTab = class extends import_obsidian10.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
+    this.caldavViewVersion = 0;
     this.plugin = plugin;
   }
   display() {
+    const viewVersion = ++this.caldavViewVersion;
     const { containerEl } = this;
     containerEl.empty();
     containerEl.createEl("h2", { text: "Folders" });
-    new import_obsidian9.Setting(containerEl).setName("Week Folder").setDesc("Folder for all Week Files").addText(
+    new import_obsidian10.Setting(containerEl).setName("Week Folder").setDesc("Folder for all Week Files").addText(
       (text) => text.setPlaceholder("wochen").setValue(this.plugin.settings.paths.weekFolder).onChange(async (value) => {
         this.plugin.settings.paths.weekFolder = value;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian9.Setting(containerEl).setName("Event Folder").setDesc("Folder for CalDav Events").addText(
+    new import_obsidian10.Setting(containerEl).setName("Event Folder").setDesc("Folder for CalDav Events").addText(
       (text) => text.setPlaceholder("events").setValue(this.plugin.settings.paths.eventFolder).onChange(async (value) => {
         this.plugin.settings.paths.eventFolder = value;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian9.Setting(containerEl).setName("Overview File Name").setDesc("Name of the File, where the Links to all Week Files are.").addText(
+    new import_obsidian10.Setting(containerEl).setName("Overview File Name").setDesc("Name of the File, where the Links to all Week Files are.").addText(
       (text) => text.setPlaceholder("\xDCbersicht").setValue(this.plugin.settings.paths.overviewFileName).onChange(async (value) => {
         this.plugin.settings.paths.overviewFileName = value;
         await this.plugin.saveSettings();
@@ -4646,7 +10080,7 @@ var WeekCalendartSettingTab = class extends import_obsidian9.PluginSettingTab {
     );
     containerEl.createEl("h2", { text: "Week File Titles" });
     Object.entries(this.plugin.settings.weekdays).filter(([key]) => key !== "start").forEach(([key, value]) => {
-      new import_obsidian9.Setting(containerEl).setName(key).addText(
+      new import_obsidian10.Setting(containerEl).setName(key).addText(
         (text) => text.setValue(value).onChange(async (val) => {
           this.plugin.settings.weekdays[key] = val;
           await this.plugin.saveSettings();
@@ -4655,7 +10089,7 @@ var WeekCalendartSettingTab = class extends import_obsidian9.PluginSettingTab {
     });
     containerEl.createEl("h2", { text: "Event Fields" });
     Object.entries(this.plugin.settings.prefixes).forEach(([key, value]) => {
-      new import_obsidian9.Setting(containerEl).setName(key).addText(
+      new import_obsidian10.Setting(containerEl).setName(key).addText(
         (text) => text.setValue(value).onChange(async (val) => {
           this.plugin.settings.prefixes[key] = val;
           await this.plugin.saveSettings();
@@ -4664,42 +10098,95 @@ var WeekCalendartSettingTab = class extends import_obsidian9.PluginSettingTab {
     });
     containerEl.createEl("h2", { text: "CalDAV" });
     let confirmationToggle;
-    new import_obsidian9.Setting(containerEl).setName("URL").addText(
+    let calendarDropdown;
+    let connectButton;
+    let calendars = [];
+    let requestVersion = 0;
+    let loading = false;
+    const connectionSetting = new import_obsidian10.Setting(containerEl).setName("CalDAV-Verbindung").setDesc("Liest die verf\xFCgbaren Kalender. Es werden keine Termine ver\xE4ndert.");
+    const invalidateConnection = () => {
+      requestVersion++;
+      loading = false;
+      calendars = [];
+      this.plugin.settings.caldav.managedCalendarConfirmed = false;
+      confirmationToggle?.setValue(false);
+      calendarDropdown?.selectEl.replaceChildren();
+      calendarDropdown?.addOption("", "Zuerst Verbindung pr\xFCfen").setValue("").setDisabled(true);
+      connectButton?.setDisabled(false).setButtonText("Verbindung pr\xFCfen");
+      connectionSetting.setDesc("Zugangsdaten ge\xE4ndert. Bitte Verbindung erneut pr\xFCfen.");
+    };
+    new import_obsidian10.Setting(containerEl).setName("URL").addText(
       (text) => text.setValue(this.plugin.settings.caldav.url).onChange(async (val) => {
         this.plugin.settings.caldav.url = val;
-        this.plugin.settings.caldav.managedCalendarConfirmed = false;
-        confirmationToggle?.setValue(false);
+        invalidateConnection();
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian9.Setting(containerEl).setName("Benutzername").addText(
+    new import_obsidian10.Setting(containerEl).setName("Benutzername").addText(
       (text) => text.setValue(this.plugin.settings.caldav.username).onChange(async (val) => {
         this.plugin.settings.caldav.username = val;
-        this.plugin.settings.caldav.managedCalendarConfirmed = false;
-        confirmationToggle?.setValue(false);
+        invalidateConnection();
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian9.Setting(containerEl).setName("Passwort").setDesc(
+    new import_obsidian10.Setting(containerEl).setName("Passwort").setDesc(
       "Wird in der Plugin-Konfiguration unverschl\xFCsselt gespeichert. Bei iCloud ein app-spezifisches Passwort verwenden."
     ).addText((text) => {
       text.inputEl.type = "password";
       text.setValue(this.plugin.settings.caldav.password).onChange(async (val) => {
         this.plugin.settings.caldav.password = val;
+        invalidateConnection();
         await this.plugin.saveSettings();
       });
     });
-    new import_obsidian9.Setting(containerEl).setName("Zielkalender-URL").setDesc(
-      "URL eines ausschliesslich f\xFCr dieses Plugin vorgesehenen Kalenders, nicht die Server-URL. Die Auswahl vom Server folgt im n\xE4chsten Verbindungsschritt."
-    ).addText(
-      (text) => text.setValue(this.plugin.settings.caldav.calendar).onChange(async (val) => {
-        this.plugin.settings.caldav.calendar = val;
+    connectionSetting.addButton((button) => {
+      connectButton = button;
+      button.setButtonText("Verbindung pr\xFCfen").onClick(async () => {
+        if (loading) return;
+        loading = true;
+        const version = ++requestVersion;
+        const connection = { ...this.plugin.settings.caldav };
+        button.setDisabled(true).setButtonText("Verbinde \u2026");
+        calendarDropdown?.setDisabled(true);
+        connectionSetting.setDesc("Verbindung wird gepr\xFCft \u2026");
+        try {
+          const found = await discoverCalendars(connection);
+          if (version !== requestVersion || viewVersion !== this.caldavViewVersion) return;
+          calendars = found;
+          calendarDropdown.selectEl.replaceChildren();
+          calendarDropdown.addOption("", "Bitte einen exklusiven Kalender ausw\xE4hlen");
+          for (const calendar2 of calendars) {
+            calendarDropdown.addOption(calendar2.url, `${calendar2.name} \u2014 ${calendar2.url}`);
+          }
+          const selected = calendars.some((calendar2) => calendar2.url === connection.calendar);
+          calendarDropdown.setValue(selected ? connection.calendar : "").setDisabled(!calendars.length);
+          connectionSetting.setDesc(calendars.length ? `${calendars.length} Kalender gefunden. Es wurden keine Termine ver\xE4ndert.${connection.calendar && !selected ? " Der gespeicherte Zielkalender wurde nicht gefunden; bitte neu ausw\xE4hlen." : ""}` : "Verbindung erfolgreich, aber keine Kalender f\xFCr Termine (VEVENT) gefunden.");
+        } catch (error) {
+          if (version !== requestVersion || viewVersion !== this.caldavViewVersion) return;
+          calendars = [];
+          calendarDropdown.selectEl.replaceChildren();
+          calendarDropdown.addOption("", "Verbindung fehlgeschlagen").setValue("").setDisabled(true);
+          connectionSetting.setDesc(error instanceof Error ? error.message : "CalDAV-Verbindung fehlgeschlagen.");
+        } finally {
+          if (version === requestVersion && viewVersion === this.caldavViewVersion) {
+            loading = false;
+            button.setDisabled(false).setButtonText("Verbindung pr\xFCfen");
+          }
+        }
+      });
+    });
+    const targetSetting = new import_obsidian10.Setting(containerEl).setName("Zielkalender").setDesc(`Nur einen ausschliesslich f\xFCr dieses Plugin vorgesehenen Kalender ausw\xE4hlen. Gespeicherte URL: ${this.plugin.settings.caldav.calendar || "(keine)"}`).addDropdown((dropdown) => {
+      calendarDropdown = dropdown;
+      dropdown.addOption("", "Zuerst Verbindung pr\xFCfen").setValue("").setDisabled(true).onChange(async (value) => {
+        if (loading || !calendars.some((calendar2) => calendar2.url === value)) return;
+        this.plugin.settings.caldav.calendar = value;
         this.plugin.settings.caldav.managedCalendarConfirmed = false;
         confirmationToggle?.setValue(false);
+        targetSetting.setDesc(`Exklusiver Zielkalender: ${value}`);
         await this.plugin.saveSettings();
-      })
-    );
-    new import_obsidian9.Setting(containerEl).setName("Exklusiven Zielkalender freigeben").setDesc(
+      });
+    });
+    new import_obsidian10.Setting(containerEl).setName("Exklusiven Zielkalender freigeben").setDesc(
       "Dieser Kalender wird ausschliesslich vom Plugin verwaltet. Beim sp\xE4teren Sync d\xFCrfen alle Eintr\xE4ge gel\xF6scht werden, die nicht in den Wochen-Dateien vorkommen. Aktuell erfolgt noch keine Synchronisation."
     ).addToggle((toggle) => {
       confirmationToggle = toggle;
@@ -4708,6 +10195,9 @@ var WeekCalendartSettingTab = class extends import_obsidian9.PluginSettingTab {
         await this.plugin.saveSettings();
       });
     });
+  }
+  hide() {
+    this.caldavViewVersion++;
   }
 };
 
@@ -4721,7 +10211,7 @@ Fehlende Features: toSpliced verlangs ES2023}`;
 }
 
 // src/main.ts
-var WeekCalendartPlugin = class extends import_obsidian10.Plugin {
+var WeekCalendartPlugin = class extends import_obsidian11.Plugin {
   constructor() {
     super(...arguments);
     this.actualFileChanded$ = fromEvent(this.app.workspace, "active-leaf-change");
@@ -4732,7 +10222,7 @@ var WeekCalendartPlugin = class extends import_obsidian10.Plugin {
   async onload() {
     const versionCheck = checkToSplicedCompatibility();
     if (versionCheck) {
-      new import_obsidian10.Notice(versionCheck, 1e4);
+      new import_obsidian11.Notice(versionCheck, 1e4);
       return;
     }
     await this.loadSettings();
@@ -4771,7 +10261,7 @@ var WeekCalendartPlugin = class extends import_obsidian10.Plugin {
       )
     );
     this.addSettingTab(new WeekCalendartSettingTab(this.app, this));
-    new import_obsidian10.Notice("Week Calendart loaded.");
+    new import_obsidian11.Notice("Week Calendart loaded.");
   }
   async loadSettings() {
     this.settings = mergeSettings(await this.loadData());
@@ -4780,7 +10270,15 @@ var WeekCalendartPlugin = class extends import_obsidian10.Plugin {
     await this.saveData(this.settings);
   }
   onunload() {
-    new import_obsidian10.Notice("Week Calendart unload.");
+    new import_obsidian11.Notice("Week Calendart unload.");
     this.subscription.unsubscribe();
   }
 };
+/*! Bundled license information:
+
+sax/lib/sax.js:
+  (*! http://mths.be/fromcodepoint v0.1.0 by @mathias *)
+
+base-64/base64.js:
+  (*! https://mths.be/base64 v1.0.0 by @mathias | MIT license *)
+*/
