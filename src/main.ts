@@ -7,7 +7,8 @@ import { processActiveFile } from './lib/commands/process-active-file';
 import { processAll } from './lib/commands/process-all';
 import { previewCalendarSync } from './lib/commands/preview-calendar-sync';
 import { createCalendarSync } from './lib/commands/sync-calendar';
-import { modifyWeekFileEvent } from './lib/event-handling/modify-week-file-event';
+import { watchWeekFiles } from './lib/event-handling/watch-week-files';
+import { createAutomaticSyncCoordinator } from './lib/sync/automatic-sync-coordinator';
 import { mergeSettings } from './lib/settings/load-settings';
 import { WeekCalendartSettingTab } from './lib/settings/week-calendar-settings-tab';
 import { checkToSplicedCompatibility } from './lib/utils/check-toSpliced-compatibility';
@@ -21,6 +22,7 @@ export default class WeekCalendartPlugin extends Plugin {
   syncStatus$ = new BehaviorSubject<SyncStatus>('off');
   migratingFiles = new Set<string>();
   private stopCalendarSync?: () => void;
+  private automaticSync?: ReturnType<typeof createAutomaticSyncCoordinator>;
 
   async onload(): Promise<void> {
     const versionCheck = checkToSplicedCompatibility();
@@ -32,7 +34,13 @@ export default class WeekCalendartPlugin extends Plugin {
     this.syncStatus$.next(getInitialSyncStatus(this.settings.caldav));
     this.subscription.add(addSyncStatusUi(this, this.syncStatus$));
 
-    const calendarSync = createCalendarSync(this.app, this.settings, (status) => this.syncStatus$.next(status));
+    const calendarSync = createCalendarSync(this.app, this.settings,
+      (status) => this.automaticSync?.reportWorkerStatus(status),
+      () => this.automaticSync?.idle());
+    const automaticSync = createAutomaticSyncCoordinator(this.settings, calendarSync.runAutomatic,
+      (status) => this.syncStatus$.next(status));
+    this.automaticSync = automaticSync;
+    this.subscription.add(() => automaticSync.dispose());
     this.stopCalendarSync = calendarSync.cancel;
     this.addCommand({
       id: 'sync-calendar',
@@ -76,15 +84,12 @@ export default class WeekCalendartPlugin extends Plugin {
       callback: gotoCurrentWeek(this.app, this.settings),
     });
 
-    this.subscription.add(
-      modifyWeekFileEvent(
-        this.app,
-        fromEvent(this.app.vault, 'modify'),
-        this.actualFileChanded$,
-        this.settings,
-        this.migratingFiles,
-      ),
-    );
+    // Vault "create" also fires during initial loading; only watch actual changes after layout readiness.
+    this.app.workspace.onLayoutReady(() => {
+      if (this.subscription.closed) return;
+      this.subscription.add(watchWeekFiles(this.app, this.settings, this.actualFileChanded$,
+        this.migratingFiles, automaticSync));
+    });
 
     this.addSettingTab(new WeekCalendartSettingTab(this.app, this));
     new Notice('Week Calendart loaded.');
@@ -96,7 +101,8 @@ export default class WeekCalendartPlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
-    this.syncStatus$.next(getInitialSyncStatus(this.settings.caldav));
+    if (this.automaticSync) this.automaticSync.configurationChanged();
+    else this.syncStatus$.next(getInitialSyncStatus(this.settings.caldav));
   }
 
   onunload(): void {

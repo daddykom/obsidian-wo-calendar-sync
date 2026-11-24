@@ -15,6 +15,7 @@ export function createCalendarSync(
   app: App,
   settings: WeekcalendarSettings,
   reportStatus: (status: SyncStatus) => void = () => {},
+  onIdle: () => void = () => {},
 ) {
   let active = true;
   let running = false;
@@ -78,6 +79,7 @@ export function createCalendarSync(
       } finally {
         progress?.hide();
         running = false;
+        onIdle();
       }
     },
     async runAutomatic(): Promise<AutomaticSyncOutcome> {
@@ -130,6 +132,7 @@ export function createCalendarSync(
         return { status: 'error' };
       } finally {
         running = false;
+        onIdle();
       }
     },
     cancel(): void {

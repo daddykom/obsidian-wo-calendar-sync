@@ -12,11 +12,11 @@ var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
 };
-var __copyProps = (to, from2, except, desc) => {
-  if (from2 && typeof from2 === "object" || typeof from2 === "function") {
-    for (let key of __getOwnPropNames(from2))
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
       if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from2[key], enumerable: !(desc = __getOwnPropDesc(from2, key)) || desc.enumerable });
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
   }
   return to;
 };
@@ -2016,7 +2016,7 @@ var require_array_helper = __commonJS({
 // node_modules/xml-js/lib/options-helper.js
 var require_options_helper = __commonJS({
   "node_modules/xml-js/lib/options-helper.js"(exports, module2) {
-    var isArray3 = require_array_helper().isArray;
+    var isArray2 = require_array_helper().isArray;
     module2.exports = {
       copyOptions: function(options) {
         var key, copy = {};
@@ -2038,7 +2038,7 @@ var require_options_helper = __commonJS({
         }
       },
       ensureAlwaysArrayExists: function(options) {
-        if (!("alwaysArray" in options) || typeof options.alwaysArray !== "boolean" && !isArray3(options.alwaysArray)) {
+        if (!("alwaysArray" in options) || typeof options.alwaysArray !== "boolean" && !isArray2(options.alwaysArray)) {
           options.alwaysArray = false;
         }
       },
@@ -2062,7 +2062,7 @@ var require_xml2js = __commonJS({
     }, parse: function() {
     } };
     var helper = require_options_helper();
-    var isArray3 = require_array_helper().isArray;
+    var isArray2 = require_array_helper().isArray;
     var options;
     var pureJsParser = true;
     var currentElement;
@@ -2124,10 +2124,10 @@ var require_xml2js = __commonJS({
     function addField(type, value) {
       var key;
       if (options.compact) {
-        if (!currentElement[options[type + "Key"]] && (isArray3(options.alwaysArray) ? options.alwaysArray.indexOf(options[type + "Key"]) !== -1 : options.alwaysArray)) {
+        if (!currentElement[options[type + "Key"]] && (isArray2(options.alwaysArray) ? options.alwaysArray.indexOf(options[type + "Key"]) !== -1 : options.alwaysArray)) {
           currentElement[options[type + "Key"]] = [];
         }
-        if (currentElement[options[type + "Key"]] && !isArray3(currentElement[options[type + "Key"]])) {
+        if (currentElement[options[type + "Key"]] && !isArray2(currentElement[options[type + "Key"]])) {
           currentElement[options[type + "Key"]] = [currentElement[options[type + "Key"]]];
         }
         if (type + "Fn" in options && typeof value === "string") {
@@ -2146,7 +2146,7 @@ var require_xml2js = __commonJS({
             }
           }
         }
-        if (isArray3(currentElement[options[type + "Key"]])) {
+        if (isArray2(currentElement[options[type + "Key"]])) {
           currentElement[options[type + "Key"]].push(value);
         } else {
           currentElement[options[type + "Key"]] = value;
@@ -2269,13 +2269,13 @@ var require_xml2js = __commonJS({
             }
           }
         }
-        if (!(name in currentElement) && (isArray3(options.alwaysArray) ? options.alwaysArray.indexOf(name) !== -1 : options.alwaysArray)) {
+        if (!(name in currentElement) && (isArray2(options.alwaysArray) ? options.alwaysArray.indexOf(name) !== -1 : options.alwaysArray)) {
           currentElement[name] = [];
         }
-        if (currentElement[name] && !isArray3(currentElement[name])) {
+        if (currentElement[name] && !isArray2(currentElement[name])) {
           currentElement[name] = [currentElement[name]];
         }
-        if (isArray3(currentElement[name])) {
+        if (isArray2(currentElement[name])) {
           currentElement[name].push(element);
         } else {
           currentElement[name] = element;
@@ -2425,7 +2425,7 @@ var require_xml2json = __commonJS({
 var require_js2xml = __commonJS({
   "node_modules/xml-js/lib/js2xml.js"(exports, module2) {
     var helper = require_options_helper();
-    var isArray3 = require_array_helper().isArray;
+    var isArray2 = require_array_helper().isArray;
     var currentElement;
     var currentElementName;
     function validateOptions(userOptions) {
@@ -2705,7 +2705,7 @@ var require_js2xml = __commonJS({
       var i, key, nodes, xml = [];
       for (key in element) {
         if (element.hasOwnProperty(key)) {
-          nodes = isArray3(element[key]) ? element[key] : [element[key]];
+          nodes = isArray2(element[key]) ? element[key] : [element[key]];
           for (i = 0; i < nodes.length; ++i) {
             switch (key) {
               case options.declarationKey:
@@ -3465,7 +3465,7 @@ __export(main_exports, {
   default: () => WeekCalendartPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian16 = require("obsidian");
+var import_obsidian17 = require("obsidian");
 
 // node_modules/tslib/tslib.es6.mjs
 var extendStatics = function(d, b) {
@@ -3609,14 +3609,14 @@ function __read(o, n) {
   }
   return ar;
 }
-function __spreadArray(to, from2, pack) {
-  if (pack || arguments.length === 2) for (var i = 0, l = from2.length, ar; i < l; i++) {
-    if (ar || !(i in from2)) {
-      if (!ar) ar = Array.prototype.slice.call(from2, 0, i);
-      ar[i] = from2[i];
+function __spreadArray(to, from, pack) {
+  if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+    if (ar || !(i in from)) {
+      if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+      ar[i] = from[i];
     }
   }
-  return to.concat(ar || Array.prototype.slice.call(from2));
+  return to.concat(ar || Array.prototype.slice.call(from));
 }
 function __await(v) {
   return this instanceof __await ? (this.v = v, this) : new __await(v);
@@ -4134,18 +4134,18 @@ function pipeFromArray(fns) {
 
 // node_modules/rxjs/dist/esm5/internal/Observable.js
 var Observable = (function() {
-  function Observable3(subscribe) {
+  function Observable4(subscribe) {
     if (subscribe) {
       this._subscribe = subscribe;
     }
   }
-  Observable3.prototype.lift = function(operator) {
-    var observable2 = new Observable3();
+  Observable4.prototype.lift = function(operator) {
+    var observable2 = new Observable4();
     observable2.source = this;
     observable2.operator = operator;
     return observable2;
   };
-  Observable3.prototype.subscribe = function(observerOrNext, error, complete) {
+  Observable4.prototype.subscribe = function(observerOrNext, error, complete) {
     var _this = this;
     var subscriber = isSubscriber(observerOrNext) ? observerOrNext : new SafeSubscriber(observerOrNext, error, complete);
     errorContext(function() {
@@ -4154,14 +4154,14 @@ var Observable = (function() {
     });
     return subscriber;
   };
-  Observable3.prototype._trySubscribe = function(sink) {
+  Observable4.prototype._trySubscribe = function(sink) {
     try {
       return this._subscribe(sink);
     } catch (err) {
       sink.error(err);
     }
   };
-  Observable3.prototype.forEach = function(next, promiseCtor) {
+  Observable4.prototype.forEach = function(next, promiseCtor) {
     var _this = this;
     promiseCtor = getPromiseCtor(promiseCtor);
     return new promiseCtor(function(resolve, reject) {
@@ -4180,21 +4180,21 @@ var Observable = (function() {
       _this.subscribe(subscriber);
     });
   };
-  Observable3.prototype._subscribe = function(subscriber) {
+  Observable4.prototype._subscribe = function(subscriber) {
     var _a;
     return (_a = this.source) === null || _a === void 0 ? void 0 : _a.subscribe(subscriber);
   };
-  Observable3.prototype[observable] = function() {
+  Observable4.prototype[observable] = function() {
     return this;
   };
-  Observable3.prototype.pipe = function() {
+  Observable4.prototype.pipe = function() {
     var operations = [];
     for (var _i = 0; _i < arguments.length; _i++) {
       operations[_i] = arguments[_i];
     }
     return pipeFromArray(operations)(this);
   };
-  Observable3.prototype.toPromise = function(promiseCtor) {
+  Observable4.prototype.toPromise = function(promiseCtor) {
     var _this = this;
     promiseCtor = getPromiseCtor(promiseCtor);
     return new promiseCtor(function(resolve, reject) {
@@ -4208,10 +4208,10 @@ var Observable = (function() {
       });
     });
   };
-  Observable3.create = function(subscribe) {
-    return new Observable3(subscribe);
+  Observable4.create = function(subscribe) {
+    return new Observable4(subscribe);
   };
-  return Observable3;
+  return Observable4;
 })();
 function getPromiseCtor(promiseCtor) {
   var _a;
@@ -4489,211 +4489,6 @@ var BehaviorSubject = (function(_super) {
   return BehaviorSubject2;
 })(Subject);
 
-// node_modules/rxjs/dist/esm5/internal/scheduler/dateTimestampProvider.js
-var dateTimestampProvider = {
-  now: function() {
-    return (dateTimestampProvider.delegate || Date).now();
-  },
-  delegate: void 0
-};
-
-// node_modules/rxjs/dist/esm5/internal/scheduler/Action.js
-var Action = (function(_super) {
-  __extends(Action2, _super);
-  function Action2(scheduler, work) {
-    return _super.call(this) || this;
-  }
-  Action2.prototype.schedule = function(state, delay) {
-    if (delay === void 0) {
-      delay = 0;
-    }
-    return this;
-  };
-  return Action2;
-})(Subscription);
-
-// node_modules/rxjs/dist/esm5/internal/scheduler/intervalProvider.js
-var intervalProvider = {
-  setInterval: function(handler, timeout) {
-    var args = [];
-    for (var _i = 2; _i < arguments.length; _i++) {
-      args[_i - 2] = arguments[_i];
-    }
-    var delegate = intervalProvider.delegate;
-    if (delegate === null || delegate === void 0 ? void 0 : delegate.setInterval) {
-      return delegate.setInterval.apply(delegate, __spreadArray([handler, timeout], __read(args)));
-    }
-    return setInterval.apply(void 0, __spreadArray([handler, timeout], __read(args)));
-  },
-  clearInterval: function(handle) {
-    var delegate = intervalProvider.delegate;
-    return ((delegate === null || delegate === void 0 ? void 0 : delegate.clearInterval) || clearInterval)(handle);
-  },
-  delegate: void 0
-};
-
-// node_modules/rxjs/dist/esm5/internal/scheduler/AsyncAction.js
-var AsyncAction = (function(_super) {
-  __extends(AsyncAction2, _super);
-  function AsyncAction2(scheduler, work) {
-    var _this = _super.call(this, scheduler, work) || this;
-    _this.scheduler = scheduler;
-    _this.work = work;
-    _this.pending = false;
-    return _this;
-  }
-  AsyncAction2.prototype.schedule = function(state, delay) {
-    var _a;
-    if (delay === void 0) {
-      delay = 0;
-    }
-    if (this.closed) {
-      return this;
-    }
-    this.state = state;
-    var id = this.id;
-    var scheduler = this.scheduler;
-    if (id != null) {
-      this.id = this.recycleAsyncId(scheduler, id, delay);
-    }
-    this.pending = true;
-    this.delay = delay;
-    this.id = (_a = this.id) !== null && _a !== void 0 ? _a : this.requestAsyncId(scheduler, this.id, delay);
-    return this;
-  };
-  AsyncAction2.prototype.requestAsyncId = function(scheduler, _id, delay) {
-    if (delay === void 0) {
-      delay = 0;
-    }
-    return intervalProvider.setInterval(scheduler.flush.bind(scheduler, this), delay);
-  };
-  AsyncAction2.prototype.recycleAsyncId = function(_scheduler, id, delay) {
-    if (delay === void 0) {
-      delay = 0;
-    }
-    if (delay != null && this.delay === delay && this.pending === false) {
-      return id;
-    }
-    if (id != null) {
-      intervalProvider.clearInterval(id);
-    }
-    return void 0;
-  };
-  AsyncAction2.prototype.execute = function(state, delay) {
-    if (this.closed) {
-      return new Error("executing a cancelled action");
-    }
-    this.pending = false;
-    var error = this._execute(state, delay);
-    if (error) {
-      return error;
-    } else if (this.pending === false && this.id != null) {
-      this.id = this.recycleAsyncId(this.scheduler, this.id, null);
-    }
-  };
-  AsyncAction2.prototype._execute = function(state, _delay) {
-    var errored = false;
-    var errorValue;
-    try {
-      this.work(state);
-    } catch (e) {
-      errored = true;
-      errorValue = e ? e : new Error("Scheduled action threw falsy error");
-    }
-    if (errored) {
-      this.unsubscribe();
-      return errorValue;
-    }
-  };
-  AsyncAction2.prototype.unsubscribe = function() {
-    if (!this.closed) {
-      var _a = this, id = _a.id, scheduler = _a.scheduler;
-      var actions = scheduler.actions;
-      this.work = this.state = this.scheduler = null;
-      this.pending = false;
-      arrRemove(actions, this);
-      if (id != null) {
-        this.id = this.recycleAsyncId(scheduler, id, null);
-      }
-      this.delay = null;
-      _super.prototype.unsubscribe.call(this);
-    }
-  };
-  return AsyncAction2;
-})(Action);
-
-// node_modules/rxjs/dist/esm5/internal/Scheduler.js
-var Scheduler = (function() {
-  function Scheduler2(schedulerActionCtor, now) {
-    if (now === void 0) {
-      now = Scheduler2.now;
-    }
-    this.schedulerActionCtor = schedulerActionCtor;
-    this.now = now;
-  }
-  Scheduler2.prototype.schedule = function(work, delay, state) {
-    if (delay === void 0) {
-      delay = 0;
-    }
-    return new this.schedulerActionCtor(this, work).schedule(state, delay);
-  };
-  Scheduler2.now = dateTimestampProvider.now;
-  return Scheduler2;
-})();
-
-// node_modules/rxjs/dist/esm5/internal/scheduler/AsyncScheduler.js
-var AsyncScheduler = (function(_super) {
-  __extends(AsyncScheduler2, _super);
-  function AsyncScheduler2(SchedulerAction, now) {
-    if (now === void 0) {
-      now = Scheduler.now;
-    }
-    var _this = _super.call(this, SchedulerAction, now) || this;
-    _this.actions = [];
-    _this._active = false;
-    return _this;
-  }
-  AsyncScheduler2.prototype.flush = function(action) {
-    var actions = this.actions;
-    if (this._active) {
-      actions.push(action);
-      return;
-    }
-    var error;
-    this._active = true;
-    do {
-      if (error = action.execute(action.state, action.delay)) {
-        break;
-      }
-    } while (action = actions.shift());
-    this._active = false;
-    if (error) {
-      while (action = actions.shift()) {
-        action.unsubscribe();
-      }
-      throw error;
-    }
-  };
-  return AsyncScheduler2;
-})(Scheduler);
-
-// node_modules/rxjs/dist/esm5/internal/scheduler/async.js
-var asyncScheduler = new AsyncScheduler(AsyncAction);
-var async = asyncScheduler;
-
-// node_modules/rxjs/dist/esm5/internal/util/isScheduler.js
-function isScheduler(value) {
-  return value && isFunction(value.schedule);
-}
-
-// node_modules/rxjs/dist/esm5/internal/util/args.js
-function last(arr) {
-  return arr[arr.length - 1];
-}
-function popScheduler(args) {
-  return isScheduler(last(args)) ? args.pop() : void 0;
-}
-
 // node_modules/rxjs/dist/esm5/internal/util/isArrayLike.js
 var isArrayLike = (function(x) {
   return x && typeof x.length === "number" && typeof x !== "function";
@@ -4938,167 +4733,6 @@ function executeSchedule(parentSubscription, scheduler, work, delay, repeat) {
   }
 }
 
-// node_modules/rxjs/dist/esm5/internal/operators/observeOn.js
-function observeOn(scheduler, delay) {
-  if (delay === void 0) {
-    delay = 0;
-  }
-  return operate(function(source, subscriber) {
-    source.subscribe(createOperatorSubscriber(subscriber, function(value) {
-      return executeSchedule(subscriber, scheduler, function() {
-        return subscriber.next(value);
-      }, delay);
-    }, function() {
-      return executeSchedule(subscriber, scheduler, function() {
-        return subscriber.complete();
-      }, delay);
-    }, function(err) {
-      return executeSchedule(subscriber, scheduler, function() {
-        return subscriber.error(err);
-      }, delay);
-    }));
-  });
-}
-
-// node_modules/rxjs/dist/esm5/internal/operators/subscribeOn.js
-function subscribeOn(scheduler, delay) {
-  if (delay === void 0) {
-    delay = 0;
-  }
-  return operate(function(source, subscriber) {
-    subscriber.add(scheduler.schedule(function() {
-      return source.subscribe(subscriber);
-    }, delay));
-  });
-}
-
-// node_modules/rxjs/dist/esm5/internal/scheduled/scheduleObservable.js
-function scheduleObservable(input, scheduler) {
-  return innerFrom(input).pipe(subscribeOn(scheduler), observeOn(scheduler));
-}
-
-// node_modules/rxjs/dist/esm5/internal/scheduled/schedulePromise.js
-function schedulePromise(input, scheduler) {
-  return innerFrom(input).pipe(subscribeOn(scheduler), observeOn(scheduler));
-}
-
-// node_modules/rxjs/dist/esm5/internal/scheduled/scheduleArray.js
-function scheduleArray(input, scheduler) {
-  return new Observable(function(subscriber) {
-    var i = 0;
-    return scheduler.schedule(function() {
-      if (i === input.length) {
-        subscriber.complete();
-      } else {
-        subscriber.next(input[i++]);
-        if (!subscriber.closed) {
-          this.schedule();
-        }
-      }
-    });
-  });
-}
-
-// node_modules/rxjs/dist/esm5/internal/scheduled/scheduleIterable.js
-function scheduleIterable(input, scheduler) {
-  return new Observable(function(subscriber) {
-    var iterator2;
-    executeSchedule(subscriber, scheduler, function() {
-      iterator2 = input[iterator]();
-      executeSchedule(subscriber, scheduler, function() {
-        var _a;
-        var value;
-        var done;
-        try {
-          _a = iterator2.next(), value = _a.value, done = _a.done;
-        } catch (err) {
-          subscriber.error(err);
-          return;
-        }
-        if (done) {
-          subscriber.complete();
-        } else {
-          subscriber.next(value);
-        }
-      }, 0, true);
-    });
-    return function() {
-      return isFunction(iterator2 === null || iterator2 === void 0 ? void 0 : iterator2.return) && iterator2.return();
-    };
-  });
-}
-
-// node_modules/rxjs/dist/esm5/internal/scheduled/scheduleAsyncIterable.js
-function scheduleAsyncIterable(input, scheduler) {
-  if (!input) {
-    throw new Error("Iterable cannot be null");
-  }
-  return new Observable(function(subscriber) {
-    executeSchedule(subscriber, scheduler, function() {
-      var iterator2 = input[Symbol.asyncIterator]();
-      executeSchedule(subscriber, scheduler, function() {
-        iterator2.next().then(function(result) {
-          if (result.done) {
-            subscriber.complete();
-          } else {
-            subscriber.next(result.value);
-          }
-        });
-      }, 0, true);
-    });
-  });
-}
-
-// node_modules/rxjs/dist/esm5/internal/scheduled/scheduleReadableStreamLike.js
-function scheduleReadableStreamLike(input, scheduler) {
-  return scheduleAsyncIterable(readableStreamLikeToAsyncGenerator(input), scheduler);
-}
-
-// node_modules/rxjs/dist/esm5/internal/scheduled/scheduled.js
-function scheduled(input, scheduler) {
-  if (input != null) {
-    if (isInteropObservable(input)) {
-      return scheduleObservable(input, scheduler);
-    }
-    if (isArrayLike(input)) {
-      return scheduleArray(input, scheduler);
-    }
-    if (isPromise(input)) {
-      return schedulePromise(input, scheduler);
-    }
-    if (isAsyncIterable(input)) {
-      return scheduleAsyncIterable(input, scheduler);
-    }
-    if (isIterable(input)) {
-      return scheduleIterable(input, scheduler);
-    }
-    if (isReadableStreamLike(input)) {
-      return scheduleReadableStreamLike(input, scheduler);
-    }
-  }
-  throw createInvalidObservableTypeError(input);
-}
-
-// node_modules/rxjs/dist/esm5/internal/observable/from.js
-function from(input, scheduler) {
-  return scheduler ? scheduled(input, scheduler) : innerFrom(input);
-}
-
-// node_modules/rxjs/dist/esm5/internal/observable/of.js
-function of() {
-  var args = [];
-  for (var _i = 0; _i < arguments.length; _i++) {
-    args[_i] = arguments[_i];
-  }
-  var scheduler = popScheduler(args);
-  return from(args, scheduler);
-}
-
-// node_modules/rxjs/dist/esm5/internal/util/isDate.js
-function isValidDate(value) {
-  return value instanceof Date && !isNaN(value);
-}
-
 // node_modules/rxjs/dist/esm5/internal/operators/map.js
 function map(project, thisArg) {
   return operate(function(source, subscriber) {
@@ -5255,167 +4889,6 @@ function isJQueryStyleEventEmitter(target) {
 }
 function isEventTarget(target) {
   return isFunction(target.addEventListener) && isFunction(target.removeEventListener);
-}
-
-// node_modules/rxjs/dist/esm5/internal/observable/timer.js
-function timer(dueTime, intervalOrScheduler, scheduler) {
-  if (dueTime === void 0) {
-    dueTime = 0;
-  }
-  if (scheduler === void 0) {
-    scheduler = async;
-  }
-  var intervalDuration = -1;
-  if (intervalOrScheduler != null) {
-    if (isScheduler(intervalOrScheduler)) {
-      scheduler = intervalOrScheduler;
-    } else {
-      intervalDuration = intervalOrScheduler;
-    }
-  }
-  return new Observable(function(subscriber) {
-    var due = isValidDate(dueTime) ? +dueTime - scheduler.now() : dueTime;
-    if (due < 0) {
-      due = 0;
-    }
-    var n = 0;
-    return scheduler.schedule(function() {
-      if (!subscriber.closed) {
-        subscriber.next(n++);
-        if (0 <= intervalDuration) {
-          this.schedule(void 0, intervalDuration);
-        } else {
-          subscriber.complete();
-        }
-      }
-    }, due);
-  });
-}
-
-// node_modules/rxjs/dist/esm5/internal/util/argsOrArgArray.js
-var isArray2 = Array.isArray;
-function argsOrArgArray(args) {
-  return args.length === 1 && isArray2(args[0]) ? args[0] : args;
-}
-
-// node_modules/rxjs/dist/esm5/internal/operators/filter.js
-function filter(predicate, thisArg) {
-  return operate(function(source, subscriber) {
-    var index2 = 0;
-    source.subscribe(createOperatorSubscriber(subscriber, function(value) {
-      return predicate.call(thisArg, value, index2++) && subscriber.next(value);
-    }));
-  });
-}
-
-// node_modules/rxjs/dist/esm5/internal/observable/race.js
-function race() {
-  var sources = [];
-  for (var _i = 0; _i < arguments.length; _i++) {
-    sources[_i] = arguments[_i];
-  }
-  sources = argsOrArgArray(sources);
-  return sources.length === 1 ? innerFrom(sources[0]) : new Observable(raceInit(sources));
-}
-function raceInit(sources) {
-  return function(subscriber) {
-    var subscriptions = [];
-    var _loop_1 = function(i2) {
-      subscriptions.push(innerFrom(sources[i2]).subscribe(createOperatorSubscriber(subscriber, function(value) {
-        if (subscriptions) {
-          for (var s = 0; s < subscriptions.length; s++) {
-            s !== i2 && subscriptions[s].unsubscribe();
-          }
-          subscriptions = null;
-        }
-        subscriber.next(value);
-      })));
-    };
-    for (var i = 0; subscriptions && !subscriber.closed && i < sources.length; i++) {
-      _loop_1(i);
-    }
-  };
-}
-
-// node_modules/rxjs/dist/esm5/internal/operators/catchError.js
-function catchError(selector) {
-  return operate(function(source, subscriber) {
-    var innerSub = null;
-    var syncUnsub = false;
-    var handledResult;
-    innerSub = source.subscribe(createOperatorSubscriber(subscriber, void 0, void 0, function(err) {
-      handledResult = innerFrom(selector(err, catchError(selector)(source)));
-      if (innerSub) {
-        innerSub.unsubscribe();
-        innerSub = null;
-        handledResult.subscribe(subscriber);
-      } else {
-        syncUnsub = true;
-      }
-    }));
-    if (syncUnsub) {
-      innerSub.unsubscribe();
-      innerSub = null;
-      handledResult.subscribe(subscriber);
-    }
-  });
-}
-
-// node_modules/rxjs/dist/esm5/internal/operators/debounce.js
-function debounce(durationSelector) {
-  return operate(function(source, subscriber) {
-    var hasValue = false;
-    var lastValue = null;
-    var durationSubscriber = null;
-    var emit = function() {
-      durationSubscriber === null || durationSubscriber === void 0 ? void 0 : durationSubscriber.unsubscribe();
-      durationSubscriber = null;
-      if (hasValue) {
-        hasValue = false;
-        var value = lastValue;
-        lastValue = null;
-        subscriber.next(value);
-      }
-    };
-    source.subscribe(createOperatorSubscriber(subscriber, function(value) {
-      durationSubscriber === null || durationSubscriber === void 0 ? void 0 : durationSubscriber.unsubscribe();
-      hasValue = true;
-      lastValue = value;
-      durationSubscriber = createOperatorSubscriber(subscriber, emit, noop);
-      innerFrom(durationSelector(value)).subscribe(durationSubscriber);
-    }, function() {
-      emit();
-      subscriber.complete();
-    }, void 0, function() {
-      lastValue = durationSubscriber = null;
-    }));
-  });
-}
-
-// node_modules/rxjs/dist/esm5/internal/operators/switchMap.js
-function switchMap(project, resultSelector) {
-  return operate(function(source, subscriber) {
-    var innerSubscriber = null;
-    var index2 = 0;
-    var isComplete = false;
-    var checkComplete = function() {
-      return isComplete && !innerSubscriber && subscriber.complete();
-    };
-    source.subscribe(createOperatorSubscriber(subscriber, function(value) {
-      innerSubscriber === null || innerSubscriber === void 0 ? void 0 : innerSubscriber.unsubscribe();
-      var innerIndex = 0;
-      var outerIndex = index2++;
-      innerFrom(project(value, outerIndex)).subscribe(innerSubscriber = createOperatorSubscriber(subscriber, function(innerValue) {
-        return subscriber.next(resultSelector ? resultSelector(value, innerValue, outerIndex, innerIndex++) : innerValue);
-      }, function() {
-        innerSubscriber = null;
-        checkComplete();
-      }));
-    }, function() {
-      isComplete = true;
-      checkComplete();
-    }));
-  });
 }
 
 // src/lib/commands/create-year/create-year.ts
@@ -7525,27 +6998,27 @@ var NUMBER_TO_WEEKDAY = {
   5: "Fr",
   6: "Sa"
 };
-function calculateNextOccurrence(from2, rule) {
-  const result = new Date(from2);
+function calculateNextOccurrence(from, rule) {
+  const result = new Date(from);
   result.setHours(0, 0, 0, 0);
   switch (rule.frequency) {
     case "daily":
       result.setDate(result.getDate() + rule.interval);
       return result;
     case "weekly":
-      return calculateNextWeekly(from2, rule);
+      return calculateNextWeekly(from, rule);
     case "monthly-date":
-      return calculateNextMonthlyDate(from2, rule);
+      return calculateNextMonthlyDate(from, rule);
     case "monthly-weekday":
-      return calculateNextMonthlyWeekday(from2, rule);
+      return calculateNextMonthlyWeekday(from, rule);
     case "yearly":
-      return calculateNextYearly(from2, rule);
+      return calculateNextYearly(from, rule);
     default:
       return null;
   }
 }
-function calculateNextWeekly(from2, rule) {
-  const result = new Date(from2);
+function calculateNextWeekly(from, rule) {
+  const result = new Date(from);
   result.setHours(0, 0, 0, 0);
   if (!rule.byDay || rule.byDay.length === 0) {
     result.setDate(result.getDate() + 7 * rule.interval);
@@ -7564,8 +7037,8 @@ function calculateNextWeekly(from2, rule) {
   result.setDate(result.getDate() + daysToAdd);
   return result;
 }
-function calculateNextMonthlyDate(from2, rule) {
-  const result = new Date(from2);
+function calculateNextMonthlyDate(from, rule) {
+  const result = new Date(from);
   result.setHours(0, 0, 0, 0);
   const currentDay = result.getDate();
   const targetDay = rule.byMonthDay ?? currentDay;
@@ -7578,9 +7051,9 @@ function calculateNextMonthlyDate(from2, rule) {
   result.setDate(Math.min(targetDay, daysInMonth));
   return result;
 }
-function calculateNextMonthlyWeekday(from2, rule) {
+function calculateNextMonthlyWeekday(from, rule) {
   if (!rule.byWeekday) return null;
-  const result = new Date(from2);
+  const result = new Date(from);
   result.setHours(0, 0, 0, 0);
   const { ordinal, weekday } = rule.byWeekday;
   const targetWeekday = WEEKDAY_TO_NUMBER[weekday];
@@ -7620,8 +7093,8 @@ function findNthWeekdayOfMonth(year, month, weekday, ordinal) {
   if (nthOccurrence > daysInMonth) return null;
   return nthOccurrence;
 }
-function calculateNextYearly(from2, rule) {
-  const result = new Date(from2);
+function calculateNextYearly(from, rule) {
+  const result = new Date(from);
   result.setHours(0, 0, 0, 0);
   const targetMonth = rule.byMonth !== void 0 ? rule.byMonth - 1 : result.getMonth();
   const targetDay = rule.byMonthDay ?? result.getDate();
@@ -14415,14 +13888,14 @@ var RecurIterator = class _RecurIterator {
         }
         days_list.push(first + (pos - 1) * 7);
       } else {
-        let last2;
+        let last;
         pos = -pos;
         if (dow <= end_dow) {
-          last2 = end_year_day - end_dow + dow;
+          last = end_year_day - end_dow + dow;
         } else {
-          last2 = end_year_day - end_dow + dow - 7;
+          last = end_year_day - end_dow + dow - 7;
         }
-        days_list.push(last2 - (pos - 1) * 7);
+        days_list.push(last - (pos - 1) * 7);
       }
     }
     return days_list;
@@ -18294,6 +17767,7 @@ var ConfirmCalendarSyncModal = class extends import_obsidian11.Modal {
 
 // src/lib/commands/sync-calendar.ts
 function createCalendarSync(app, settings, reportStatus = () => {
+}, onIdle = () => {
 }) {
   let active = true;
   let running = false;
@@ -18364,6 +17838,7 @@ ${result.created} neu \xB7 ${result.updated} ge\xE4ndert \xB7 ${result.deleted} 
       } finally {
         progress?.hide();
         running = false;
+        onIdle();
       }
     },
     async runAutomatic() {
@@ -18420,6 +17895,7 @@ ${result.created} neu \xB7 ${result.updated} ge\xE4ndert \xB7 ${result.deleted} 
         return { status: "error" };
       } finally {
         running = false;
+        onIdle();
       }
     },
     cancel() {
@@ -18429,8 +17905,17 @@ ${result.created} neu \xB7 ${result.updated} ge\xE4ndert \xB7 ${result.deleted} 
   };
 }
 
+// src/lib/event-handling/watch-week-files.ts
+var import_obsidian14 = require("obsidian");
+
 // src/lib/event-handling/modify-week-file-event.ts
 var import_obsidian13 = require("obsidian");
+function recurrenceKey(info) {
+  return `${info.section}|${info.recurrence.recurrenceId}|${info.event.eventId}`;
+}
+function recurrenceContent(event) {
+  return event.content.filter((line) => !/^\s+\^woev-/.test(line)).join("\n");
+}
 function extractDateFromFilePath(filePath) {
   const match2 = filePath.match(/W\d{2} (\d{2})\.(\d{2})\.(\d{2})\.md$/);
   if (!match2) return null;
@@ -18445,7 +17930,7 @@ function detectRecurringEvents(fileContent, filePath, settings) {
   const fileDate = extractDateFromFilePath(filePath);
   if (!fileDate) return [];
   const recurring = Object.entries(elements).flatMap(
-    ([, sectionElements]) => sectionElements.filter(
+    ([section, sectionElements]) => sectionElements.filter(
       (element) => element.type === "event" && element.recurrenceId !== void 0 && !element.isException
     ).map((eventElement) => {
       const recurrence = parseRecurrence(
@@ -18453,73 +17938,320 @@ function detectRecurringEvents(fileContent, filePath, settings) {
         eventElement.eventId,
         eventElement.recurrenceId
       );
-      return recurrence ? { event: eventElement, recurrence, eventDate: fileDate } : null;
+      const dayIndex = woFileTitleStructure.indexOf(section) - 1;
+      if (!recurrence || dayIndex < 0 || dayIndex > 6) return null;
+      const eventDate = new Date(fileDate);
+      eventDate.setDate(eventDate.getDate() + dayIndex);
+      return { event: eventElement, recurrence, eventDate, section };
     })
   ).filter((item) => item !== null);
   return recurring;
 }
-async function propagateRecurrenceChanges(app, settings, recurringEvents) {
-  for (const { event, recurrence, eventDate } of recurringEvents) {
+async function propagateRecurrenceChanges(app, settings, recurringEvents, isActive, baselines, ownChanges, sourcePath) {
+  const protectedAnchors = new Set(recurringEvents.map((info) => `${sourcePath}
+${recurrenceKey(info)}`));
+  for (const { event, recurrence, eventDate } of [...recurringEvents].sort((a, b) => a.eventDate.getTime() - b.eventDate.getTime())) {
     const endDate = recurrence.end.endDate;
-    const files = await findWeekFilesForRange(eventDate, endDate, settings, app);
-    for (const filePath of files) {
-      const { elements, exists } = await readWeekFile(filePath, settings, app);
-      if (!exists) continue;
-      let updated = false;
-      for (const section of Object.keys(elements)) {
-        const sectionElements = elements[section];
-        for (let i = 0; i < sectionElements.length; i++) {
-          const element = sectionElements[i];
-          if (element.type === "event") {
-            const eventElement = element;
-            if (eventElement.recurrenceId === recurrence.recurrenceId && !eventElement.isException && eventElement.eventId !== event.eventId) {
-              sectionElements[i] = {
-                ...eventElement,
-                content: event.content
-              };
-              updated = true;
-            }
+    const files = app.vault.getMarkdownFiles().filter((file) => getWeekFileInfo(file.path, settings.paths.weekFolder) !== null);
+    for (const file of files) {
+      if (!isActive()) return;
+      const monday = extractDateFromFilePath(file.path);
+      if (!monday || monday > endDate || monday.getTime() + 7 * 864e5 <= eventDate.getTime()) continue;
+      const path = file.path;
+      const baseline = baselines.get(path);
+      if (!baseline) continue;
+      const changedKeys = /* @__PURE__ */ new Set();
+      const transform = (content) => {
+        if (!isActive() || file.path !== path) return content;
+        const elements = parseWo(content, settings);
+        let updated = false;
+        for (const section of woFileTitleStructure.slice(1, 8)) {
+          const targetDate = new Date(monday);
+          targetDate.setDate(targetDate.getDate() + woFileTitleStructure.indexOf(section) - 1);
+          if (targetDate <= eventDate || targetDate > endDate) continue;
+          elements[section] = elements[section].map((element) => {
+            if (element.type !== "event" || element.recurrenceId !== recurrence.recurrenceId || element.isException) return element;
+            const key = `${section}|${element.recurrenceId}|${element.eventId}`;
+            const identity2 = `${path}
+${key}`;
+            const previous = baseline.get(key);
+            const current = recurrenceContent(element);
+            if (protectedAnchors.has(identity2) || current !== previous && current !== ownChanges.get(identity2)) return element;
+            const copied = event.content.flatMap((line) => /^\s+\^woev-(?!rec-)[a-zA-Z0-9]+\s*$/.test(line) ? element.eventId ? [`  ^woev-${element.eventId}`] : [] : [line]);
+            if (copied.join("\n") === element.content.join("\n")) return element;
+            updated = true;
+            changedKeys.add(key);
+            return { ...element, content: copied };
+          });
+        }
+        return updated ? stringifyWo(elements) : content;
+      };
+      try {
+        const content = await app.vault.read(file);
+        if (transform(content) !== content && isActive()) {
+          changedKeys.clear();
+          const written = await app.vault.process(file, transform);
+          for (const info of detectRecurringEvents(written, file.path, settings)) {
+            if (changedKeys.has(recurrenceKey(info))) ownChanges.set(`${path}
+${recurrenceKey(info)}`, recurrenceContent(info.event));
           }
         }
-      }
-      if (updated) {
-        const abstractFile = app.vault.getAbstractFileByPath(filePath);
-        if (abstractFile instanceof import_obsidian13.TFile) {
-          await app.vault.modify(abstractFile, stringifyWo(elements));
-        }
+      } catch (error) {
+        if (app.vault.getAbstractFileByPath(path)) throw error;
       }
     }
   }
 }
-var modifyWeekFileEvent = (app, modifyEvents, actualFileChanged$, settings, ignoredFiles = /* @__PURE__ */ new Set()) => modifyEvents.pipe(
-  filter((file) => file instanceof import_obsidian13.TFile),
-  filter((file) => !ignoredFiles.has(file.path)),
-  filter((file) => getWeekFileInfo(file.path, settings.paths.weekFolder) !== null),
-  filter((file) => file.extension === "md"),
-  switchMap(
-    (file) => from(app.vault.read(file)).pipe(map((fileContent) => [file, fileContent]))
-  ),
-  debounce(() => race(actualFileChanged$, timer(1e4))),
-  switchMap(([file, fileContent]) => {
-    const changedFile = processFile(fileContent, file, settings);
-    if (changedFile) {
-      return from(app.vault.modify(file, changedFile)).pipe(
-        switchMap(async () => {
-          const recurringInFile = detectRecurringEvents(fileContent, file.path, settings);
-          if (recurringInFile.length > 0) {
-            await propagateRecurrenceChanges(app, settings, recurringInFile);
+var modifyWeekFileEvent = (app, modifyEvents, actualFileChanged$, settings, ignoredFiles = /* @__PURE__ */ new Set(), hooks) => {
+  const subscription = new Subscription();
+  const pending = /* @__PURE__ */ new Set();
+  const baselines = /* @__PURE__ */ new Map();
+  const ownChanges = /* @__PURE__ */ new Map();
+  let priming = true;
+  let timer;
+  let running = false;
+  let success = true;
+  const schedule = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      timer = void 0;
+      void drain();
+    }, settings.caldav.autoSync === true ? 500 : 1e4);
+  };
+  const drain = async () => {
+    if (running || priming || subscription.closed) return;
+    running = true;
+    const files = [...pending];
+    pending.clear();
+    try {
+      for (const path of files) {
+        if (subscription.closed) break;
+        const file = app.vault.getAbstractFileByPath(path);
+        if (!(file instanceof import_obsidian13.TFile) || ignoredFiles.has(path) || !getWeekFileInfo(file.path, settings.paths.weekFolder)) continue;
+        try {
+          const snapshot = JSON.stringify(settings);
+          const isActive = () => !subscription.closed && JSON.stringify(settings) === snapshot;
+          let content = await app.vault.read(file);
+          if (!isActive()) continue;
+          if (processFile(content, file, settings)) {
+            content = await app.vault.process(file, (current) => isActive() ? processFile(current, file, settings) || current : current);
+            if (settings.caldav.autoSync !== true && isActive()) new import_obsidian13.Notice(`File ${file.name} angepasst.`);
           }
-          return new import_obsidian13.Notice(`File ${file.name} angepasst.`);
-        }),
-        catchError((err) => {
-          const message2 = err instanceof Error ? err.message : String(err);
-          return of(new import_obsidian13.Notice(`Fehler bei der Anpassung von ${file.name}: ${message2}`));
-        })
-      );
+          if (!isActive()) continue;
+          const recurring = detectRecurringEvents(content, file.path, settings);
+          const previous = baselines.get(path);
+          const changed = recurring.filter((info) => previous?.get(recurrenceKey(info)) !== recurrenceContent(info.event) && ownChanges.get(`${path}
+${recurrenceKey(info)}`) !== recurrenceContent(info.event));
+          baselines.set(path, new Map(recurring.map((info) => [recurrenceKey(info), recurrenceContent(info.event)])));
+          for (const identity2 of ownChanges.keys()) if (identity2.startsWith(path + "\n")) ownChanges.delete(identity2);
+          if (changed.length && isActive()) await propagateRecurrenceChanges(app, settings, changed, isActive, baselines, ownChanges, path);
+        } catch {
+          if (subscription.closed || !app.vault.getAbstractFileByPath(path)) continue;
+          success = false;
+          if (settings.caldav.autoSync !== true) new import_obsidian13.Notice(`Fehler bei der Verarbeitung von ${file.name}.`);
+        }
+      }
+    } finally {
+      running = false;
+      if (!subscription.closed) {
+        if (pending.size) schedule();
+        else {
+          clearTimeout(timer);
+          timer = void 0;
+          hooks?.settled(success);
+          success = true;
+        }
+      }
     }
-    return of("");
-  })
-).subscribe();
+  };
+  subscription.add(modifyEvents.subscribe((file) => {
+    if (!(file instanceof import_obsidian13.TFile) || ignoredFiles.has(file.path) || file.extension !== "md" || !getWeekFileInfo(file.path, settings.paths.weekFolder)) return;
+    pending.add(file.path);
+    hooks?.pending();
+    schedule();
+  }));
+  subscription.add(actualFileChanged$.subscribe(() => {
+    if (!pending.size) return;
+    clearTimeout(timer);
+    timer = void 0;
+    void drain();
+  }));
+  subscription.add(() => {
+    clearTimeout(timer);
+    pending.clear();
+    baselines.clear();
+    ownChanges.clear();
+  });
+  void (async () => {
+    const snapshot = JSON.stringify(settings);
+    try {
+      for (const file of app.vault.getMarkdownFiles()) {
+        if (subscription.closed) break;
+        if (!getWeekFileInfo(file.path, settings.paths.weekFolder)) continue;
+        try {
+          const content = await app.vault.read(file);
+          if (subscription.closed || JSON.stringify(settings) !== snapshot) break;
+          if (!pending.has(file.path)) baselines.set(
+            file.path,
+            new Map(detectRecurringEvents(content, file.path, settings).map((info) => [recurrenceKey(info), recurrenceContent(info.event)]))
+          );
+        } catch {
+        }
+      }
+    } catch {
+    } finally {
+      priming = false;
+      if (pending.size && !subscription.closed) schedule();
+    }
+  })();
+  return subscription;
+};
+
+// src/lib/event-handling/watch-week-files.ts
+function affectsWeekFiles(path, root) {
+  const folder = root.replace(/\/$/, "");
+  if (path === folder || folder.startsWith(path + "/")) return true;
+  if (!path.startsWith(folder + "/")) return false;
+  const relative = path.slice(folder.length + 1);
+  return /^\d{4}$/.test(relative) || /^[^/]+\/weeks(?:\/W[^/]*\.md)?$/.test(relative);
+}
+function watchWeekFiles(app, settings, activeChanges, ignoredFiles, coordinator) {
+  const subscription = new Subscription();
+  const modifications = new Subject();
+  subscription.add(modifyWeekFileEvent(app, modifications, activeChanges, settings, ignoredFiles, {
+    pending: () => coordinator.processingPending(),
+    settled: (success) => coordinator.processingSettled(success)
+  }));
+  const changed = (file, oldPath, deleted = false) => {
+    if (ignoredFiles.has(file.path) || oldPath !== void 0 && ignoredFiles.has(oldPath)) return;
+    if (![file.path, oldPath].some((path) => path !== void 0 && affectsWeekFiles(path, settings.paths.weekFolder))) return;
+    coordinator.changed();
+    if (!deleted) {
+      if (file instanceof import_obsidian14.TFile) modifications.next(file);
+      else for (const child of app.vault.getMarkdownFiles()) {
+        if (child.path.startsWith(file.path + "/")) modifications.next(child);
+      }
+    }
+  };
+  const refs = [
+    app.vault.on("modify", (file) => changed(file)),
+    app.vault.on("create", (file) => changed(file)),
+    app.vault.on("delete", (file) => changed(file, void 0, true)),
+    app.vault.on("rename", (file, oldPath) => changed(file, oldPath))
+  ];
+  subscription.add(() => {
+    for (const ref of refs) app.vault.offref(ref);
+    modifications.complete();
+  });
+  return subscription;
+}
+
+// src/lib/sync/automatic-sync-coordinator.ts
+function createAutomaticSyncCoordinator(settings, runAutomatic, reportStatus) {
+  let disposed = false;
+  let revision = 0;
+  let pending = false;
+  let localPending = false;
+  let localFailed = false;
+  let running = false;
+  let waitingForIdle = false;
+  let idleRevision = 0;
+  let lastChange = 0;
+  let timer;
+  const publish = (status) => {
+    if (!disposed) reportStatus(settings.caldav.autoSync === true ? status : "off");
+  };
+  const schedule = () => {
+    clearTimeout(timer);
+    timer = void 0;
+    if (disposed || !pending || localPending || localFailed || running || waitingForIdle) return;
+    const initial = getInitialSyncStatus(settings.caldav);
+    if (initial !== "not-checked") {
+      publish(initial);
+      return;
+    }
+    timer = setTimeout(() => {
+      timer = void 0;
+      void run();
+    }, Math.max(0, lastChange + 5e3 - Date.now()));
+  };
+  const run = async () => {
+    if (disposed || running || localPending || localFailed || !pending) return;
+    if (getInitialSyncStatus(settings.caldav) !== "not-checked") {
+      schedule();
+      return;
+    }
+    running = true;
+    const startedAtRevision = revision;
+    const startedAtIdleRevision = idleRevision;
+    let outcome;
+    try {
+      outcome = await runAutomatic();
+    } catch {
+      outcome = { status: "error" };
+    } finally {
+      running = false;
+    }
+    if (disposed) return;
+    if (revision !== startedAtRevision) {
+      publish(localFailed ? "error" : "pending");
+      schedule();
+      return;
+    }
+    if (outcome.status === "busy") {
+      waitingForIdle = idleRevision === startedAtIdleRevision;
+      publish("pending");
+      schedule();
+      return;
+    }
+    pending = false;
+    const status = outcome.status === "stale" || outcome.status === "cancelled" ? getInitialSyncStatus(settings.caldav) : outcome.status;
+    publish(status);
+  };
+  const changed = () => {
+    if (disposed) return;
+    revision++;
+    pending = true;
+    localFailed = false;
+    lastChange = Date.now();
+    publish(getInitialSyncStatus(settings.caldav) === "not-checked" ? "pending" : getInitialSyncStatus(settings.caldav));
+    schedule();
+  };
+  return {
+    changed,
+    configurationChanged: changed,
+    processingPending() {
+      if (disposed) return;
+      localPending = true;
+      clearTimeout(timer);
+      timer = void 0;
+    },
+    processingSettled(success) {
+      if (disposed) return;
+      localPending = false;
+      localFailed = !success;
+      if (!success) publish("error");
+      schedule();
+    },
+    idle() {
+      if (disposed) return;
+      idleRevision++;
+      waitingForIdle = false;
+      schedule();
+    },
+    reportWorkerStatus(status) {
+      if (disposed) return;
+      if (pending && (status === "synced" || status === "error" || status === "pending")) {
+        publish(localFailed ? "error" : "pending");
+      } else publish(status);
+    },
+    dispose() {
+      disposed = true;
+      clearTimeout(timer);
+      timer = void 0;
+    }
+  };
+}
 
 // src/lib/settings/load-settings.ts
 function mergeSettings(saved = null) {
@@ -18532,7 +18264,7 @@ function mergeSettings(saved = null) {
 }
 
 // src/lib/settings/week-calendar-settings-tab.ts
-var import_obsidian14 = require("obsidian");
+var import_obsidian15 = require("obsidian");
 
 // src/lib/caldav/discover-calendars.ts
 async function discoverCalendars(settings) {
@@ -18547,7 +18279,7 @@ async function discoverCalendars(settings) {
 }
 
 // src/lib/settings/week-calendar-settings-tab.ts
-var WeekCalendartSettingTab = class extends import_obsidian14.PluginSettingTab {
+var WeekCalendartSettingTab = class extends import_obsidian15.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.caldavViewVersion = 0;
@@ -18559,19 +18291,19 @@ var WeekCalendartSettingTab = class extends import_obsidian14.PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     containerEl.createEl("h2", { text: "Folders" });
-    new import_obsidian14.Setting(containerEl).setName("Week Folder").setDesc("Folder for all Week Files").addText(
+    new import_obsidian15.Setting(containerEl).setName("Week Folder").setDesc("Folder for all Week Files").addText(
       (text) => text.setPlaceholder("wochen").setValue(this.plugin.settings.paths.weekFolder).onChange(async (value) => {
         this.plugin.settings.paths.weekFolder = value;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian14.Setting(containerEl).setName("Event Folder").setDesc("Folder for CalDav Events").addText(
+    new import_obsidian15.Setting(containerEl).setName("Event Folder").setDesc("Folder for CalDav Events").addText(
       (text) => text.setPlaceholder("events").setValue(this.plugin.settings.paths.eventFolder).onChange(async (value) => {
         this.plugin.settings.paths.eventFolder = value;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian14.Setting(containerEl).setName("Overview File Name").setDesc("Name of the File, where the Links to all Week Files are.").addText(
+    new import_obsidian15.Setting(containerEl).setName("Overview File Name").setDesc("Name of the File, where the Links to all Week Files are.").addText(
       (text) => text.setPlaceholder("\xDCbersicht").setValue(this.plugin.settings.paths.overviewFileName).onChange(async (value) => {
         this.plugin.settings.paths.overviewFileName = value;
         await this.plugin.saveSettings();
@@ -18579,7 +18311,7 @@ var WeekCalendartSettingTab = class extends import_obsidian14.PluginSettingTab {
     );
     containerEl.createEl("h2", { text: "Week File Titles" });
     Object.entries(this.plugin.settings.weekdays).filter(([key]) => key !== "start").forEach(([key, value]) => {
-      new import_obsidian14.Setting(containerEl).setName(key).addText(
+      new import_obsidian15.Setting(containerEl).setName(key).addText(
         (text) => text.setValue(value).onChange(async (val) => {
           this.plugin.settings.weekdays[key] = val;
           await this.plugin.saveSettings();
@@ -18588,7 +18320,7 @@ var WeekCalendartSettingTab = class extends import_obsidian14.PluginSettingTab {
     });
     containerEl.createEl("h2", { text: "Event Fields" });
     Object.entries(this.plugin.settings.prefixes).forEach(([key, value]) => {
-      new import_obsidian14.Setting(containerEl).setName(key).addText(
+      new import_obsidian15.Setting(containerEl).setName(key).addText(
         (text) => text.setValue(value).onChange(async (val) => {
           this.plugin.settings.prefixes[key] = val;
           await this.plugin.saveSettings();
@@ -18602,7 +18334,7 @@ var WeekCalendartSettingTab = class extends import_obsidian14.PluginSettingTab {
     let calendars = [];
     let requestVersion = 0;
     let loading = false;
-    const connectionSetting = new import_obsidian14.Setting(containerEl).setName("CalDAV-Verbindung").setDesc("Liest die verf\xFCgbaren Kalender. Es werden keine Termine ver\xE4ndert.");
+    const connectionSetting = new import_obsidian15.Setting(containerEl).setName("CalDAV-Verbindung").setDesc("Liest die verf\xFCgbaren Kalender. Es werden keine Termine ver\xE4ndert.");
     const invalidateConnection = () => {
       requestVersion++;
       loading = false;
@@ -18614,21 +18346,21 @@ var WeekCalendartSettingTab = class extends import_obsidian14.PluginSettingTab {
       connectButton?.setDisabled(false).setButtonText("Verbindung pr\xFCfen");
       connectionSetting.setDesc("Zugangsdaten ge\xE4ndert. Bitte Verbindung erneut pr\xFCfen.");
     };
-    new import_obsidian14.Setting(containerEl).setName("URL").addText(
+    new import_obsidian15.Setting(containerEl).setName("URL").addText(
       (text) => text.setValue(this.plugin.settings.caldav.url).onChange(async (val) => {
         this.plugin.settings.caldav.url = val;
         invalidateConnection();
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian14.Setting(containerEl).setName("Benutzername").addText(
+    new import_obsidian15.Setting(containerEl).setName("Benutzername").addText(
       (text) => text.setValue(this.plugin.settings.caldav.username).onChange(async (val) => {
         this.plugin.settings.caldav.username = val;
         invalidateConnection();
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian14.Setting(containerEl).setName("Passwort").setDesc(
+    new import_obsidian15.Setting(containerEl).setName("Passwort").setDesc(
       "Wird in der Plugin-Konfiguration unverschl\xFCsselt gespeichert. Bei iCloud ein app-spezifisches Passwort verwenden."
     ).addText((text) => {
       text.inputEl.type = "password";
@@ -18674,11 +18406,11 @@ var WeekCalendartSettingTab = class extends import_obsidian14.PluginSettingTab {
         }
       });
     });
-    new import_obsidian14.Setting(containerEl).setName("Zeitzone").setDesc("IANA-Zeitzone f\xFCr lokale Terminzeiten, unabh\xE4ngig von der Ger\xE4tezeitzone, z. B. Europe/Zurich.").addText((text) => text.setValue(this.plugin.settings.caldav.timezone ?? "Europe/Zurich").onChange(async (value) => {
+    new import_obsidian15.Setting(containerEl).setName("Zeitzone").setDesc("IANA-Zeitzone f\xFCr lokale Terminzeiten, unabh\xE4ngig von der Ger\xE4tezeitzone, z. B. Europe/Zurich.").addText((text) => text.setValue(this.plugin.settings.caldav.timezone ?? "Europe/Zurich").onChange(async (value) => {
       this.plugin.settings.caldav.timezone = value.trim();
       await this.plugin.saveSettings();
     }));
-    const targetSetting = new import_obsidian14.Setting(containerEl).setName("Zielkalender").setDesc(`Nur einen ausschliesslich f\xFCr dieses Plugin vorgesehenen Kalender ausw\xE4hlen. Gespeicherte URL: ${this.plugin.settings.caldav.calendar || "(keine)"}`).addDropdown((dropdown) => {
+    const targetSetting = new import_obsidian15.Setting(containerEl).setName("Zielkalender").setDesc(`Nur einen ausschliesslich f\xFCr dieses Plugin vorgesehenen Kalender ausw\xE4hlen. Gespeicherte URL: ${this.plugin.settings.caldav.calendar || "(keine)"}`).addDropdown((dropdown) => {
       calendarDropdown = dropdown;
       dropdown.addOption("", "Zuerst Verbindung pr\xFCfen").setValue("").setDisabled(true).onChange(async (value) => {
         if (loading || !calendars.some((calendar2) => calendar2.url === value)) return;
@@ -18689,8 +18421,8 @@ var WeekCalendartSettingTab = class extends import_obsidian14.PluginSettingTab {
         await this.plugin.saveSettings();
       });
     });
-    new import_obsidian14.Setting(containerEl).setName("Exklusiven Zielkalender freigeben").setDesc(
-      "Dieser Kalender wird ausschliesslich vom Plugin verwaltet. Beim manuellen Sync d\xFCrfen alle Eintr\xE4ge gel\xF6scht werden, die nicht in den Wochen-Dateien vorkommen. Die Ausf\xFChrung erfordert zus\xE4tzlich eine best\xE4tigte Vorschau."
+    new import_obsidian15.Setting(containerEl).setName("Exklusiven Zielkalender freigeben").setDesc(
+      "Dieser Kalender wird ausschliesslich vom Plugin verwaltet. Fremde oder lokal gel\xF6schte Eintr\xE4ge d\xFCrfen entfernt werden. Die Automatik \xFCbernimmt gew\xF6hnliche \xC4nderungen ohne Dialog; vollst\xE4ndiges Leeren oder Ersetzen bleibt manuell best\xE4tigungspflichtig."
     ).addToggle((toggle) => {
       confirmationToggle = toggle;
       toggle.setValue(this.plugin.settings.caldav.managedCalendarConfirmed === true).onChange(async (value) => {
@@ -18698,11 +18430,11 @@ var WeekCalendartSettingTab = class extends import_obsidian14.PluginSettingTab {
         await this.plugin.saveSettings();
       });
     });
-    new import_obsidian14.Setting(containerEl).setName("Automatisch synchronisieren").setDesc("Auf Mac, iPad und iPhone vorgesehen: nach f\xFCnf Sekunden ohne \xC4nderung abgleichen und beim Aktivieren nachholen. Vorbereitungsschritt: Noch keine automatische Ausf\xFChrung.").addToggle((toggle) => toggle.setValue(this.plugin.settings.caldav.autoSync === true).onChange(async (value) => {
+    new import_obsidian15.Setting(containerEl).setName("Automatisch synchronisieren").setDesc("Auf Mac, iPad und iPhone nach f\xFCnf Sekunden ohne Kalender\xE4nderung abgleichen, sobald die lokale Verarbeitung fertig ist. Obsidian muss laufen. Das Nachholen beim erneuten Aktivieren folgt im n\xE4chsten Umsetzungsschritt.").addToggle((toggle) => toggle.setValue(this.plugin.settings.caldav.autoSync === true).onChange(async (value) => {
       this.plugin.settings.caldav.autoSync = value;
       await this.plugin.saveSettings();
     }));
-    const statusSetting = new import_obsidian14.Setting(containerEl).setName("Automatik-Status");
+    const statusSetting = new import_obsidian15.Setting(containerEl).setName("Automatik-Status");
     this.statusSubscription = this.plugin.syncStatus$.subscribe((state) => {
       const status = SYNC_STATUS_PRESENTATION[state];
       statusSetting.setDesc(`${status.label}. ${status.description}`);
@@ -18724,8 +18456,8 @@ Fehlende Features: toSpliced verlangs ES2023}`;
 }
 
 // src/lib/ui/sync-status.ts
-var import_obsidian15 = require("obsidian");
-var SyncStatusModal = class extends import_obsidian15.Modal {
+var import_obsidian16 = require("obsidian");
+var SyncStatusModal = class extends import_obsidian16.Modal {
   constructor(app, status$) {
     super(app);
     this.status$ = status$;
@@ -18756,7 +18488,7 @@ function addSyncStatusUi(plugin, status$) {
   const openStatus = () => new SyncStatusModal(plugin.app, status$).open();
   const ribbon = plugin.addRibbonIcon("calendar", "Kalender-Sync: Status", openStatus);
   plugin.addCommand({ id: "show-calendar-sync-status", name: "Kalender-Sync: Status anzeigen", callback: openStatus });
-  const statusBar = import_obsidian15.Platform.isMobile ? void 0 : plugin.addStatusBarItem();
+  const statusBar = import_obsidian16.Platform.isMobile ? void 0 : plugin.addStatusBarItem();
   if (statusBar) {
     statusBar.setAttribute("role", "button");
     statusBar.setAttribute("tabindex", "0");
@@ -18770,7 +18502,7 @@ function addSyncStatusUi(plugin, status$) {
   }
   return status$.subscribe((state) => {
     const status = SYNC_STATUS_PRESENTATION[state];
-    (0, import_obsidian15.setIcon)(ribbon, status.icon);
+    (0, import_obsidian16.setIcon)(ribbon, status.icon);
     ribbon.setAttribute("aria-label", `Kalender-Sync: ${status.label}`);
     if (statusBar) {
       statusBar.textContent = `Kalender: ${status.label}`;
@@ -18780,7 +18512,7 @@ function addSyncStatusUi(plugin, status$) {
 }
 
 // src/main.ts
-var WeekCalendartPlugin = class extends import_obsidian16.Plugin {
+var WeekCalendartPlugin = class extends import_obsidian17.Plugin {
   constructor() {
     super(...arguments);
     this.actualFileChanded$ = fromEvent(this.app.workspace, "active-leaf-change");
@@ -18792,13 +18524,25 @@ var WeekCalendartPlugin = class extends import_obsidian16.Plugin {
   async onload() {
     const versionCheck = checkToSplicedCompatibility();
     if (versionCheck) {
-      new import_obsidian16.Notice(versionCheck, 1e4);
+      new import_obsidian17.Notice(versionCheck, 1e4);
       return;
     }
     await this.loadSettings();
     this.syncStatus$.next(getInitialSyncStatus(this.settings.caldav));
     this.subscription.add(addSyncStatusUi(this, this.syncStatus$));
-    const calendarSync = createCalendarSync(this.app, this.settings, (status) => this.syncStatus$.next(status));
+    const calendarSync = createCalendarSync(
+      this.app,
+      this.settings,
+      (status) => this.automaticSync?.reportWorkerStatus(status),
+      () => this.automaticSync?.idle()
+    );
+    const automaticSync = createAutomaticSyncCoordinator(
+      this.settings,
+      calendarSync.runAutomatic,
+      (status) => this.syncStatus$.next(status)
+    );
+    this.automaticSync = automaticSync;
+    this.subscription.add(() => automaticSync.dispose());
     this.stopCalendarSync = calendarSync.cancel;
     this.addCommand({
       id: "sync-calendar",
@@ -18835,28 +18579,30 @@ var WeekCalendartPlugin = class extends import_obsidian16.Plugin {
       name: "Das aktuelle Wochen-File \xF6ffnen",
       callback: gotoCurrentWeek(this.app, this.settings)
     });
-    this.subscription.add(
-      modifyWeekFileEvent(
+    this.app.workspace.onLayoutReady(() => {
+      if (this.subscription.closed) return;
+      this.subscription.add(watchWeekFiles(
         this.app,
-        fromEvent(this.app.vault, "modify"),
-        this.actualFileChanded$,
         this.settings,
-        this.migratingFiles
-      )
-    );
+        this.actualFileChanded$,
+        this.migratingFiles,
+        automaticSync
+      ));
+    });
     this.addSettingTab(new WeekCalendartSettingTab(this.app, this));
-    new import_obsidian16.Notice("Week Calendart loaded.");
+    new import_obsidian17.Notice("Week Calendart loaded.");
   }
   async loadSettings() {
     this.settings = mergeSettings(await this.loadData());
   }
   async saveSettings() {
     await this.saveData(this.settings);
-    this.syncStatus$.next(getInitialSyncStatus(this.settings.caldav));
+    if (this.automaticSync) this.automaticSync.configurationChanged();
+    else this.syncStatus$.next(getInitialSyncStatus(this.settings.caldav));
   }
   onunload() {
     this.stopCalendarSync?.();
-    new import_obsidian16.Notice("Week Calendart unload.");
+    new import_obsidian17.Notice("Week Calendart unload.");
     this.subscription.unsubscribe();
     this.syncStatus$.complete();
   }

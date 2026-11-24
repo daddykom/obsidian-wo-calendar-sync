@@ -433,7 +433,7 @@ describe('WeekCalendartSettingTab', () => {
     new WeekCalendartSettingTab({} as never, plugin as never).display();
     const setting = getSettingInstances().find((setting) => setting.name === 'Automatisch synchronisieren')!;
     expect(setting.toggleComponent!.value).toBe(false);
-    expect(setting.desc).toContain('Noch keine automatische Ausführung');
+    expect(setting.desc).toContain('fünf Sekunden');
     await setting.toggleComponent!.onChangeCallback!(true);
     expect(plugin.settings.caldav.autoSync).toBe(true);
     expect(plugin.saveSettings).toHaveBeenCalledTimes(1);

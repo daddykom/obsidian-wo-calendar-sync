@@ -215,7 +215,7 @@ export class WeekCalendartSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('Exklusiven Zielkalender freigeben')
       .setDesc(
-        'Dieser Kalender wird ausschliesslich vom Plugin verwaltet. Beim manuellen Sync dürfen alle Einträge gelöscht werden, die nicht in den Wochen-Dateien vorkommen. Die Ausführung erfordert zusätzlich eine bestätigte Vorschau.',
+        'Dieser Kalender wird ausschliesslich vom Plugin verwaltet. Fremde oder lokal gelöschte Einträge dürfen entfernt werden. Die Automatik übernimmt gewöhnliche Änderungen ohne Dialog; vollständiges Leeren oder Ersetzen bleibt manuell bestätigungspflichtig.',
       )
       .addToggle((toggle) => {
         confirmationToggle = toggle;
@@ -229,7 +229,7 @@ export class WeekCalendartSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName('Automatisch synchronisieren')
-      .setDesc('Auf Mac, iPad und iPhone vorgesehen: nach fünf Sekunden ohne Änderung abgleichen und beim Aktivieren nachholen. Vorbereitungsschritt: Noch keine automatische Ausführung.')
+      .setDesc('Auf Mac, iPad und iPhone nach fünf Sekunden ohne Kalenderänderung abgleichen, sobald die lokale Verarbeitung fertig ist. Obsidian muss laufen. Das Nachholen beim erneuten Aktivieren folgt im nächsten Umsetzungsschritt.')
       .addToggle((toggle) => toggle.setValue(this.plugin.settings.caldav.autoSync === true)
         .onChange(async (value) => {
           this.plugin.settings.caldav.autoSync = value;

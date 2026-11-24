@@ -7,6 +7,7 @@ import { ConfirmCalendarSyncModal } from '../ui/confirm-calendar-sync';
 import { SyncPreviewModal } from '../ui/sync-preview';
 import { mergeSettings } from '../settings/load-settings';
 import { parseWeekEvents } from '../sync/parse-week-events';
+import { createAutomaticSyncCoordinator } from '../sync/automatic-sync-coordinator';
 
 jest.mock('obsidian', () => ({ Notice: jest.fn().mockImplementation(() => ({ hide: jest.fn() })) }));
 jest.mock('../sync/prepare-preview', () => ({ preparePreview: jest.fn() }));
@@ -150,6 +151,38 @@ describe('automatic execution entry point', () => {
     expect(preparePreview).toHaveBeenCalledTimes(1);
     resolve(success);
     expect((await pending).status).toBe('synced');
+  });
+
+  it('wakes the coordinator when a manual confirmation releases the shared lock', async () => {
+    jest.useFakeTimers();
+    let resolve!: (value: unknown) => void;
+    (ConfirmCalendarSyncModal as jest.Mock).mockImplementationOnce(() => ({
+      waitForApproval: () => new Promise((done) => { resolve = done; }), close: jest.fn(),
+    }));
+    const settings = createSettings();
+    let coordinator: ReturnType<typeof createAutomaticSyncCoordinator> | undefined;
+    const sync = createCalendarSync(app, settings, (status) => coordinator?.reportWorkerStatus(status),
+      () => coordinator?.idle());
+    const status = jest.fn();
+    coordinator = createAutomaticSyncCoordinator(settings, sync.runAutomatic, status);
+    try {
+      const manual = sync.run();
+      await Promise.resolve();
+      coordinator.changed();
+      await jest.advanceTimersByTimeAsync(60000);
+      expect(preparePreview).toHaveBeenCalledTimes(1);
+      expect(executeSync).not.toHaveBeenCalled();
+      resolve(null);
+      await manual;
+      await jest.advanceTimersByTimeAsync(0);
+      expect(preparePreview).toHaveBeenCalledTimes(2);
+      expect(executeSync).toHaveBeenCalledTimes(1);
+      expect(status).toHaveBeenLastCalledWith('synced');
+    } finally {
+      coordinator.dispose();
+      sync.cancel();
+      jest.useRealTimers();
+    }
   });
 
   it('discards preparation after settings change instead of writing to a new target', async () => {
