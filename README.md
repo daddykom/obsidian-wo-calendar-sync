@@ -206,10 +206,10 @@ ETag conflicts should trigger refetch + retry.
 CalDAV settings are saved through Obsidian's plugin settings, not the YAML example below.
 The server URL, username and password are retained. `caldav.calendar` stores the
 target calendar's URL (not its display name). Server-based calendar selection is
-available in step 3 below. Actual appointment synchronization is not implemented yet.
+available in step 3 below. Manual appointment synchronization is available in step 5.
 
 Use a dedicated calendar. The new `caldav.managedCalendarConfirmed` option defaults
-to `false`: enabling it explicitly permits the future sync to remove entries that
+to `false`: enabling it explicitly permits the manual sync to remove entries that
 do not exist in the weekly files. Changing the server URL, username, password or target
 calendar resets this permission. Older settings receive missing defaults on load.
 
@@ -219,7 +219,7 @@ plugin configuration. For iCloud, use an app-specific password.
 ### Local event collection (step 2)
 
 `src/lib/sync/collect-events.ts` provides a read-only collection of all weekly
-appointments, including past years. It is used by the preview command in step 4.
+appointments, including past years. It is used by the preview and manual sync commands.
 No notes or IDs are written by this collector.
 
 Markdown recognition is shared with normal weekly processing:
@@ -265,7 +265,8 @@ kept as text by both paths, not treated as appointments.
 4. Explicitly enable **Exklusiven Zielkalender freigeben** for that calendar.
 
 The connection test fetches only discovery and calendar metadata, not appointments.
-The transport rejects write methods. No notes or server entries are changed.
+The discovery/preview transport rejects write methods. No notes or server entries
+are changed by the connection test.
 Existing calendar URLs remain saved, but are only shown as selected if returned
 by the connection test. Missing calendars must be selected again; there is no
 automatic fallback to a different calendar. Read-only calendars may still appear:
@@ -282,7 +283,8 @@ server you trust. The underlying native HTTP client handles redirects.
 Run **Kalender-Synchronisation: Vorschau** after selecting and explicitly approving
 the dedicated calendar. The dialog lists appointments to create, changed fields,
 foreign or obsolete resources to delete, and the unchanged count. It has only a
-close button: **no write or delete operation is implemented in this step**.
+close button: **the preview command never writes or deletes anything**. Use the
+separate manual sync command below to explicitly approve execution.
 
 - Local validation happens before any server requests. Invalid notes are shown
   with their file and line instead of producing a partial plan.
@@ -303,12 +305,58 @@ close button: **no write or delete operation is implemented in this step**.
 - A completely empty local collection or a plan deleting all existing resources
   gets a prominent warning. The additional confirmation and execution safeguards
   belong to step 5.
-- This is a snapshot, not an executable approval. The future writer must recheck
-  settings, local files, server content and ETags before applying any changes.
+- This is a snapshot, not an executable approval. The manual sync command below
+  creates its own confirmation preview and rechecks the approved data.
 
 The ICS reader adds one runtime dependency: [ical.js](https://github.com/kewisch/ical.js),
 licensed under [MPL-2.0](https://mozilla.org/MPL/2.0/). It is bundled without upstream
 source modifications; its source and license are available at those links.
+
+### Manual synchronization (step 5)
+
+Run **Kalender synchronisieren**. It always displays a fresh preview before any
+write. Cancel or close the dialog to leave the server untouched. Click **Jetzt
+synchronisieren** to approve the listed changes. If all existing calendar resources
+would be deleted (including a full replacement with new local events), explicitly
+enable the additional **Alle bisherigen Kalendereinträge löschen** confirmation.
+
+Execution is one-way: weekly files remain the source of truth and are never
+rewritten by synchronization. The dedicated calendar may lose **all foreign
+entries**, as shown in the preview. Test with a disposable dedicated calendar first.
+
+Safeguards:
+
+1. Re-read and validate local notes and the entire selected server calendar. Exact
+   source contents, semantic events, resource URLs, ETags and the planned operations
+   must still match the approved preview. Otherwise a new preview is required.
+2. Prevalidate payloads and require strong ETags for every update/deletion. Weak or
+   missing ETags are not bypassed. Writes are scoped to resources inside the selected
+   calendar; deleting the calendar collection itself is not allowed.
+3. Create deterministic filenames with `If-None-Match: *`, then update existing
+   resources with `If-Match`. Serialize standalone VEVENTs with UTC times or DATE
+   boundaries and DISPLAY reminders; no server recurrence rules are generated.
+4. Read the server again and verify every upsert before deleting anything. Unexpected
+   resources, incomplete results, changed deletion candidates or modified unchanged
+   entries stop the run without further deletion.
+5. Re-read local sources before writes, before deletion and at completion. Vault
+   change listeners also stop further operations if calendar files or folders change
+   during the run. Changes to settings or unloading the plugin stop subsequent requests.
+6. Delete only the approved resource URLs, each with its original `If-Match` ETag.
+   Read the complete calendar afterwards and verify that no differences remain.
+
+Only one manual sync/confirmation can run per plugin instance. The plugin does not
+implement a distributed lock across devices; conditional requests provide conflict
+protection. A 409/412 conflict aborts instead of silently overwriting newer data.
+Rerun the command and approve the newly calculated preview to continue.
+
+CalDAV has no transaction covering the whole run. Confirmed changes remain after
+an error, and an in-flight request may have succeeded even if its response was lost.
+An already-issued request cannot be cancelled or rolled back by unloading the plugin.
+The result reports confirmed counts, stops subsequent operations and can be retried
+from a fresh preview without creating duplicate resources. Nothing runs automatically
+at startup or on note modification; there is no outbox, stored preview or sync log.
+Source snapshots remain in memory only. Credentials continue to live in the ignored
+local `data.json`, not in the repository.
 
 ### Original architecture proposal (not yet implemented)
 

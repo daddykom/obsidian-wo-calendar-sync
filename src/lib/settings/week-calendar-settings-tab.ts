@@ -211,7 +211,7 @@ export class WeekCalendartSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('Exklusiven Zielkalender freigeben')
       .setDesc(
-        'Dieser Kalender wird ausschliesslich vom Plugin verwaltet. Beim späteren Sync dürfen alle Einträge gelöscht werden, die nicht in den Wochen-Dateien vorkommen. Aktuell erfolgt noch keine Synchronisation.',
+        'Dieser Kalender wird ausschliesslich vom Plugin verwaltet. Beim manuellen Sync dürfen alle Einträge gelöscht werden, die nicht in den Wochen-Dateien vorkommen. Die Ausführung erfordert zusätzlich eine bestätigte Vorschau.',
       )
       .addToggle((toggle) => {
         confirmationToggle = toggle;

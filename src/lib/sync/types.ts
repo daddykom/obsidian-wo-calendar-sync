@@ -19,6 +19,11 @@ export interface CollectionError {
   message: string;
 }
 
+export interface SourceSnapshot {
+  path: string;
+  content: string;
+}
+
 export type CollectionResult =
-  | { ok: true; scannedFiles: number; events: CalendarEvent[] }
+  | { ok: true; scannedFiles: number; events: CalendarEvent[]; sources: SourceSnapshot[] }
   | { ok: false; scannedFiles: number; errors: CollectionError[] };

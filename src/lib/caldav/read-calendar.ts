@@ -2,7 +2,7 @@ import { WeekcalendarSettings } from '../types';
 import { RemoteEvent } from '../sync/compare-events';
 import { loadCalendars, caldavConnectionError } from './connection';
 import { parseCalendarObject } from './parse-calendar-object';
-import { validateServerUrl } from './transport';
+import { assertCalendarResource, validateServerUrl } from './transport';
 
 function calendarKey(value: string): string {
   const url = new URL(validateServerUrl(value));
@@ -19,13 +19,19 @@ function davText(value: unknown): string | null {
   return null;
 }
 
-export async function readCalendar(settings: WeekcalendarSettings['caldav']): Promise<RemoteEvent[]> {
+export async function openSelectedCalendar(settings: WeekcalendarSettings['caldav']) {
   if (!settings.calendar) throw new Error('Bitte zuerst einen Zielkalender auswählen.');
   const targetKey = calendarKey(settings.calendar);
   const { client, calendars } = await loadCalendars(settings);
   const matches = calendars.filter((calendar) => calendarKey(calendar.url) === targetKey);
   if (matches.length !== 1) throw new Error('Der ausgewählte Zielkalender wurde nicht eindeutig gefunden. Bitte Verbindung und Auswahl prüfen.');
   const calendar = matches[0];
+  return { client, calendar };
+}
+
+export async function readCalendar(settings: WeekcalendarSettings['caldav']): Promise<RemoteEvent[]> {
+  const { client, calendar } = await openSelectedCalendar(settings);
+  const targetKey = calendarKey(calendar.url);
   let responses: Awaited<ReturnType<typeof client.calendarQuery>>;
   try {
     // A full VCALENDAR query includes foreign resources, tasks and extensionless URLs.
@@ -44,7 +50,6 @@ export async function readCalendar(settings: WeekcalendarSettings['caldav']): Pr
       !responses[0].href && !responses[0].raw && !responses[0].props) return [];
   const resources: RemoteEvent[] = [];
   const seen = new Set<string>();
-  const collection = new URL(calendar.url);
   for (const response of responses) {
     if (!response.ok || response.status < 200 || response.status >= 300 || !response.href ||
         typeof response.raw === 'string') {
@@ -52,9 +57,7 @@ export async function readCalendar(settings: WeekcalendarSettings['caldav']): Pr
     }
     const url = new URL(validateServerUrl(new URL(response.href, calendar.url).href));
     if (calendarKey(url.href) === targetKey) continue;
-    if (url.origin !== collection.origin || !url.pathname.startsWith(collection.pathname.replace(/\/$/, '') + '/')) {
-      throw new Error('Server lieferte eine Ressource ausserhalb des ausgewählten Kalenders.');
-    }
+    assertCalendarResource(url.href, calendar.url);
     const data = davText(response.props?.calendarData);
     const etag = davText(response.props?.getetag);
     if (!data || !etag || seen.has(url.href)) throw new Error('Kalenderressource fehlt, ist unvollständig oder wurde doppelt geliefert.');

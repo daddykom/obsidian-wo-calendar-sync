@@ -1,14 +1,25 @@
 import type { App } from 'obsidian';
 import { WeekcalendarSettings } from '../types';
 import { collectEvents } from './collect-events';
-import { compareEvents, SyncPlan } from './compare-events';
-import { CollectionError } from './types';
+import { compareEvents, SyncPlan, RemoteEvent } from './compare-events';
+import { CalendarEvent, CollectionError, SourceSnapshot } from './types';
 import { readCalendar } from '../caldav/read-calendar';
 import { validateTimezone } from './timezone';
 
-export type PreviewResult =
-  | { ok: false; errors: CollectionError[] }
-  | { ok: true; calendarUrl: string; timezone: string; scannedFiles: number; localCount: number; remoteCount: number; plan: SyncPlan };
+export interface PreparedPreview {
+  ok: true;
+  calendarUrl: string;
+  timezone: string;
+  scannedFiles: number;
+  localCount: number;
+  remoteCount: number;
+  plan: SyncPlan;
+  sources: SourceSnapshot[];
+  remote: RemoteEvent[];
+  local: CalendarEvent[];
+}
+
+export type PreviewResult = { ok: false; errors: CollectionError[] } | PreparedPreview;
 
 export async function preparePreview(
   vault: Pick<App['vault'], 'getMarkdownFiles' | 'read'>,
@@ -29,6 +40,7 @@ export async function preparePreview(
       ok: true, calendarUrl: settings.caldav.calendar, timezone,
       scannedFiles: local.scannedFiles, localCount: local.events.length, remoteCount: remote.length,
       plan: compareEvents(local.events, remote, timezone),
+      sources: local.sources, remote, local: local.events,
     };
   } catch (error) {
     return { ok: false, errors: [{ path: '', message: error instanceof Error ? error.message : 'Kalender-Vorschau konnte nicht erstellt werden.' }] };

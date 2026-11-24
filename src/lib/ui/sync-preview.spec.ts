@@ -40,6 +40,7 @@ describe('SyncPreviewModal', () => {
     const result: PreviewResult = {
       ok: true, calendarUrl: 'https://example.com/calendar/', timezone: 'Europe/Zurich',
       scannedFiles: 1, localCount: 0, remoteCount: 1,
+      sources: [], local: [], remote: [],
       plan: { create: [], update: [], unchanged: 0, delete: [{
         uid: 'foreign', title: 'Fremder Termin', url: 'https://example.com/calendar/foreign', etag: '"v1"', comparable: null,
       }] },

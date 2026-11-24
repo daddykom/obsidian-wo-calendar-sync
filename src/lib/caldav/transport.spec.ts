@@ -1,5 +1,5 @@
 import { requestUrl } from 'obsidian';
-import { caldavReadFetch, CaldavHttpError } from './transport';
+import { caldavReadFetch, CaldavHttpError, createCalendarWriteFetch } from './transport';
 
 jest.mock('obsidian', () => ({ requestUrl: jest.fn() }));
 
@@ -45,5 +45,35 @@ describe('caldavReadFetch', () => {
     (requestUrl as jest.Mock).mockRejectedValue(new Error('authorization: sensitive-data'));
     await expect(caldavReadFetch('https://example.com/', { method: 'PROPFIND' }))
       .rejects.toThrow('CalDAV-Netzwerkanfrage fehlgeschlagen.');
+  });
+});
+
+describe('calendar-scoped write transport', () => {
+  const write = createCalendarWriteFetch('https://example.com/calendar/');
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (requestUrl as jest.Mock).mockResolvedValue({ status: 204, headers: {}, text: '' });
+  });
+
+  it.each([
+    ['PUT', { 'If-None-Match': '*' }],
+    ['PUT', { 'If-Match': '"v1"' }],
+    ['DELETE', { 'If-Match': '"v1"' }],
+  ])('permits a conditional %s inside the selected calendar', async (method, headers) => {
+    await expect(write('https://example.com/calendar/object', { method: method as string, headers }))
+      .resolves.toHaveProperty('status', 204);
+  });
+
+  it.each([
+    ['https://example.com/calendar/', 'DELETE', { 'If-Match': '"v1"' }],
+    ['https://example.com/other/object', 'DELETE', { 'If-Match': '"v1"' }],
+    ['https://foreign.example.com/calendar/object', 'PUT', { 'If-None-Match': '*' }],
+    ['https://example.com/calendar/object', 'DELETE', {}],
+    ['https://example.com/calendar/object', 'DELETE', { 'If-Match': '*' }],
+    ['https://example.com/calendar/object', 'PUT', { 'If-Match': 'W/"v1"' }],
+    ['https://example.com/calendar/object', 'POST', {}],
+  ])('rejects unsafe or out-of-calendar writes', async (url, method, headers) => {
+    await expect(write(url as string, { method: method as string, headers })).rejects.toThrow();
+    expect(requestUrl).not.toHaveBeenCalled();
   });
 });

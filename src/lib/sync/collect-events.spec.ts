@@ -76,7 +76,7 @@ describe('collectEvents', () => {
 
   it('returns an explicitly empty snapshot without writing anything', async () => {
     expect(await collectEvents(createVault({}), settings)).toEqual({
-      ok: true, scannedFiles: 0, events: [],
+      ok: true, scannedFiles: 0, events: [], sources: [],
     });
   });
 });

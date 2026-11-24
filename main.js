@@ -3465,7 +3465,7 @@ __export(main_exports, {
   default: () => WeekCalendartPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian13 = require("obsidian");
+var import_obsidian15 = require("obsidian");
 
 // node_modules/tslib/tslib.es6.mjs
 var extendStatics = function(d, b) {
@@ -8085,11 +8085,14 @@ async function collectEvents(vault, settings) {
   const prefix = `${settings.paths.weekFolder}/`;
   const files = vault.getMarkdownFiles().filter((file) => file.path.startsWith(prefix) && /^[^/]+\/weeks\/W[^/]*\.md$/.test(file.path.slice(prefix.length))).sort((a, b) => a.path.localeCompare(b.path));
   const events = [];
+  const sources = [];
   const errors = [];
   const seen = /* @__PURE__ */ new Map();
   for (const file of files) {
     try {
-      const parsed = parseWeekEvents(await vault.read(file), file.path, settings);
+      const content = await vault.read(file);
+      sources.push({ path: file.path, content });
+      const parsed = parseWeekEvents(content, file.path, settings);
       errors.push(...parsed.errors);
       for (const event of parsed.events) {
         const previous = seen.get(event.uid);
@@ -8108,7 +8111,7 @@ async function collectEvents(vault, settings) {
       errors.push({ path: file.path, message: "Wochen-Datei konnte nicht gelesen oder verarbeitet werden." });
     }
   }
-  return errors.length > 0 ? { ok: false, scannedFiles: files.length, errors } : { ok: true, scannedFiles: files.length, events };
+  return errors.length > 0 ? { ok: false, scannedFiles: files.length, errors } : { ok: true, scannedFiles: files.length, events, sources };
 }
 
 // src/lib/sync/timezone.ts
@@ -10122,14 +10125,12 @@ function validateServerUrl(value) {
   }
   return url.href;
 }
-var caldavReadFetch = async (input, init) => {
+async function nativeFetch(input, init, authorize) {
   const request2 = input instanceof Request ? input : void 0;
   const url = validateServerUrl(request2?.url ?? String(input));
   const method = (init?.method ?? request2?.method ?? "GET").toUpperCase();
-  if (!["GET", "HEAD", "OPTIONS", "PROPFIND", "REPORT"].includes(method)) {
-    throw new Error("Schreibzugriffe sind im Lesemodus nicht erlaubt.");
-  }
   const headers = new Headers(init?.headers ?? request2?.headers);
+  authorize(url, method, headers);
   const requestHeaders = {};
   headers.forEach((value, key) => {
     requestHeaders[key] = value;
@@ -10154,7 +10155,36 @@ var caldavReadFetch = async (input, init) => {
   });
   Object.defineProperty(response, "url", { value: url });
   return response;
-};
+}
+var caldavReadFetch = (input, init) => nativeFetch(input, init, (_url, method) => {
+  if (!["GET", "HEAD", "OPTIONS", "PROPFIND", "REPORT"].includes(method)) {
+    throw new Error("Schreibzugriffe sind im Lesemodus nicht erlaubt.");
+  }
+});
+function assertCalendarResource(url, calendarUrl) {
+  const resource = new URL(validateServerUrl(url));
+  const calendar2 = new URL(validateServerUrl(calendarUrl));
+  if (resource.origin !== calendar2.origin || resource.pathname.endsWith("/") || !resource.pathname.startsWith(calendar2.pathname.replace(/\/$/, "") + "/")) {
+    throw new Error("Ressource liegt ausserhalb des ausgew\xE4hlten Kalenders.");
+  }
+}
+function assertStrongEtag(etag) {
+  if (!/^"[\x21\x23-\x7e\x80-\xff]*"$/.test(etag)) throw new Error("F\xFCr sichere \xC4nderungen ist ein starker ETag erforderlich.");
+}
+function createCalendarWriteFetch(calendarUrl) {
+  validateServerUrl(calendarUrl);
+  return (input, init) => nativeFetch(input, init, (url, method, headers) => {
+    assertCalendarResource(url, calendarUrl);
+    const match2 = headers.get("if-match");
+    const noneMatch = headers.get("if-none-match");
+    if (method === "PUT" && noneMatch === "*" && !match2) return;
+    if ((method === "PUT" || method === "DELETE") && match2 && !noneMatch) {
+      assertStrongEtag(match2);
+      return;
+    }
+    throw new Error("Schreibzugriff ohne eindeutige Methode oder Konfliktschutz verweigert.");
+  });
+}
 
 // src/lib/caldav/connection.ts
 function caldavConnectionError(error) {
@@ -17635,13 +17665,18 @@ function davText(value) {
   }
   return null;
 }
-async function readCalendar(settings) {
+async function openSelectedCalendar(settings) {
   if (!settings.calendar) throw new Error("Bitte zuerst einen Zielkalender ausw\xE4hlen.");
   const targetKey = calendarKey(settings.calendar);
   const { client: client2, calendars } = await loadCalendars(settings);
   const matches = calendars.filter((calendar3) => calendarKey(calendar3.url) === targetKey);
   if (matches.length !== 1) throw new Error("Der ausgew\xE4hlte Zielkalender wurde nicht eindeutig gefunden. Bitte Verbindung und Auswahl pr\xFCfen.");
   const calendar2 = matches[0];
+  return { client: client2, calendar: calendar2 };
+}
+async function readCalendar(settings) {
+  const { client: client2, calendar: calendar2 } = await openSelectedCalendar(settings);
+  const targetKey = calendarKey(calendar2.url);
   let responses;
   try {
     responses = await client2.calendarQuery({
@@ -17656,16 +17691,13 @@ async function readCalendar(settings) {
   if (responses.length === 1 && responses[0].ok && responses[0].status === 207 && !responses[0].href && !responses[0].raw && !responses[0].props) return [];
   const resources = [];
   const seen = /* @__PURE__ */ new Set();
-  const collection2 = new URL(calendar2.url);
   for (const response of responses) {
     if (!response.ok || response.status < 200 || response.status >= 300 || !response.href || typeof response.raw === "string") {
       throw new Error("Kalenderabfrage ist unvollst\xE4ndig oder enth\xE4lt DAV-Fehler. Keine Vorschau erstellt.");
     }
     const url = new URL(validateServerUrl(new URL(response.href, calendar2.url).href));
     if (calendarKey(url.href) === targetKey) continue;
-    if (url.origin !== collection2.origin || !url.pathname.startsWith(collection2.pathname.replace(/\/$/, "") + "/")) {
-      throw new Error("Server lieferte eine Ressource ausserhalb des ausgew\xE4hlten Kalenders.");
-    }
+    assertCalendarResource(url.href, calendar2.url);
     const data = davText(response.props?.calendarData);
     const etag = davText(response.props?.getetag);
     if (!data || !etag || seen.has(url.href)) throw new Error("Kalenderressource fehlt, ist unvollst\xE4ndig oder wurde doppelt geliefert.");
@@ -17698,7 +17730,10 @@ async function preparePreview(vault, settings) {
       scannedFiles: local.scannedFiles,
       localCount: local.events.length,
       remoteCount: remote.length,
-      plan: compareEvents(local.events, remote, timezone)
+      plan: compareEvents(local.events, remote, timezone),
+      sources: local.sources,
+      remote,
+      local: local.events
     };
   } catch (error) {
     return { ok: false, errors: [{ path: "", message: error instanceof Error ? error.message : "Kalender-Vorschau konnte nicht erstellt werden." }] };
@@ -17713,44 +17748,46 @@ var SyncPreviewModal = class extends import_obsidian9.Modal {
     this.result = result;
   }
   onOpen() {
-    const { contentEl } = this;
-    contentEl.createEl("h2", { text: "Kalender-Synchronisation: Vorschau" });
-    contentEl.createEl("p", { text: "Nur Vorschau. Es wurden keine Notizen oder Kalendereintr\xE4ge ver\xE4ndert." });
-    if (!this.result.ok) {
-      contentEl.createEl("h3", { text: "Kein sicherer Abgleich m\xF6glich" });
-      const list = contentEl.createEl("ul");
-      for (const error of this.result.errors) {
-        list.createEl("li", { text: `${error.path}${error.line ? ":" + error.line : ""}${error.path ? ": " : ""}${error.message}` });
-      }
-    } else {
-      const { plan, calendarUrl, timezone, scannedFiles, localCount, remoteCount } = this.result;
-      contentEl.createEl("p", { text: `Ziel: ${calendarUrl}
-Zeitzone: ${timezone}` });
-      contentEl.createEl("p", { text: `${scannedFiles} Wochen-Dateien \xB7 ${localCount} lokale Termine \xB7 ${remoteCount} Kalenderressourcen` });
-      contentEl.createEl("p", { text: `${plan.create.length} neu \xB7 ${plan.update.length} \xE4ndern \xB7 ${plan.delete.length} l\xF6schen \xB7 ${plan.unchanged} unver\xE4ndert` });
-      if (!localCount && remoteCount) {
-        contentEl.createEl("p", { text: "ACHTUNG: Lokal sind keine Termine vorhanden. Ein sp\xE4terer Sync w\xFCrde den Zielkalender vollst\xE4ndig leeren und ben\xF6tigt eine zus\xE4tzliche Best\xE4tigung." });
-      } else if (plan.delete.length === remoteCount && remoteCount) {
-        contentEl.createEl("p", { text: "ACHTUNG: Alle bisherigen Kalenderressourcen w\xFCrden gel\xF6scht und gegebenenfalls durch lokale Termine ersetzt. Ein sp\xE4terer Sync ben\xF6tigt eine zus\xE4tzliche Best\xE4tigung." });
-      }
-      for (const [heading, items] of [
-        ["Neu anlegen", plan.create.map((event) => `${event.date}: ${event.title} \u2014 ${event.sourcePath}:${event.sourceLine}`)],
-        ["\xC4ndern", plan.update.map(({ local, fields }) => `${local.date}: ${local.title} \u2014 ${fields.join(", ")}`)],
-        ["L\xF6schen (auch fremde Eintr\xE4ge)", plan.delete.map((event) => `${event.title} \u2014 ${event.url}`)]
-      ]) {
-        if (!items.length) continue;
-        contentEl.createEl("h3", { text: `${heading} (${items.length})` });
-        const list = contentEl.createEl("ul");
-        for (const text of items) list.createEl("li", { text });
-      }
-      contentEl.createEl("p", { text: "Momentaufnahme: Vor einem sp\xE4teren Schreibzugriff m\xFCssen lokale Dateien und Serverdaten erneut gepr\xFCft werden." });
-    }
-    new import_obsidian9.Setting(contentEl).addButton((button) => button.setButtonText("Schliessen").onClick(() => this.close()));
+    renderSyncPreview(this.contentEl, this.result);
+    new import_obsidian9.Setting(this.contentEl).addButton((button) => button.setButtonText("Schliessen").onClick(() => this.close()));
   }
   onClose() {
     this.contentEl.empty();
   }
 };
+function renderSyncPreview(contentEl, result, executable = false) {
+  contentEl.createEl("h2", { text: "Kalender-Synchronisation: Vorschau" });
+  contentEl.createEl("p", { text: executable ? "Bisher wurde nichts ver\xE4ndert. \u201EJetzt synchronisieren\u201C best\xE4tigt die unten aufgef\xFChrten \xC4nderungen am exklusiven Zielkalender. Notizen werden nicht ver\xE4ndert." : "Nur Vorschau. Es wurden keine Notizen oder Kalendereintr\xE4ge ver\xE4ndert." });
+  if (!result.ok) {
+    contentEl.createEl("h3", { text: "Kein sicherer Abgleich m\xF6glich" });
+    const list = contentEl.createEl("ul");
+    for (const error of result.errors) {
+      list.createEl("li", { text: `${error.path}${error.line ? ":" + error.line : ""}${error.path ? ": " : ""}${error.message}` });
+    }
+  } else {
+    const { plan, calendarUrl, timezone, scannedFiles, localCount, remoteCount } = result;
+    contentEl.createEl("p", { text: `Ziel: ${calendarUrl}
+Zeitzone: ${timezone}` });
+    contentEl.createEl("p", { text: `${scannedFiles} Wochen-Dateien \xB7 ${localCount} lokale Termine \xB7 ${remoteCount} Kalenderressourcen` });
+    contentEl.createEl("p", { text: `${plan.create.length} neu \xB7 ${plan.update.length} \xE4ndern \xB7 ${plan.delete.length} l\xF6schen \xB7 ${plan.unchanged} unver\xE4ndert` });
+    if (!localCount && remoteCount) {
+      contentEl.createEl("p", { text: "ACHTUNG: Lokal sind keine Termine vorhanden. Ein Sync w\xFCrde den Zielkalender vollst\xE4ndig leeren und ben\xF6tigt eine zus\xE4tzliche Best\xE4tigung." });
+    } else if (plan.delete.length === remoteCount && remoteCount) {
+      contentEl.createEl("p", { text: "ACHTUNG: Alle bisherigen Kalenderressourcen w\xFCrden gel\xF6scht und gegebenenfalls durch lokale Termine ersetzt. Ein Sync ben\xF6tigt eine zus\xE4tzliche Best\xE4tigung." });
+    }
+    for (const [heading, items] of [
+      ["Neu anlegen", plan.create.map((event) => `${event.date}: ${event.title} \u2014 ${event.sourcePath}:${event.sourceLine}`)],
+      ["\xC4ndern", plan.update.map(({ local, fields }) => `${local.date}: ${local.title} \u2014 ${fields.join(", ")}`)],
+      ["L\xF6schen (auch fremde Eintr\xE4ge)", plan.delete.map((event) => `${event.title} \u2014 ${event.url}`)]
+    ]) {
+      if (!items.length) continue;
+      contentEl.createEl("h3", { text: `${heading} (${items.length})` });
+      const list = contentEl.createEl("ul");
+      for (const text of items) list.createEl("li", { text });
+    }
+    contentEl.createEl("p", { text: "Momentaufnahme: Vor Schreibzugriffen werden lokale Dateien und Serverdaten erneut gepr\xFCft. Bei \xC4nderungen muss eine neue Vorschau best\xE4tigt werden." });
+  }
+}
 
 // src/lib/commands/preview-calendar-sync.ts
 function previewCalendarSync(app, settings) {
@@ -17776,8 +17813,300 @@ function previewCalendarSync(app, settings) {
   };
 }
 
-// src/lib/event-handling/modify-week-file-event.ts
+// src/lib/commands/sync-calendar.ts
+var import_obsidian12 = require("obsidian");
+
+// src/lib/caldav/calendar-writer.ts
+async function openCalendarWriter(settings) {
+  if (settings.managedCalendarConfirmed !== true) throw new Error("Exklusiver Zielkalender ist nicht freigegeben.");
+  const { client: client2, calendar: calendar2 } = await openSelectedCalendar(settings);
+  const fetch2 = createCalendarWriteFetch(calendar2.url);
+  const requireSuccess = (response) => {
+    if (![200, 201, 204].includes(response.status)) throw new Error("Schreibzugriff wurde vom Server nicht als abgeschlossen best\xE4tigt.");
+  };
+  return {
+    async create(event, data) {
+      const filename = `woev-${event.localId}-${event.date}.ics`;
+      if (!/^woev-[a-zA-Z0-9]+-\d{4}-\d{2}-\d{2}\.ics$/.test(filename)) throw new Error("Ung\xFCltiger Termin-Dateiname.");
+      const collection2 = new URL(calendar2.url);
+      collection2.pathname = collection2.pathname.replace(/\/$/, "") + "/";
+      requireSuccess(await client2.createCalendarObject({
+        calendar: { ...calendar2, url: collection2.href },
+        filename,
+        iCalString: data,
+        fetch: fetch2
+      }));
+    },
+    async update(event, data) {
+      assertCalendarResource(event.url, calendar2.url);
+      assertStrongEtag(event.etag);
+      requireSuccess(await client2.updateCalendarObject({ calendarObject: { url: event.url, etag: event.etag, data }, fetch: fetch2 }));
+    },
+    async delete(event) {
+      assertCalendarResource(event.url, calendar2.url);
+      assertStrongEtag(event.etag);
+      requireSuccess(await client2.deleteCalendarObject({ calendarObject: { url: event.url, etag: event.etag }, fetch: fetch2 }));
+    }
+  };
+}
+
+// src/lib/caldav/serialize-event.ts
+function serializeEvent(event, timezone, timestamp = /* @__PURE__ */ new Date()) {
+  const normalized = comparableLocalEvent(event, timezone);
+  const calendar2 = new ICALmodule.Component("vcalendar");
+  calendar2.updatePropertyWithValue("version", "2.0");
+  calendar2.updatePropertyWithValue("prodid", "-//Week Calendart//Obsidian Calendar//EN");
+  calendar2.updatePropertyWithValue("calscale", "GREGORIAN");
+  const component = new ICALmodule.Component("vevent");
+  const appointment = new ICALmodule.Event(component);
+  appointment.uid = event.uid;
+  appointment.summary = event.title;
+  appointment.startDate = ICALmodule.Time.fromString(normalized.start, void 0);
+  appointment.endDate = ICALmodule.Time.fromString(normalized.end, void 0);
+  component.updatePropertyWithValue("dtstamp", ICALmodule.Time.fromJSDate(timestamp, true));
+  if (event.location) appointment.location = event.location;
+  if (event.description) appointment.description = event.description;
+  for (const minutes of normalized.reminderMinutes) {
+    const seconds = minutes * 60;
+    if (!Number.isSafeInteger(seconds) || seconds <= 0) throw new Error("Ung\xFCltige Erinnerungsdauer.");
+    const alarm = new ICALmodule.Component("valarm");
+    alarm.updatePropertyWithValue("action", "DISPLAY");
+    alarm.updatePropertyWithValue("description", event.title);
+    alarm.updatePropertyWithValue("trigger", ICALmodule.Duration.fromSeconds(-seconds));
+    component.addSubcomponent(alarm);
+  }
+  calendar2.addSubcomponent(component);
+  return calendar2.toString() + "\r\n";
+}
+
+// src/lib/sync/execute-sync.ts
+var SyncSafetyError = class extends Error {
+};
+function previewSignature(preview) {
+  const byUid = (values) => [...values].sort((a, b) => a.uid.localeCompare(b.uid));
+  return JSON.stringify({
+    calendarUrl: preview.calendarUrl,
+    timezone: preview.timezone,
+    sources: preview.sources,
+    local: byUid(preview.local),
+    remote: byUid(preview.remote),
+    create: byUid(preview.plan.create),
+    update: [...preview.plan.update].sort((a, b) => a.local.uid.localeCompare(b.local.uid)),
+    delete: byUid(preview.plan.delete),
+    unchanged: preview.plan.unchanged
+  });
+}
+function requiresFullDeletionConfirmation(preview) {
+  return preview.remoteCount > 0 && preview.plan.delete.length === preview.remoteCount;
+}
+function verifyUpserts(preview, current) {
+  const byUid = new Map(current.map((event) => [event.uid, event]));
+  if (byUid.size !== current.length || current.length !== preview.remote.length + preview.plan.create.length) {
+    throw new SyncSafetyError("Der Serverbestand wurde inzwischen ver\xE4ndert oder ist unvollst\xE4ndig. Es wird nicht weiter gel\xF6scht.");
+  }
+  const updates = new Set(preview.plan.update.map(({ local }) => local.uid));
+  for (const previous of preview.remote) {
+    const now = byUid.get(previous.uid);
+    if (!now || now.url !== previous.url || !updates.has(previous.uid) && now.etag !== previous.etag) {
+      throw new SyncSafetyError("Ein Kalendereintrag wurde w\xE4hrend des Syncs ver\xE4ndert. Es wird nicht weiter gel\xF6scht.");
+    }
+  }
+  const remaining = compareEvents(preview.local, current, preview.timezone);
+  if (remaining.create.length || remaining.update.length || remaining.delete.length !== preview.plan.delete.length || remaining.delete.some((event) => !preview.plan.delete.some((approved) => approved.uid === event.uid && approved.url === event.url && approved.etag === event.etag))) {
+    throw new SyncSafetyError("Geschriebene Termine konnten nicht vollst\xE4ndig best\xE4tigt werden. Es wird nicht weiter gel\xF6scht.");
+  }
+}
+async function executeSync(vault, settings, approved, settingsSnapshot, fullDeletionConfirmed, isActive = () => true) {
+  const result = { ok: false, created: 0, updated: 0, deleted: 0, unchanged: approved.plan.unchanged, message: "" };
+  let sourcesChanged = false;
+  const root = settings.paths.weekFolder.replace(/\/$/, "");
+  const markChanged = (file, oldPath) => {
+    if ([file.path, oldPath].some((path) => path !== void 0 && (path === root || path.startsWith(root + "/") || root.startsWith(path + "/")))) sourcesChanged = true;
+  };
+  const refs = [
+    vault.on("modify", markChanged),
+    vault.on("create", markChanged),
+    vault.on("delete", markChanged),
+    vault.on("rename", markChanged)
+  ];
+  const checkpoint = () => {
+    if (!isActive()) throw new SyncSafetyError("Sync wurde abgebrochen.");
+    if (JSON.stringify(settings) !== settingsSnapshot) throw new SyncSafetyError("Einstellungen wurden ge\xE4ndert. Bitte eine neue Vorschau erstellen.");
+    if (sourcesChanged) throw new SyncSafetyError("Lokale Kalenderdateien wurden w\xE4hrend des Syncs ge\xE4ndert. Bitte eine neue Vorschau erstellen.");
+  };
+  try {
+    checkpoint();
+    const snapshot = JSON.parse(settingsSnapshot);
+    const fresh = await preparePreview(vault, snapshot);
+    checkpoint();
+    if (!fresh.ok) throw new SyncSafetyError("Die erneute Pr\xFCfung ist fehlgeschlagen. Bitte die Vorschau erneut erstellen und die gemeldeten Fehler beheben.");
+    if (previewSignature(fresh) !== previewSignature(approved)) {
+      throw new SyncSafetyError("Lokale Dateien oder Serverdaten unterscheiden sich von der best\xE4tigten Vorschau. Bitte eine neue Vorschau erstellen.");
+    }
+    if (requiresFullDeletionConfirmation(fresh) && !fullDeletionConfirmed) {
+      throw new SyncSafetyError("Die zus\xE4tzliche Best\xE4tigung zum L\xF6schen aller bisherigen Eintr\xE4ge fehlt.");
+    }
+    const assertSourcesCurrent = async () => {
+      const current = await collectEvents(vault, snapshot);
+      checkpoint();
+      if (!current.ok || JSON.stringify(current.sources) !== JSON.stringify(fresh.sources)) {
+        throw new SyncSafetyError("Lokale Kalenderdateien stimmen nicht mehr mit der best\xE4tigten Vorschau \xFCberein. Bitte eine neue Vorschau erstellen.");
+      }
+    };
+    const { plan } = fresh;
+    if (!plan.create.length && !plan.update.length && !plan.delete.length) {
+      return { ...result, ok: true, message: "Kalender ist bereits aktuell. Keine \xC4nderungen n\xF6tig." };
+    }
+    for (const remote of [...plan.update.map(({ remote: remote2 }) => remote2), ...plan.delete]) {
+      assertCalendarResource(remote.url, fresh.calendarUrl);
+      assertStrongEtag(remote.etag);
+    }
+    const creates = plan.create.map((event) => ({ event, data: serializeEvent(event, fresh.timezone) }));
+    const updates = plan.update.map(({ remote, local }) => ({ remote, data: serializeEvent(local, fresh.timezone) }));
+    const writer = await openCalendarWriter(snapshot.caldav);
+    await assertSourcesCurrent();
+    for (const { event, data } of creates) {
+      checkpoint();
+      await writer.create(event, data);
+      result.created++;
+      checkpoint();
+    }
+    for (const { remote, data } of updates) {
+      checkpoint();
+      await writer.update(remote, data);
+      result.updated++;
+      checkpoint();
+    }
+    const afterUpserts = await readCalendar(snapshot.caldav);
+    checkpoint();
+    verifyUpserts(fresh, afterUpserts);
+    if (plan.delete.length) await assertSourcesCurrent();
+    for (const remote of plan.delete) {
+      checkpoint();
+      await writer.delete(remote);
+      result.deleted++;
+      checkpoint();
+    }
+    const finalRemote = plan.delete.length ? await readCalendar(snapshot.caldav) : afterUpserts;
+    await assertSourcesCurrent();
+    const finalPlan = compareEvents(fresh.local, finalRemote, fresh.timezone);
+    if (finalPlan.create.length || finalPlan.update.length || finalPlan.delete.length) {
+      throw new SyncSafetyError("Die Abschlusspr\xFCfung zeigt verbleibende Unterschiede. Bitte eine neue Vorschau erstellen.");
+    }
+    return { ...result, ok: true, message: "Kalender erfolgreich synchronisiert und gepr\xFCft." };
+  } catch (error) {
+    const detail = error instanceof SyncSafetyError ? error.message : error instanceof CaldavHttpError && [409, 412].includes(error.status) ? "Serverkonflikt: Ein Eintrag wurde inzwischen ge\xE4ndert oder bereits angelegt. Bitte eine neue Vorschau erstellen." : "Serverzugriff oder Sicherheitspr\xFCfung fehlgeschlagen. Zugangsdaten, Verbindung und ETags pr\xFCfen und eine neue Vorschau erstellen.";
+    return { ...result, message: `${detail} Bereits best\xE4tigte \xC4nderungen bleiben bestehen; bei Netzwerkfehlern kann auch die letzte Anfrage bereits verarbeitet worden sein. Es werden keine weiteren Eintr\xE4ge gel\xF6scht.` };
+  } finally {
+    for (const ref of refs) vault.offref(ref);
+  }
+}
+
+// src/lib/ui/confirm-calendar-sync.ts
 var import_obsidian11 = require("obsidian");
+var ConfirmCalendarSyncModal = class extends import_obsidian11.Modal {
+  constructor(app, preview) {
+    super(app);
+    this.preview = preview;
+    this.approval = null;
+  }
+  waitForApproval() {
+    return new Promise((resolve) => {
+      this.resolve = resolve;
+      this.open();
+    });
+  }
+  onOpen() {
+    renderSyncPreview(this.contentEl, this.preview, true);
+    const fullDeletion = requiresFullDeletionConfirmation(this.preview);
+    let fullDeletionConfirmed = false;
+    let submit;
+    if (fullDeletion) {
+      new import_obsidian11.Setting(this.contentEl).setName("Alle bisherigen Kalendereintr\xE4ge l\xF6schen").setDesc("Ich best\xE4tige ausdr\xFCcklich, dass s\xE4mtliche bisherigen Eintr\xE4ge dieses Zielkalenders gel\xF6scht werden d\xFCrfen.").addToggle((toggle) => toggle.setValue(false).onChange((value) => {
+        fullDeletionConfirmed = value;
+        submit?.setDisabled(!value);
+      }));
+    }
+    new import_obsidian11.Setting(this.contentEl).addButton((button) => button.setButtonText("Abbrechen").onClick(() => this.close())).addButton((button) => {
+      submit = button;
+      button.setButtonText("Jetzt synchronisieren").setCta().setDisabled(fullDeletion).onClick(() => {
+        if (fullDeletion && !fullDeletionConfirmed) return;
+        this.approval = { fullDeletionConfirmed };
+        this.close();
+      });
+    });
+  }
+  onClose() {
+    this.resolve?.(this.approval);
+    this.resolve = void 0;
+    this.contentEl.empty();
+  }
+};
+
+// src/lib/commands/sync-calendar.ts
+function createCalendarSync(app, settings) {
+  let active = true;
+  let running = false;
+  let dialog;
+  return {
+    async run() {
+      if (!active) return;
+      if (running) {
+        new import_obsidian12.Notice("Ein Kalender-Sync oder dessen Best\xE4tigung l\xE4uft bereits.");
+        return;
+      }
+      running = true;
+      const settingsSnapshot = JSON.stringify(settings);
+      let progress;
+      try {
+        new import_obsidian12.Notice("Kalender-Sync: Vorschau wird erstellt \u2026");
+        const preview = await preparePreview(app.vault, JSON.parse(settingsSnapshot));
+        if (!active) return;
+        if (JSON.stringify(settings) !== settingsSnapshot) {
+          new import_obsidian12.Notice("Einstellungen wurden inzwischen ge\xE4ndert. Bitte Sync erneut starten.");
+          return;
+        }
+        if (!preview.ok) {
+          new SyncPreviewModal(app, preview).open();
+          return;
+        }
+        if (!preview.plan.create.length && !preview.plan.update.length && !preview.plan.delete.length) {
+          new import_obsidian12.Notice("Kalender ist bereits aktuell. Keine \xC4nderungen n\xF6tig.");
+          return;
+        }
+        dialog = new ConfirmCalendarSyncModal(app, preview);
+        const approval = await dialog.waitForApproval();
+        dialog = void 0;
+        if (!approval || !active) return;
+        progress = new import_obsidian12.Notice("Kalender wird erneut gepr\xFCft und synchronisiert \u2026", 0);
+        const result = await executeSync(
+          app.vault,
+          settings,
+          preview,
+          settingsSnapshot,
+          approval.fullDeletionConfirmed,
+          () => active
+        );
+        if (active) {
+          new import_obsidian12.Notice(`${result.message}
+${result.created} neu \xB7 ${result.updated} ge\xE4ndert \xB7 ${result.deleted} gel\xF6scht \xB7 ${result.unchanged} unver\xE4ndert`, 2e4);
+        }
+      } catch {
+        if (active) new import_obsidian12.Notice("Kalender-Sync konnte nicht abgeschlossen werden. Bitte eine neue Vorschau erstellen.", 1e4);
+      } finally {
+        progress?.hide();
+        running = false;
+      }
+    },
+    cancel() {
+      active = false;
+      dialog?.close();
+    }
+  };
+}
+
+// src/lib/event-handling/modify-week-file-event.ts
+var import_obsidian13 = require("obsidian");
 function extractDateFromFilePath(filePath) {
   const match2 = filePath.match(/W\d{2} (\d{2})\.(\d{2})\.(\d{2})\.md$/);
   if (!match2) return null;
@@ -17831,7 +18160,7 @@ async function propagateRecurrenceChanges(app, settings, recurringEvents) {
       }
       if (updated) {
         const abstractFile = app.vault.getAbstractFileByPath(filePath);
-        if (abstractFile instanceof import_obsidian11.TFile) {
+        if (abstractFile instanceof import_obsidian13.TFile) {
           await app.vault.modify(abstractFile, stringifyWo(elements));
         }
       }
@@ -17839,7 +18168,7 @@ async function propagateRecurrenceChanges(app, settings, recurringEvents) {
   }
 }
 var modifyWeekFileEvent = (app, modifyEvents, actualFileChanged$, settings, ignoredFiles = /* @__PURE__ */ new Set()) => modifyEvents.pipe(
-  filter((file) => file instanceof import_obsidian11.TFile),
+  filter((file) => file instanceof import_obsidian13.TFile),
   filter((file) => !ignoredFiles.has(file.path)),
   filter((file) => getWeekFileInfo(file.path, settings.paths.weekFolder) !== null),
   filter((file) => file.extension === "md"),
@@ -17856,11 +18185,11 @@ var modifyWeekFileEvent = (app, modifyEvents, actualFileChanged$, settings, igno
           if (recurringInFile.length > 0) {
             await propagateRecurrenceChanges(app, settings, recurringInFile);
           }
-          return new import_obsidian11.Notice(`File ${file.name} angepasst.`);
+          return new import_obsidian13.Notice(`File ${file.name} angepasst.`);
         }),
         catchError((err) => {
           const message2 = err instanceof Error ? err.message : String(err);
-          return of(new import_obsidian11.Notice(`Fehler bei der Anpassung von ${file.name}: ${message2}`));
+          return of(new import_obsidian13.Notice(`Fehler bei der Anpassung von ${file.name}: ${message2}`));
         })
       );
     }
@@ -17879,7 +18208,7 @@ function mergeSettings(saved = null) {
 }
 
 // src/lib/settings/week-calendar-settings-tab.ts
-var import_obsidian12 = require("obsidian");
+var import_obsidian14 = require("obsidian");
 
 // src/lib/caldav/discover-calendars.ts
 async function discoverCalendars(settings) {
@@ -17894,7 +18223,7 @@ async function discoverCalendars(settings) {
 }
 
 // src/lib/settings/week-calendar-settings-tab.ts
-var WeekCalendartSettingTab = class extends import_obsidian12.PluginSettingTab {
+var WeekCalendartSettingTab = class extends import_obsidian14.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.caldavViewVersion = 0;
@@ -17905,19 +18234,19 @@ var WeekCalendartSettingTab = class extends import_obsidian12.PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     containerEl.createEl("h2", { text: "Folders" });
-    new import_obsidian12.Setting(containerEl).setName("Week Folder").setDesc("Folder for all Week Files").addText(
+    new import_obsidian14.Setting(containerEl).setName("Week Folder").setDesc("Folder for all Week Files").addText(
       (text) => text.setPlaceholder("wochen").setValue(this.plugin.settings.paths.weekFolder).onChange(async (value) => {
         this.plugin.settings.paths.weekFolder = value;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian12.Setting(containerEl).setName("Event Folder").setDesc("Folder for CalDav Events").addText(
+    new import_obsidian14.Setting(containerEl).setName("Event Folder").setDesc("Folder for CalDav Events").addText(
       (text) => text.setPlaceholder("events").setValue(this.plugin.settings.paths.eventFolder).onChange(async (value) => {
         this.plugin.settings.paths.eventFolder = value;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian12.Setting(containerEl).setName("Overview File Name").setDesc("Name of the File, where the Links to all Week Files are.").addText(
+    new import_obsidian14.Setting(containerEl).setName("Overview File Name").setDesc("Name of the File, where the Links to all Week Files are.").addText(
       (text) => text.setPlaceholder("\xDCbersicht").setValue(this.plugin.settings.paths.overviewFileName).onChange(async (value) => {
         this.plugin.settings.paths.overviewFileName = value;
         await this.plugin.saveSettings();
@@ -17925,7 +18254,7 @@ var WeekCalendartSettingTab = class extends import_obsidian12.PluginSettingTab {
     );
     containerEl.createEl("h2", { text: "Week File Titles" });
     Object.entries(this.plugin.settings.weekdays).filter(([key]) => key !== "start").forEach(([key, value]) => {
-      new import_obsidian12.Setting(containerEl).setName(key).addText(
+      new import_obsidian14.Setting(containerEl).setName(key).addText(
         (text) => text.setValue(value).onChange(async (val) => {
           this.plugin.settings.weekdays[key] = val;
           await this.plugin.saveSettings();
@@ -17934,7 +18263,7 @@ var WeekCalendartSettingTab = class extends import_obsidian12.PluginSettingTab {
     });
     containerEl.createEl("h2", { text: "Event Fields" });
     Object.entries(this.plugin.settings.prefixes).forEach(([key, value]) => {
-      new import_obsidian12.Setting(containerEl).setName(key).addText(
+      new import_obsidian14.Setting(containerEl).setName(key).addText(
         (text) => text.setValue(value).onChange(async (val) => {
           this.plugin.settings.prefixes[key] = val;
           await this.plugin.saveSettings();
@@ -17948,7 +18277,7 @@ var WeekCalendartSettingTab = class extends import_obsidian12.PluginSettingTab {
     let calendars = [];
     let requestVersion = 0;
     let loading = false;
-    const connectionSetting = new import_obsidian12.Setting(containerEl).setName("CalDAV-Verbindung").setDesc("Liest die verf\xFCgbaren Kalender. Es werden keine Termine ver\xE4ndert.");
+    const connectionSetting = new import_obsidian14.Setting(containerEl).setName("CalDAV-Verbindung").setDesc("Liest die verf\xFCgbaren Kalender. Es werden keine Termine ver\xE4ndert.");
     const invalidateConnection = () => {
       requestVersion++;
       loading = false;
@@ -17960,21 +18289,21 @@ var WeekCalendartSettingTab = class extends import_obsidian12.PluginSettingTab {
       connectButton?.setDisabled(false).setButtonText("Verbindung pr\xFCfen");
       connectionSetting.setDesc("Zugangsdaten ge\xE4ndert. Bitte Verbindung erneut pr\xFCfen.");
     };
-    new import_obsidian12.Setting(containerEl).setName("URL").addText(
+    new import_obsidian14.Setting(containerEl).setName("URL").addText(
       (text) => text.setValue(this.plugin.settings.caldav.url).onChange(async (val) => {
         this.plugin.settings.caldav.url = val;
         invalidateConnection();
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian12.Setting(containerEl).setName("Benutzername").addText(
+    new import_obsidian14.Setting(containerEl).setName("Benutzername").addText(
       (text) => text.setValue(this.plugin.settings.caldav.username).onChange(async (val) => {
         this.plugin.settings.caldav.username = val;
         invalidateConnection();
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian12.Setting(containerEl).setName("Passwort").setDesc(
+    new import_obsidian14.Setting(containerEl).setName("Passwort").setDesc(
       "Wird in der Plugin-Konfiguration unverschl\xFCsselt gespeichert. Bei iCloud ein app-spezifisches Passwort verwenden."
     ).addText((text) => {
       text.inputEl.type = "password";
@@ -18020,11 +18349,11 @@ var WeekCalendartSettingTab = class extends import_obsidian12.PluginSettingTab {
         }
       });
     });
-    new import_obsidian12.Setting(containerEl).setName("Zeitzone").setDesc("IANA-Zeitzone f\xFCr lokale Terminzeiten, unabh\xE4ngig von der Ger\xE4tezeitzone, z. B. Europe/Zurich.").addText((text) => text.setValue(this.plugin.settings.caldav.timezone ?? "Europe/Zurich").onChange(async (value) => {
+    new import_obsidian14.Setting(containerEl).setName("Zeitzone").setDesc("IANA-Zeitzone f\xFCr lokale Terminzeiten, unabh\xE4ngig von der Ger\xE4tezeitzone, z. B. Europe/Zurich.").addText((text) => text.setValue(this.plugin.settings.caldav.timezone ?? "Europe/Zurich").onChange(async (value) => {
       this.plugin.settings.caldav.timezone = value.trim();
       await this.plugin.saveSettings();
     }));
-    const targetSetting = new import_obsidian12.Setting(containerEl).setName("Zielkalender").setDesc(`Nur einen ausschliesslich f\xFCr dieses Plugin vorgesehenen Kalender ausw\xE4hlen. Gespeicherte URL: ${this.plugin.settings.caldav.calendar || "(keine)"}`).addDropdown((dropdown) => {
+    const targetSetting = new import_obsidian14.Setting(containerEl).setName("Zielkalender").setDesc(`Nur einen ausschliesslich f\xFCr dieses Plugin vorgesehenen Kalender ausw\xE4hlen. Gespeicherte URL: ${this.plugin.settings.caldav.calendar || "(keine)"}`).addDropdown((dropdown) => {
       calendarDropdown = dropdown;
       dropdown.addOption("", "Zuerst Verbindung pr\xFCfen").setValue("").setDisabled(true).onChange(async (value) => {
         if (loading || !calendars.some((calendar2) => calendar2.url === value)) return;
@@ -18035,8 +18364,8 @@ var WeekCalendartSettingTab = class extends import_obsidian12.PluginSettingTab {
         await this.plugin.saveSettings();
       });
     });
-    new import_obsidian12.Setting(containerEl).setName("Exklusiven Zielkalender freigeben").setDesc(
-      "Dieser Kalender wird ausschliesslich vom Plugin verwaltet. Beim sp\xE4teren Sync d\xFCrfen alle Eintr\xE4ge gel\xF6scht werden, die nicht in den Wochen-Dateien vorkommen. Aktuell erfolgt noch keine Synchronisation."
+    new import_obsidian14.Setting(containerEl).setName("Exklusiven Zielkalender freigeben").setDesc(
+      "Dieser Kalender wird ausschliesslich vom Plugin verwaltet. Beim manuellen Sync d\xFCrfen alle Eintr\xE4ge gel\xF6scht werden, die nicht in den Wochen-Dateien vorkommen. Die Ausf\xFChrung erfordert zus\xE4tzlich eine best\xE4tigte Vorschau."
     ).addToggle((toggle) => {
       confirmationToggle = toggle;
       toggle.setValue(this.plugin.settings.caldav.managedCalendarConfirmed === true).onChange(async (value) => {
@@ -18060,7 +18389,7 @@ Fehlende Features: toSpliced verlangs ES2023}`;
 }
 
 // src/main.ts
-var WeekCalendartPlugin = class extends import_obsidian13.Plugin {
+var WeekCalendartPlugin = class extends import_obsidian15.Plugin {
   constructor() {
     super(...arguments);
     this.actualFileChanded$ = fromEvent(this.app.workspace, "active-leaf-change");
@@ -18071,10 +18400,17 @@ var WeekCalendartPlugin = class extends import_obsidian13.Plugin {
   async onload() {
     const versionCheck = checkToSplicedCompatibility();
     if (versionCheck) {
-      new import_obsidian13.Notice(versionCheck, 1e4);
+      new import_obsidian15.Notice(versionCheck, 1e4);
       return;
     }
     await this.loadSettings();
+    const calendarSync = createCalendarSync(this.app, this.settings);
+    this.stopCalendarSync = calendarSync.cancel;
+    this.addCommand({
+      id: "sync-calendar",
+      name: "Kalender synchronisieren",
+      callback: calendarSync.run
+    });
     this.addCommand({
       id: "preview-calendar-sync",
       name: "Kalender-Synchronisation: Vorschau",
@@ -18115,7 +18451,7 @@ var WeekCalendartPlugin = class extends import_obsidian13.Plugin {
       )
     );
     this.addSettingTab(new WeekCalendartSettingTab(this.app, this));
-    new import_obsidian13.Notice("Week Calendart loaded.");
+    new import_obsidian15.Notice("Week Calendart loaded.");
   }
   async loadSettings() {
     this.settings = mergeSettings(await this.loadData());
@@ -18124,7 +18460,8 @@ var WeekCalendartPlugin = class extends import_obsidian13.Plugin {
     await this.saveData(this.settings);
   }
   onunload() {
-    new import_obsidian13.Notice("Week Calendart unload.");
+    this.stopCalendarSync?.();
+    new import_obsidian15.Notice("Week Calendart unload.");
     this.subscription.unsubscribe();
   }
 };

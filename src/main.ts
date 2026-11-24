@@ -6,6 +6,7 @@ import { migrateAllWeekHeadings } from './lib/commands/migrate-week-headings';
 import { processActiveFile } from './lib/commands/process-active-file';
 import { processAll } from './lib/commands/process-all';
 import { previewCalendarSync } from './lib/commands/preview-calendar-sync';
+import { createCalendarSync } from './lib/commands/sync-calendar';
 import { modifyWeekFileEvent } from './lib/event-handling/modify-week-file-event';
 import { mergeSettings } from './lib/settings/load-settings';
 import { WeekCalendartSettingTab } from './lib/settings/week-calendar-settings-tab';
@@ -16,6 +17,7 @@ export default class WeekCalendartPlugin extends Plugin {
   subscription = new Subscription();
   settings = mergeSettings();
   migratingFiles = new Set<string>();
+  private stopCalendarSync?: () => void;
 
   async onload(): Promise<void> {
     const versionCheck = checkToSplicedCompatibility();
@@ -24,6 +26,14 @@ export default class WeekCalendartPlugin extends Plugin {
       return;
     }
     await this.loadSettings();
+
+    const calendarSync = createCalendarSync(this.app, this.settings);
+    this.stopCalendarSync = calendarSync.cancel;
+    this.addCommand({
+      id: 'sync-calendar',
+      name: 'Kalender synchronisieren',
+      callback: calendarSync.run,
+    });
 
     this.addCommand({
       id: 'preview-calendar-sync',
@@ -84,6 +94,7 @@ export default class WeekCalendartPlugin extends Plugin {
   }
 
   onunload(): void {
+    this.stopCalendarSync?.();
     new Notice('Week Calendart unload.');
     this.subscription.unsubscribe();
   }

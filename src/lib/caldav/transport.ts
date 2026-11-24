@@ -19,15 +19,16 @@ export function validateServerUrl(value: string): string {
   return url.href;
 }
 
-// Obsidian's native transport avoids CORS on desktop and mobile. This stage is read-only.
-export const caldavReadFetch: typeof fetch = async (input, init) => {
+async function nativeFetch(
+  input: RequestInfo | URL,
+  init: RequestInit | undefined,
+  authorize: (url: string, method: string, headers: Headers) => void,
+): Promise<Response> {
   const request = input instanceof Request ? input : undefined;
   const url = validateServerUrl(request?.url ?? String(input));
   const method = (init?.method ?? request?.method ?? 'GET').toUpperCase();
-  if (!['GET', 'HEAD', 'OPTIONS', 'PROPFIND', 'REPORT'].includes(method)) {
-    throw new Error('Schreibzugriffe sind im Lesemodus nicht erlaubt.');
-  }
   const headers = new Headers(init?.headers ?? request?.headers);
+  authorize(url, method, headers);
   const requestHeaders: Record<string, string> = {};
   headers.forEach((value, key) => { requestHeaders[key] = value; });
   const body = init?.body ?? (request ? await request.text() : undefined);
@@ -48,4 +49,39 @@ export const caldavReadFetch: typeof fetch = async (input, init) => {
   });
   Object.defineProperty(response, 'url', { value: url });
   return response;
-};
+}
+
+// Discovery and preview can never acquire write access through this transport.
+export const caldavReadFetch: typeof fetch = (input, init) => nativeFetch(input, init, (_url, method) => {
+  if (!['GET', 'HEAD', 'OPTIONS', 'PROPFIND', 'REPORT'].includes(method)) {
+    throw new Error('Schreibzugriffe sind im Lesemodus nicht erlaubt.');
+  }
+});
+
+export function assertCalendarResource(url: string, calendarUrl: string): void {
+  const resource = new URL(validateServerUrl(url));
+  const calendar = new URL(validateServerUrl(calendarUrl));
+  if (resource.origin !== calendar.origin || resource.pathname.endsWith('/') ||
+      !resource.pathname.startsWith(calendar.pathname.replace(/\/$/, '') + '/')) {
+    throw new Error('Ressource liegt ausserhalb des ausgewählten Kalenders.');
+  }
+}
+
+export function assertStrongEtag(etag: string): void {
+  if (!/^"[\x21\x23-\x7e\x80-\xff]*"$/.test(etag)) throw new Error('Für sichere Änderungen ist ein starker ETag erforderlich.');
+}
+
+export function createCalendarWriteFetch(calendarUrl: string): typeof fetch {
+  validateServerUrl(calendarUrl);
+  return (input, init) => nativeFetch(input, init, (url, method, headers) => {
+    assertCalendarResource(url, calendarUrl);
+    const match = headers.get('if-match');
+    const noneMatch = headers.get('if-none-match');
+    if (method === 'PUT' && noneMatch === '*' && !match) return;
+    if ((method === 'PUT' || method === 'DELETE') && match && !noneMatch) {
+      assertStrongEtag(match);
+      return;
+    }
+    throw new Error('Schreibzugriff ohne eindeutige Methode oder Konfliktschutz verweigert.');
+  });
+}

@@ -1,7 +1,7 @@
 import type { App } from 'obsidian';
 import { WeekcalendarSettings } from '../types';
 import { parseWeekEvents } from './parse-week-events';
-import { CalendarEvent, CollectionError, CollectionResult } from './types';
+import { CalendarEvent, CollectionError, CollectionResult, SourceSnapshot } from './types';
 
 export async function collectEvents(
   vault: Pick<App['vault'], 'getMarkdownFiles' | 'read'>,
@@ -12,12 +12,15 @@ export async function collectEvents(
     .filter((file) => file.path.startsWith(prefix) && /^[^/]+\/weeks\/W[^/]*\.md$/.test(file.path.slice(prefix.length)))
     .sort((a, b) => a.path.localeCompare(b.path));
   const events: CalendarEvent[] = [];
+  const sources: SourceSnapshot[] = [];
   const errors: CollectionError[] = [];
   const seen = new Map<string, CalendarEvent>();
 
   for (const file of files) {
     try {
-      const parsed = parseWeekEvents(await vault.read(file), file.path, settings);
+      const content = await vault.read(file);
+      sources.push({ path: file.path, content });
+      const parsed = parseWeekEvents(content, file.path, settings);
       errors.push(...parsed.errors);
       for (const event of parsed.events) {
         const previous = seen.get(event.uid);
@@ -39,5 +42,5 @@ export async function collectEvents(
   // Never expose a partial snapshot: later sync steps must require ok === true.
   return errors.length > 0
     ? { ok: false, scannedFiles: files.length, errors }
-    : { ok: true, scannedFiles: files.length, events };
+    : { ok: true, scannedFiles: files.length, events, sources };
 }
