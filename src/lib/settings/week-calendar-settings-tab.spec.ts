@@ -185,6 +185,8 @@ jest.mock(
 
 import { WeekCalendartSettingTab } from './week-calendar-settings-tab';
 import { discoverCalendars } from '../caldav/discover-calendars';
+import { BehaviorSubject } from 'rxjs';
+import { SyncStatus } from '../sync/sync-status';
 
 jest.mock('../caldav/discover-calendars', () => ({ discoverCalendars: jest.fn() }));
 
@@ -220,9 +222,11 @@ describe('WeekCalendartSettingTab', () => {
         calendar: 'https://example.com/calendars/obsidian/',
         managedCalendarConfirmed: false,
         timezone: 'Europe/Zurich',
+        autoSync: false,
       },
     },
     saveSettings: jest.fn().mockResolvedValue(undefined),
+    syncStatus$: new BehaviorSubject<SyncStatus>('off'),
   });
 
   const getSettingInstances = (): MockSettingInstance[] => mockSettingInstances;
@@ -282,6 +286,8 @@ describe('WeekCalendartSettingTab', () => {
       'Zeitzone',
       'Zielkalender',
       'Exklusiven Zielkalender freigeben',
+      'Automatisch synchronisieren',
+      'Automatik-Status',
     ]);
   });
 
@@ -420,6 +426,31 @@ describe('WeekCalendartSettingTab', () => {
     const password = getSettingInstances().find((setting) => setting.name === 'Passwort');
     expect(password?.textComponent?.inputEl.type).toBe('password');
     expect(password?.desc).toContain('unverschlüsselt');
+  });
+
+  it('defaults automatic sync to off and persists explicit opt-in without contacting the server', async () => {
+    const plugin = createPlugin();
+    new WeekCalendartSettingTab({} as never, plugin as never).display();
+    const setting = getSettingInstances().find((setting) => setting.name === 'Automatisch synchronisieren')!;
+    expect(setting.toggleComponent!.value).toBe(false);
+    expect(setting.desc).toContain('Noch keine automatische Ausführung');
+    await setting.toggleComponent!.onChangeCallback!(true);
+    expect(plugin.settings.caldav.autoSync).toBe(true);
+    expect(plugin.saveSettings).toHaveBeenCalledTimes(1);
+    expect(discoverCalendars).not.toHaveBeenCalled();
+  });
+
+  it('updates the status text while visible and stops updates when hidden', () => {
+    const plugin = createPlugin();
+    const tab = new WeekCalendartSettingTab({} as never, plugin as never);
+    tab.display();
+    const setting = getSettingInstances().find((setting) => setting.name === 'Automatik-Status')!;
+    expect(setting.desc).toContain('Automatik aus');
+    plugin.syncStatus$.next('pending');
+    expect(setting.desc).toContain('Ausstehend');
+    tab.hide();
+    plugin.syncStatus$.next('synced');
+    expect(setting.desc).toContain('Ausstehend');
   });
 
   it('saves an explicit calendar timezone without changing calendar consent', async () => {

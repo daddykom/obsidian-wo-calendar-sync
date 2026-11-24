@@ -92,6 +92,7 @@ export interface WeekcalendarSettings {
     calendar: string;
     timezone?: string;
     managedCalendarConfirmed?: boolean;
+    autoSync?: boolean;
   };
 }
 

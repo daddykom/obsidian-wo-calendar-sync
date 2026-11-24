@@ -1,5 +1,5 @@
 import { Notice, Plugin } from 'obsidian';
-import { fromEvent, Subscription } from 'rxjs';
+import { BehaviorSubject, fromEvent, Subscription } from 'rxjs';
 import { createYear } from './lib/commands/create-year/create-year';
 import { gotoCurrentWeek } from './lib/commands/goto-current-week';
 import { migrateAllWeekHeadings } from './lib/commands/migrate-week-headings';
@@ -11,11 +11,14 @@ import { modifyWeekFileEvent } from './lib/event-handling/modify-week-file-event
 import { mergeSettings } from './lib/settings/load-settings';
 import { WeekCalendartSettingTab } from './lib/settings/week-calendar-settings-tab';
 import { checkToSplicedCompatibility } from './lib/utils/check-toSpliced-compatibility';
+import { getInitialSyncStatus, SyncStatus } from './lib/sync/sync-status';
+import { addSyncStatusUi } from './lib/ui/sync-status';
 
 export default class WeekCalendartPlugin extends Plugin {
   actualFileChanded$ = fromEvent(this.app.workspace, 'active-leaf-change');
   subscription = new Subscription();
   settings = mergeSettings();
+  syncStatus$ = new BehaviorSubject<SyncStatus>('off');
   migratingFiles = new Set<string>();
   private stopCalendarSync?: () => void;
 
@@ -26,6 +29,8 @@ export default class WeekCalendartPlugin extends Plugin {
       return;
     }
     await this.loadSettings();
+    this.syncStatus$.next(getInitialSyncStatus(this.settings.caldav));
+    this.subscription.add(addSyncStatusUi(this, this.syncStatus$));
 
     const calendarSync = createCalendarSync(this.app, this.settings);
     this.stopCalendarSync = calendarSync.cancel;
@@ -91,11 +96,13 @@ export default class WeekCalendartPlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
+    this.syncStatus$.next(getInitialSyncStatus(this.settings.caldav));
   }
 
   onunload(): void {
     this.stopCalendarSync?.();
     new Notice('Week Calendart unload.');
     this.subscription.unsubscribe();
+    this.syncStatus$.complete();
   }
 }

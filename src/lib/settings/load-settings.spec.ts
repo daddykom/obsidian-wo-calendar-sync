@@ -16,7 +16,7 @@ describe('mergeSettings', () => {
     expect(result.paths.overviewFileName).toBe(DEFAULT_SETTINGS.paths.overviewFileName);
     expect(result.caldav).toEqual({
       url: 'https://example.com', username: 'user', password: 'secret',
-      calendar: '', managedCalendarConfirmed: false, timezone: 'Europe/Zurich',
+      calendar: '', managedCalendarConfirmed: false, timezone: 'Europe/Zurich', autoSync: false,
     });
   });
 
@@ -26,6 +26,11 @@ describe('mergeSettings', () => {
     });
     expect(result.caldav.calendar).toBe('https://example.com/calendars/obsidian/');
     expect(result.caldav.managedCalendarConfirmed).toBe(true);
+  });
+
+  it('keeps automatic sync disabled for old settings and preserves explicit opt-in', () => {
+    expect(mergeSettings({ caldav: { calendar: 'https://example.com/calendar/' } }).caldav.autoSync).toBe(false);
+    expect(mergeSettings({ caldav: { autoSync: true } }).caldav.autoSync).toBe(true);
   });
 
   it('does not share mutable default objects between loads', () => {

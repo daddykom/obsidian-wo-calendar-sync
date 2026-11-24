@@ -3465,7 +3465,7 @@ __export(main_exports, {
   default: () => WeekCalendartPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian15 = require("obsidian");
+var import_obsidian16 = require("obsidian");
 
 // node_modules/tslib/tslib.es6.mjs
 var extendStatics = function(d, b) {
@@ -4290,6 +4290,204 @@ var OperatorSubscriber = (function(_super) {
   };
   return OperatorSubscriber2;
 })(Subscriber);
+
+// node_modules/rxjs/dist/esm5/internal/util/ObjectUnsubscribedError.js
+var ObjectUnsubscribedError = createErrorClass(function(_super) {
+  return function ObjectUnsubscribedErrorImpl() {
+    _super(this);
+    this.name = "ObjectUnsubscribedError";
+    this.message = "object unsubscribed";
+  };
+});
+
+// node_modules/rxjs/dist/esm5/internal/Subject.js
+var Subject = (function(_super) {
+  __extends(Subject2, _super);
+  function Subject2() {
+    var _this = _super.call(this) || this;
+    _this.closed = false;
+    _this.currentObservers = null;
+    _this.observers = [];
+    _this.isStopped = false;
+    _this.hasError = false;
+    _this.thrownError = null;
+    return _this;
+  }
+  Subject2.prototype.lift = function(operator) {
+    var subject = new AnonymousSubject(this, this);
+    subject.operator = operator;
+    return subject;
+  };
+  Subject2.prototype._throwIfClosed = function() {
+    if (this.closed) {
+      throw new ObjectUnsubscribedError();
+    }
+  };
+  Subject2.prototype.next = function(value) {
+    var _this = this;
+    errorContext(function() {
+      var e_1, _a;
+      _this._throwIfClosed();
+      if (!_this.isStopped) {
+        if (!_this.currentObservers) {
+          _this.currentObservers = Array.from(_this.observers);
+        }
+        try {
+          for (var _b = __values(_this.currentObservers), _c = _b.next(); !_c.done; _c = _b.next()) {
+            var observer = _c.value;
+            observer.next(value);
+          }
+        } catch (e_1_1) {
+          e_1 = { error: e_1_1 };
+        } finally {
+          try {
+            if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+          } finally {
+            if (e_1) throw e_1.error;
+          }
+        }
+      }
+    });
+  };
+  Subject2.prototype.error = function(err) {
+    var _this = this;
+    errorContext(function() {
+      _this._throwIfClosed();
+      if (!_this.isStopped) {
+        _this.hasError = _this.isStopped = true;
+        _this.thrownError = err;
+        var observers = _this.observers;
+        while (observers.length) {
+          observers.shift().error(err);
+        }
+      }
+    });
+  };
+  Subject2.prototype.complete = function() {
+    var _this = this;
+    errorContext(function() {
+      _this._throwIfClosed();
+      if (!_this.isStopped) {
+        _this.isStopped = true;
+        var observers = _this.observers;
+        while (observers.length) {
+          observers.shift().complete();
+        }
+      }
+    });
+  };
+  Subject2.prototype.unsubscribe = function() {
+    this.isStopped = this.closed = true;
+    this.observers = this.currentObservers = null;
+  };
+  Object.defineProperty(Subject2.prototype, "observed", {
+    get: function() {
+      var _a;
+      return ((_a = this.observers) === null || _a === void 0 ? void 0 : _a.length) > 0;
+    },
+    enumerable: false,
+    configurable: true
+  });
+  Subject2.prototype._trySubscribe = function(subscriber) {
+    this._throwIfClosed();
+    return _super.prototype._trySubscribe.call(this, subscriber);
+  };
+  Subject2.prototype._subscribe = function(subscriber) {
+    this._throwIfClosed();
+    this._checkFinalizedStatuses(subscriber);
+    return this._innerSubscribe(subscriber);
+  };
+  Subject2.prototype._innerSubscribe = function(subscriber) {
+    var _this = this;
+    var _a = this, hasError = _a.hasError, isStopped = _a.isStopped, observers = _a.observers;
+    if (hasError || isStopped) {
+      return EMPTY_SUBSCRIPTION;
+    }
+    this.currentObservers = null;
+    observers.push(subscriber);
+    return new Subscription(function() {
+      _this.currentObservers = null;
+      arrRemove(observers, subscriber);
+    });
+  };
+  Subject2.prototype._checkFinalizedStatuses = function(subscriber) {
+    var _a = this, hasError = _a.hasError, thrownError = _a.thrownError, isStopped = _a.isStopped;
+    if (hasError) {
+      subscriber.error(thrownError);
+    } else if (isStopped) {
+      subscriber.complete();
+    }
+  };
+  Subject2.prototype.asObservable = function() {
+    var observable2 = new Observable();
+    observable2.source = this;
+    return observable2;
+  };
+  Subject2.create = function(destination, source) {
+    return new AnonymousSubject(destination, source);
+  };
+  return Subject2;
+})(Observable);
+var AnonymousSubject = (function(_super) {
+  __extends(AnonymousSubject2, _super);
+  function AnonymousSubject2(destination, source) {
+    var _this = _super.call(this) || this;
+    _this.destination = destination;
+    _this.source = source;
+    return _this;
+  }
+  AnonymousSubject2.prototype.next = function(value) {
+    var _a, _b;
+    (_b = (_a = this.destination) === null || _a === void 0 ? void 0 : _a.next) === null || _b === void 0 ? void 0 : _b.call(_a, value);
+  };
+  AnonymousSubject2.prototype.error = function(err) {
+    var _a, _b;
+    (_b = (_a = this.destination) === null || _a === void 0 ? void 0 : _a.error) === null || _b === void 0 ? void 0 : _b.call(_a, err);
+  };
+  AnonymousSubject2.prototype.complete = function() {
+    var _a, _b;
+    (_b = (_a = this.destination) === null || _a === void 0 ? void 0 : _a.complete) === null || _b === void 0 ? void 0 : _b.call(_a);
+  };
+  AnonymousSubject2.prototype._subscribe = function(subscriber) {
+    var _a, _b;
+    return (_b = (_a = this.source) === null || _a === void 0 ? void 0 : _a.subscribe(subscriber)) !== null && _b !== void 0 ? _b : EMPTY_SUBSCRIPTION;
+  };
+  return AnonymousSubject2;
+})(Subject);
+
+// node_modules/rxjs/dist/esm5/internal/BehaviorSubject.js
+var BehaviorSubject = (function(_super) {
+  __extends(BehaviorSubject2, _super);
+  function BehaviorSubject2(_value) {
+    var _this = _super.call(this) || this;
+    _this._value = _value;
+    return _this;
+  }
+  Object.defineProperty(BehaviorSubject2.prototype, "value", {
+    get: function() {
+      return this.getValue();
+    },
+    enumerable: false,
+    configurable: true
+  });
+  BehaviorSubject2.prototype._subscribe = function(subscriber) {
+    var subscription = _super.prototype._subscribe.call(this, subscriber);
+    !subscription.closed && subscriber.next(this._value);
+    return subscription;
+  };
+  BehaviorSubject2.prototype.getValue = function() {
+    var _a = this, hasError = _a.hasError, thrownError = _a.thrownError, _value = _a._value;
+    if (hasError) {
+      throw thrownError;
+    }
+    this._throwIfClosed();
+    return _value;
+  };
+  BehaviorSubject2.prototype.next = function(value) {
+    _super.prototype.next.call(this, this._value = value);
+  };
+  return BehaviorSubject2;
+})(Subject);
 
 // node_modules/rxjs/dist/esm5/internal/scheduler/dateTimestampProvider.js
 var dateTimestampProvider = {
@@ -7149,7 +7347,8 @@ var DEFAULT_SETTINGS = {
     password: "",
     calendar: "",
     timezone: "Europe/Zurich",
-    managedCalendarConfirmed: false
+    managedCalendarConfirmed: false,
+    autoSync: false
   }
 };
 
@@ -18222,6 +18421,55 @@ async function discoverCalendars(settings) {
   return [...result.values()].sort((a, b) => a.name.localeCompare(b.name) || a.url.localeCompare(b.url));
 }
 
+// src/lib/sync/sync-status.ts
+var SYNC_STATUS_PRESENTATION = {
+  off: {
+    label: "Automatik aus",
+    icon: "calendar",
+    description: "Der automatische Kalender-Sync ist ausgeschaltet. Der manuelle Sync bleibt verf\xFCgbar."
+  },
+  "setup-required": {
+    label: "Einrichtung erforderlich",
+    icon: "settings",
+    description: "Bitte CalDAV-Zugang, Zielkalender und die Freigabe des exklusiven Kalenders in den Einstellungen pr\xFCfen."
+  },
+  "not-checked": {
+    label: "Noch nicht gepr\xFCft",
+    icon: "help-circle",
+    description: "In dieser Sitzung wurde noch kein automatischer Abgleich best\xE4tigt."
+  },
+  pending: {
+    label: "Ausstehend",
+    icon: "clock",
+    description: "Lokale Kalender\xE4nderungen warten auf einen Abgleich."
+  },
+  running: {
+    label: "Synchronisierung l\xE4uft",
+    icon: "refresh-cw",
+    description: "Der Kalenderabgleich wird gerade ausgef\xFChrt."
+  },
+  synced: {
+    label: "Synchronisiert",
+    icon: "check-circle",
+    description: "Der zuletzt gepr\xFCfte lokale Terminbestand stimmt mit dem Zielkalender \xFCberein."
+  },
+  error: {
+    label: "Fehler",
+    icon: "alert-circle",
+    description: "Der letzte automatische Abgleich konnte nicht abgeschlossen werden. Bitte die manuelle Kalender-Vorschau pr\xFCfen."
+  },
+  "confirmation-required": {
+    label: "Best\xE4tigung n\xF6tig",
+    icon: "shield-alert",
+    description: "Das vollst\xE4ndige Leeren oder Ersetzen des Kalenders muss \xFCber \u201EKalender synchronisieren\u201C manuell best\xE4tigt werden."
+  }
+};
+function getInitialSyncStatus(settings) {
+  if (settings.autoSync !== true) return "off";
+  if (!settings.url.trim() || !settings.username.trim() || !settings.password || !settings.calendar || settings.managedCalendarConfirmed !== true) return "setup-required";
+  return "not-checked";
+}
+
 // src/lib/settings/week-calendar-settings-tab.ts
 var WeekCalendartSettingTab = class extends import_obsidian14.PluginSettingTab {
   constructor(app, plugin) {
@@ -18231,6 +18479,7 @@ var WeekCalendartSettingTab = class extends import_obsidian14.PluginSettingTab {
   }
   display() {
     const viewVersion = ++this.caldavViewVersion;
+    this.statusSubscription?.unsubscribe();
     const { containerEl } = this;
     containerEl.empty();
     containerEl.createEl("h2", { text: "Folders" });
@@ -18373,9 +18622,19 @@ var WeekCalendartSettingTab = class extends import_obsidian14.PluginSettingTab {
         await this.plugin.saveSettings();
       });
     });
+    new import_obsidian14.Setting(containerEl).setName("Automatisch synchronisieren").setDesc("Auf Mac, iPad und iPhone vorgesehen: nach f\xFCnf Sekunden ohne \xC4nderung abgleichen und beim Aktivieren nachholen. Vorbereitungsschritt: Noch keine automatische Ausf\xFChrung.").addToggle((toggle) => toggle.setValue(this.plugin.settings.caldav.autoSync === true).onChange(async (value) => {
+      this.plugin.settings.caldav.autoSync = value;
+      await this.plugin.saveSettings();
+    }));
+    const statusSetting = new import_obsidian14.Setting(containerEl).setName("Automatik-Status");
+    this.statusSubscription = this.plugin.syncStatus$.subscribe((state) => {
+      const status = SYNC_STATUS_PRESENTATION[state];
+      statusSetting.setDesc(`${status.label}. ${status.description}`);
+    });
   }
   hide() {
     this.caldavViewVersion++;
+    this.statusSubscription?.unsubscribe();
   }
 };
 
@@ -18388,22 +18647,81 @@ Fehlende Features: toSpliced verlangs ES2023}`;
   return null;
 }
 
+// src/lib/ui/sync-status.ts
+var import_obsidian15 = require("obsidian");
+var SyncStatusModal = class extends import_obsidian15.Modal {
+  constructor(app, status$) {
+    super(app);
+    this.status$ = status$;
+  }
+  onOpen() {
+    this.subscription?.unsubscribe();
+    this.contentEl.empty();
+    this.contentEl.createEl("h2", { text: "Kalender-Sync: Status" });
+    const label = this.contentEl.createEl("p");
+    label.setAttribute("role", "status");
+    label.setAttribute("aria-live", "polite");
+    const description = this.contentEl.createEl("p");
+    this.subscription = this.status$.subscribe({
+      next: (state) => {
+        const status = SYNC_STATUS_PRESENTATION[state];
+        label.textContent = status.label;
+        description.textContent = status.description;
+      },
+      complete: () => this.close()
+    });
+  }
+  onClose() {
+    this.subscription?.unsubscribe();
+    this.contentEl.empty();
+  }
+};
+function addSyncStatusUi(plugin, status$) {
+  const openStatus = () => new SyncStatusModal(plugin.app, status$).open();
+  const ribbon = plugin.addRibbonIcon("calendar", "Kalender-Sync: Status", openStatus);
+  plugin.addCommand({ id: "show-calendar-sync-status", name: "Kalender-Sync: Status anzeigen", callback: openStatus });
+  const statusBar = import_obsidian15.Platform.isMobile ? void 0 : plugin.addStatusBarItem();
+  if (statusBar) {
+    statusBar.setAttribute("role", "button");
+    statusBar.setAttribute("tabindex", "0");
+    plugin.registerDomEvent(statusBar, "click", openStatus);
+    plugin.registerDomEvent(statusBar, "keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openStatus();
+      }
+    });
+  }
+  return status$.subscribe((state) => {
+    const status = SYNC_STATUS_PRESENTATION[state];
+    (0, import_obsidian15.setIcon)(ribbon, status.icon);
+    ribbon.setAttribute("aria-label", `Kalender-Sync: ${status.label}`);
+    if (statusBar) {
+      statusBar.textContent = `Kalender: ${status.label}`;
+      statusBar.setAttribute("aria-label", `Kalender-Sync: ${status.label}`);
+    }
+  });
+}
+
 // src/main.ts
-var WeekCalendartPlugin = class extends import_obsidian15.Plugin {
+var WeekCalendartPlugin = class extends import_obsidian16.Plugin {
   constructor() {
     super(...arguments);
     this.actualFileChanded$ = fromEvent(this.app.workspace, "active-leaf-change");
     this.subscription = new Subscription();
     this.settings = mergeSettings();
+    this.syncStatus$ = new BehaviorSubject("off");
     this.migratingFiles = /* @__PURE__ */ new Set();
   }
   async onload() {
     const versionCheck = checkToSplicedCompatibility();
     if (versionCheck) {
-      new import_obsidian15.Notice(versionCheck, 1e4);
+      new import_obsidian16.Notice(versionCheck, 1e4);
       return;
     }
     await this.loadSettings();
+    this.syncStatus$.next(getInitialSyncStatus(this.settings.caldav));
+    this.subscription.add(addSyncStatusUi(this, this.syncStatus$));
     const calendarSync = createCalendarSync(this.app, this.settings);
     this.stopCalendarSync = calendarSync.cancel;
     this.addCommand({
@@ -18451,18 +18769,20 @@ var WeekCalendartPlugin = class extends import_obsidian15.Plugin {
       )
     );
     this.addSettingTab(new WeekCalendartSettingTab(this.app, this));
-    new import_obsidian15.Notice("Week Calendart loaded.");
+    new import_obsidian16.Notice("Week Calendart loaded.");
   }
   async loadSettings() {
     this.settings = mergeSettings(await this.loadData());
   }
   async saveSettings() {
     await this.saveData(this.settings);
+    this.syncStatus$.next(getInitialSyncStatus(this.settings.caldav));
   }
   onunload() {
     this.stopCalendarSync?.();
-    new import_obsidian15.Notice("Week Calendart unload.");
+    new import_obsidian16.Notice("Week Calendart unload.");
     this.subscription.unsubscribe();
+    this.syncStatus$.complete();
   }
 };
 /*! Includes unmodified ical.js (MPL-2.0), bundled from https://github.com/kewisch/ical.js.

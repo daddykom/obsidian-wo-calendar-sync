@@ -1,6 +1,8 @@
 import { App, ButtonComponent, DropdownComponent, PluginSettingTab, Setting, ToggleComponent } from 'obsidian';
 import WeekCalendartPlugin from '../../main';
 import { CaldavCalendar, discoverCalendars } from '../caldav/discover-calendars';
+import { Subscription } from 'rxjs';
+import { SYNC_STATUS_PRESENTATION } from '../sync/sync-status';
 
 /**
  * Schow Screen to change Settings
@@ -8,6 +10,7 @@ import { CaldavCalendar, discoverCalendars } from '../caldav/discover-calendars'
 export class WeekCalendartSettingTab extends PluginSettingTab {
   plugin: WeekCalendartPlugin;
   private caldavViewVersion = 0;
+  private statusSubscription?: Subscription;
 
   constructor(app: App, plugin: WeekCalendartPlugin) {
     super(app, plugin);
@@ -16,6 +19,7 @@ export class WeekCalendartSettingTab extends PluginSettingTab {
 
   display(): void {
     const viewVersion = ++this.caldavViewVersion;
+    this.statusSubscription?.unsubscribe();
     const { containerEl } = this;
     containerEl.empty();
 
@@ -222,9 +226,25 @@ export class WeekCalendartSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           });
       });
+
+    new Setting(containerEl)
+      .setName('Automatisch synchronisieren')
+      .setDesc('Auf Mac, iPad und iPhone vorgesehen: nach fünf Sekunden ohne Änderung abgleichen und beim Aktivieren nachholen. Vorbereitungsschritt: Noch keine automatische Ausführung.')
+      .addToggle((toggle) => toggle.setValue(this.plugin.settings.caldav.autoSync === true)
+        .onChange(async (value) => {
+          this.plugin.settings.caldav.autoSync = value;
+          await this.plugin.saveSettings();
+        }));
+
+    const statusSetting = new Setting(containerEl).setName('Automatik-Status');
+    this.statusSubscription = this.plugin.syncStatus$.subscribe((state) => {
+      const status = SYNC_STATUS_PRESENTATION[state];
+      statusSetting.setDesc(`${status.label}. ${status.description}`);
+    });
   }
 
   hide(): void {
     this.caldavViewVersion++;
+    this.statusSubscription?.unsubscribe();
   }
 }
