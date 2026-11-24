@@ -4018,11 +4018,12 @@ function getWeekdayFromDate(date) {
 var import_obsidian3 = require("obsidian");
 
 // src/lib/parseWeekFile/parse-wo.ts
+var EVENT_ID_PATTERN = /^\s+\^woev-([a-zA-Z0-9]+)\s*$/;
 function extractEventId(content) {
-  const matchLine = content.find(
-    (line) => !line.match(RECURRENCE_PATTERNS.recurrenceId) && line.match(/\^woev-([a-zA-Z0-9]+)/)
-  );
-  return matchLine ? matchLine.match(/\^woev-([a-zA-Z0-9]+)/)?.[1] ?? null : null;
+  return content.flatMap((line) => {
+    const match2 = line.match(EVENT_ID_PATTERN);
+    return match2 ? [match2[1]] : [];
+  })[0] ?? null;
 }
 function extractRecurrenceId(content) {
   const matchLine = content.find((line) => line.match(RECURRENCE_PATTERNS.recurrenceId));
@@ -4037,62 +4038,106 @@ function extractExceptionInfo(content) {
   return { isException: false, exceptionOfRecurrenceId: null };
 }
 function parseWo(wochenFile, settings = DEFAULT_SETTINGS) {
-  const wo = wochenFile.split("\n");
-  const isolateElements = wo.reduce((acc, line) => {
-    const trimmedLine = line.trimEnd();
-    const [lineType, key] = getLineType(trimmedLine, settings);
-    switch (lineType) {
-      case "key":
-        return {
-          ...acc,
-          key,
-          lastElementType: "text",
-          elements: {
-            ...acc.elements,
-            [key]: [...acc.elements[key], createElement("text", trimmedLine)]
-          }
-        };
-      case "event":
-        return {
-          ...acc,
-          lastElementType: "event",
-          elements: {
-            ...acc.elements,
-            [acc.key]: [...acc.elements[acc.key], createElement("event", trimmedLine)]
-          }
-        };
-      case "followUp":
-      case "text":
-        const type = lineType === "followUp" ? "event" : "text";
-        const length = acc.elements[acc.key].length;
-        const element = lineType === acc.lastElementType || lineType === "followUp" && acc.lastElementType === "event" && length ? acc.elements[acc.key][length - 1] : void 0;
-        const elements = acc.elements[acc.key].slice(0, length - (element ? 1 : 0)) ?? [];
-        return {
-          ...acc,
-          lastElementType: type,
-          elements: {
-            ...acc.elements,
-            [acc.key]: [...elements, createElement(type, trimmedLine, element)]
-          }
-        };
+  return parseWoWithDiagnostics(wochenFile, settings).elements;
+}
+function parseWoWithDiagnostics(wochenFile, settings = DEFAULT_SETTINGS) {
+  const state = elementStructure(settings);
+  const events = [];
+  const headings = [];
+  const diagnostics = [];
+  const lines = wochenFile.replace(/\r\n/g, "\n").split("\n");
+  let section = "start";
+  let activeEvent;
+  let frontmatter = lines[0] === "---";
+  let fence = null;
+  const eventPrefix = settings.prefixes.event.trim().toLowerCase();
+  const appendText = (line) => {
+    const elements = state.elements[state.key];
+    const previous = elements[elements.length - 1];
+    if (previous?.type === "text") previous.content.push(line);
+    else elements.push(createElement("text", line));
+    activeEvent = void 0;
+  };
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index].trimEnd();
+    const lineNumber = index + 1;
+    if (frontmatter) {
+      appendText(line);
+      if (index > 0 && /^(---|\.\.\.)\s*$/.test(line)) frontmatter = false;
+      continue;
     }
-    return acc;
-  }, elementStructure(settings));
-  return isolateElements.elements;
+    const fenceMatch = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+    if (fence) {
+      appendText(line);
+      if (fenceMatch && fenceMatch[1][0] === fence.marker && fenceMatch[1].length >= fence.length && !fenceMatch[2].trim()) fence = null;
+      continue;
+    }
+    if (fenceMatch) {
+      fence = { marker: fenceMatch[1][0], length: fenceMatch[1].length, line: lineNumber };
+      appendText(line);
+      continue;
+    }
+    const [lineType, key] = getLineType(line, settings);
+    const heading = line.match(HEADING_PATTERN);
+    if (heading) {
+      section = key;
+      headings.push({ section, line: lineNumber, dayOfMonth: heading[2] ? Number(heading[2]) : void 0 });
+    }
+    if (lineType === "key") {
+      state.key = key;
+      state.elements[state.key].push(createElement("text", line));
+      activeEvent = void 0;
+      continue;
+    }
+    const candidate = line.match(/^\s*[-*+]\s*([^:]+):/);
+    if (candidate?.[1].trim().toLowerCase() === eventPrefix && lineType !== "event") {
+      diagnostics.push({ line: lineNumber, message: "Termin muss ohne Einr\xFCckung mit \u201E- Terminpr\xE4fix: Titel\u201C beginnen." });
+    }
+    if (lineType === "event") {
+      const titleMatch = line.match(eventPattern(settings, true));
+      if (!titleMatch) diagnostics.push({ line: lineNumber, message: "Terminpr\xE4fix muss von einem Doppelpunkt gefolgt werden." });
+      const element = createElement("event", line);
+      state.elements[state.key].push(element);
+      activeEvent = { element, section, line: lineNumber, title: titleMatch?.[1].trim() ?? null, eventIds: [] };
+      events.push(activeEvent);
+    } else if (lineType === "followUp" && activeEvent) {
+      const elements = state.elements[state.key];
+      activeEvent.element = createElement("event", line, activeEvent.element);
+      elements[elements.length - 1] = activeEvent.element;
+    } else {
+      appendText(line);
+    }
+  }
+  for (const event of events) {
+    event.eventIds = event.element.content.flatMap((line, index) => {
+      const match2 = line.match(EVENT_ID_PATTERN);
+      if (/^\s+\^woev-(?!rec-)/.test(line) && !match2) {
+        diagnostics.push({ line: event.line + index, message: "Ung\xFCltige ^woev-ID." });
+      }
+      return match2 ? [match2[1]] : [];
+    });
+  }
+  if (frontmatter) diagnostics.push({ line: 1, message: "YAML-Frontmatter ist nicht abgeschlossen." });
+  if (fence) diagnostics.push({ line: fence.line, message: "Codeblock ist nicht abgeschlossen." });
+  return { elements: state.elements, events, headings, diagnostics };
 }
 function getLineType(line, settings = DEFAULT_SETTINGS) {
-  const defaultValue = ["text", null];
-  return lineMatchers(settings).reduce((acc, { matcher, type }) => {
-    const match2 = line.match(matcher);
-    const text = match2 && match2[1] ? match2[1].trim().toLowerCase() : null;
+  const heading = line.match(HEADING_PATTERN);
+  if (heading) {
+    const text = heading[1].trim().toLowerCase();
     const [key] = typedEntries(settings.weekdays).find(
-      ([, value]) => text === value.toLowerCase()
+      ([, value]) => text === value.trim().toLowerCase()
     ) ?? [null];
-    if (match2 && (type !== "key" || key !== null)) {
-      return [type, key];
-    }
-    return acc;
-  }, defaultValue);
+    if (key !== null) return ["key", key];
+  }
+  if (line.match(eventPattern(settings))) return ["event", null];
+  if (/^(?: {2,}|\t)/.test(line)) return ["followUp", null];
+  return ["text", null];
+}
+var HEADING_PATTERN = /^#\s+(.+?)(?:\s+\((\d{1,2})\))?\s*$/;
+function eventPattern(settings, withTitle = false) {
+  const prefix = settings.prefixes.event.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`^-\\s+${prefix}${withTitle ? "\\s*:\\s*(.*)$" : "(?=:|\\s|$)"}`, "i");
 }
 function createElement(type, content, element) {
   const newContent = element ? [...element.content, content] : [content];
@@ -4125,11 +4170,6 @@ function elementStructure(settings) {
     )
   };
 }
-var lineMatchers = (settings) => [
-  { matcher: /^#\s+(.+?)(?:\s+\(\d{1,2}\))?\s*$/, type: "key" },
-  { matcher: new RegExp(`^-\\s+${settings.prefixes.event}`, "i"), type: "event" },
-  { matcher: /^\s{2}/, type: "followUp" }
-];
 var typedEntries = (obj) => Object.entries(obj);
 
 // src/lib/recurrence/file-operations.ts

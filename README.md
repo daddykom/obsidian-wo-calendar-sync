@@ -216,6 +216,43 @@ calendar resets this permission. Older settings receive missing defaults on load
 The password input is masked, but credentials are stored **unencrypted** in the
 plugin configuration. For iCloud, use an app-specific password.
 
+### Local event collection (step 2)
+
+`src/lib/sync/collect-events.ts` provides a read-only collection of all weekly
+appointments, including past years. It does not yet have a command or UI and is
+not connected to CalDAV. No notes or IDs are written by this collector.
+
+Markdown recognition is shared with normal weekly processing:
+`parseWoWithDiagnostics()` in `parse-wo.ts` returns the existing elements plus
+source positions, headings, parsed IDs and syntax diagnostics. `parseWo()` remains
+the compatible elements-only entry point. The sync layer only normalizes these
+parsed appointments and validates calendar-specific rules; it has no separate
+Markdown scanner. Frontmatter, fenced examples and ordinary indented notes are
+kept as text by both paths, not treated as appointments.
+
+- Reads `<weekFolder>/<year>/weeks/W<week> <Monday dd.MM.yy>.md`.
+- Validates the ISO week year, Monday date and optional day numbers in headings.
+- Uses configured weekday names and event field prefixes.
+- Requires `- Termin: Title` (or the configured prefix) and exactly one standalone,
+  indented `^woev-…` ID. Missing IDs must first be added with the existing weekly
+  file processing command.
+- Without a time, an appointment is all-day with an exclusive next-day end.
+  A single time uses 60 minutes; an explicit range must end after its start on
+  the same day. Invalid times, reminders and repeated fields are reported.
+- Preserves location, description text and reminders (`1d, 3h, 20m`). Times are
+  represented as wall-clock strings; timezone conversion belongs to the later
+  CalDAV serialization step, not to the device's local timezone.
+- Recurrences and exceptions are collected only where they already exist in
+  weekly files. The collector does not generate more occurrences.
+- A UID combines local ID and occurrence date. Reusing a series ID on different
+  dates is supported; duplicate IDs on the same date are errors. Moving an
+  appointment to another date changes its UID (later: create new, delete old).
+- YAML frontmatter and fenced code examples are ignored. Malformed appointment
+  blocks, ambiguous headings and unclosed blocks are reported with file/line.
+- On any read or validation error, returns `ok: false` with errors and **no partial
+  event list**. A successful empty collection remains distinguishable and will
+  require the planned additional confirmation before any calendar is emptied.
+
 ### Original architecture proposal (not yet implemented)
 
 Stored in a vault config file (v1):
