@@ -90,6 +90,9 @@ export interface WeekcalendarSettings {
     username: string;
     password: string;
     calendar: string;
+    timezone?: string;
+    managedCalendarConfirmed?: boolean;
+    autoSync?: boolean;
   };
 }
 

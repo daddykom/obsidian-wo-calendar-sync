@@ -18,7 +18,7 @@ export function setEventIds(
       const elements = acc[section].map((element: WoElement) => {
         if (element.type === 'event') {
           const content = element.content;
-          if (content[content.length - 1].match(/^  \^woev-/)) {
+          if (content.some((line) => /^\s+\^woev-(?!rec-)[a-zA-Z0-9]+/.test(line))) {
             return element;
           }
           const contentString = content.map((item) => item.trim()).join('|');

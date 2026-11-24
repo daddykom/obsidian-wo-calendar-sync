@@ -1,6 +1,6 @@
 {
   "name": "week-calendart",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Sync WO weekly appointments to CalDAV via an outbox workflow.",
   "main": "main.js",
   "scripts": {
@@ -36,10 +36,11 @@
     "prettier-plugin-organize-imports": "^4.3.0",
     "rxjs": "^7.8.2",
     "ts-jest": "^29.4.6",
-    "tsdav": "^2.1.8",
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "date-fns": "^4.1.0"
+    "date-fns": "^4.1.0",
+    "ical.js": "^2.2.1",
+    "tsdav": "^2.1.8"
   }
 }

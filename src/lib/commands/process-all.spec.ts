@@ -9,10 +9,16 @@ import { processFile } from './process-file';
 
 jest.mock('./process-file', () => ({
   processFile: jest.fn(),
+  getWeekFileInfo: jest.fn((path: string) =>
+    /wo-/i.test(path) ? { year: 2024, week: 1 } : null,
+  ),
 }));
 
 jest.mock('../settings/constants', () => ({
   WO_FILE_REGEX: /wo-/i,
+  DEFAULT_SETTINGS: {
+    paths: { weekFolder: 'week-calendar' },
+  },
 }));
 
 // ---------------------------------------------------------------------------

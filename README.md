@@ -182,7 +182,8 @@ On WO modification:
 5. Generate upsert/delete operations
 6. Write an outbox job
 
-Internal writes MUST NOT trigger another processing cycle (self-write suppression + debounce).
+Internal writes are observed too. Local processing is idempotent, so follow-up
+passes settle without an endless feedback loop; migration writes are excluded.
 
 ---
 
@@ -200,6 +201,253 @@ ETag conflicts should trigger refetch + retry.
 ---
 
 ## Configuration
+
+### Current implementation: CalDAV settings (step 1)
+
+CalDAV settings are saved through Obsidian's plugin settings, not the YAML example below.
+The server URL, username and password are retained. `caldav.calendar` stores the
+target calendar's URL (not its display name). Server-based calendar selection is
+available in step 3 below. Manual appointment synchronization is available in step 5.
+
+Use a dedicated calendar. The new `caldav.managedCalendarConfirmed` option defaults
+to `false`: enabling it explicitly permits the manual sync to remove entries that
+do not exist in the weekly files. Changing the server URL, username, password or target
+calendar resets this permission. Older settings receive missing defaults on load.
+
+The password input is masked, but credentials are stored **unencrypted** in the
+plugin configuration. For iCloud, use an app-specific password.
+
+### Local event collection (step 2)
+
+`src/lib/sync/collect-events.ts` provides a read-only collection of all weekly
+appointments, including past years. It is used by the preview and manual sync commands.
+No notes or IDs are written by this collector.
+
+Markdown recognition is shared with normal weekly processing:
+`parseWoWithDiagnostics()` in `parse-wo.ts` returns the existing elements plus
+source positions, headings, parsed IDs and syntax diagnostics. `parseWo()` remains
+the compatible elements-only entry point. The sync layer only normalizes these
+parsed appointments and validates calendar-specific rules; it has no separate
+Markdown scanner. Frontmatter, fenced examples and ordinary indented notes are
+kept as text by both paths, not treated as appointments.
+
+- Reads `<weekFolder>/<year>/weeks/W<week> <Monday dd.MM.yy>.md`.
+- Validates the ISO week year, Monday date and optional day numbers in headings.
+- Uses configured weekday names and event field prefixes.
+- Requires `- Termin: Title` (or the configured prefix) and exactly one standalone,
+  indented `^woev-…` ID. Missing IDs must first be added with the existing weekly
+  file processing command.
+- Without a time, an appointment is all-day with an exclusive next-day end.
+  A single time uses 60 minutes; an explicit range must end after its start on
+  the same day. Invalid times, reminders and repeated fields are reported.
+- Preserves location, description text and reminders (`1d, 3h, 20m`). Times are
+  represented as wall-clock strings; timezone conversion belongs to the later
+  CalDAV serialization step, not to the device's local timezone.
+- Recurrences and exceptions are collected only where they already exist in
+  weekly files. The collector does not generate more occurrences.
+- A UID combines local ID and occurrence date. Reusing a series ID on different
+  dates is supported; duplicate IDs on the same date are errors. Moving an
+  appointment to another date changes its UID (later: create new, delete old).
+- YAML frontmatter and fenced code examples are ignored. Malformed appointment
+  blocks, ambiguous headings and unclosed blocks are reported with file/line.
+- On any read or validation error, returns `ok: false` with errors and **no partial
+  event list**. A successful empty collection remains distinguishable and will
+  require the planned additional confirmation before any calendar is emptied.
+
+### CalDAV connection and calendar selection (step 3)
+
+1. Open the plugin settings and enter the HTTPS server URL, username and password.
+   For iCloud, use `https://caldav.icloud.com` and an app-specific password.
+2. Click **Verbindung prüfen**. Calendar discovery uses the existing `tsdav` library
+   via Obsidian's native `requestUrl` transport, avoiding browser CORS restrictions.
+3. Select a dedicated calendar in **Zielkalender**. Only calendars supporting
+   appointments (`VEVENT`) are listed; labels include the URL to distinguish
+   calendars with identical names. Nothing is selected or created automatically.
+4. Explicitly enable **Exklusiven Zielkalender freigeben** for that calendar.
+
+The connection test fetches only discovery and calendar metadata, not appointments.
+The discovery/preview transport rejects write methods. No notes or server entries
+are changed by the connection test.
+Existing calendar URLs remain saved, but are only shown as selected if returned
+by the connection test. Missing calendars must be selected again; there is no
+automatic fallback to a different calendar. Read-only calendars may still appear:
+listing calendars does not prove that the account can write to them.
+
+Changing credentials clears the displayed server list and revokes calendar consent.
+Late responses after credentials change, a view refresh or closing settings are
+ignored. Authentication and network errors are shown without raw server responses
+or credentials. Discovery follows the server's HTTPS CalDAV endpoints; only use a
+server you trust. The underlying native HTTP client handles redirects.
+
+### Read-only comparison and preview (step 4)
+
+Run **Kalender-Synchronisation: Vorschau** after selecting and explicitly approving
+the dedicated calendar. The dialog lists appointments to create, changed fields,
+foreign or obsolete resources to delete, and the unchanged count. It has only a
+close button: **the preview command never writes or deletes anything**. Use the
+separate manual sync command below to explicitly approve execution.
+
+- Local validation happens before any server requests. Invalid notes are shown
+  with their file and line instead of producing a partial plan.
+- The selected calendar is rediscovered and must match its saved URL. No fallback
+  to another calendar is allowed.
+- A full `VCALENDAR` REPORT reads all resources without date or filename filters,
+  including foreign tasks and extensionless resource URLs. Incomplete data,
+  missing ETags, DAV errors, duplicate UIDs and out-of-calendar URLs abort the plan.
+- `ical.js` parses ICS folding, escaped text, alarms and embedded timezone data.
+  Text, all-day dates, time instants and reminder durations are compared, not the
+  raw ICS string. Server timestamps and property ordering do not cause updates.
+- The new **Zeitzone** setting defaults to `Europe/Zurich` and uses an explicit
+  IANA name. Local times are compared as UTC instants, independently of the device
+  timezone. Missing or ambiguous DST times must be corrected before continuing.
+- Server recurrences, exception bundles or participants matching a local UID are
+  marked for replacement by the plain local occurrence. Unmatched resources are
+  listed for deletion, including foreign entries.
+- A completely empty local collection or a plan deleting all existing resources
+  gets a prominent warning. The additional confirmation and execution safeguards
+  belong to step 5.
+- This is a snapshot, not an executable approval. The manual sync command below
+  creates its own confirmation preview and rechecks the approved data.
+
+The ICS reader adds one runtime dependency: [ical.js](https://github.com/kewisch/ical.js),
+licensed under [MPL-2.0](https://mozilla.org/MPL/2.0/). It is bundled without upstream
+source modifications; its source and license are available at those links.
+
+### Manual synchronization (step 5)
+
+Run **Kalender synchronisieren**. It always displays a fresh preview before any
+write. Cancel or close the dialog to leave the server untouched. Click **Jetzt
+synchronisieren** to approve the listed changes. If all existing calendar resources
+would be deleted (including a full replacement with new local events), explicitly
+enable the additional **Alle bisherigen Kalendereinträge löschen** confirmation.
+
+Execution is one-way: weekly files remain the source of truth and are never
+rewritten by synchronization. The dedicated calendar may lose **all foreign
+entries**, as shown in the preview. Test with a disposable dedicated calendar first.
+
+Safeguards:
+
+1. Re-read and validate local notes and the entire selected server calendar. Exact
+   source contents, semantic events, resource URLs, ETags and the planned operations
+   must still match the approved preview. Otherwise a new preview is required.
+2. Prevalidate payloads and require strong ETags for every update/deletion. Weak or
+   missing ETags are not bypassed. Writes are scoped to resources inside the selected
+   calendar; deleting the calendar collection itself is not allowed.
+3. Create deterministic filenames with `If-None-Match: *`, then update existing
+   resources with `If-Match`. Serialize standalone VEVENTs with UTC times or DATE
+   boundaries and DISPLAY reminders; no server recurrence rules are generated.
+4. Read the server again and verify every upsert before deleting anything. Unexpected
+   resources, incomplete results, changed deletion candidates or modified unchanged
+   entries stop the run without further deletion.
+5. Re-read local sources before writes, before deletion and at completion. Vault
+   change listeners also stop further operations if calendar files or folders change
+   during the run. Changes to settings or unloading the plugin stop subsequent requests.
+6. Delete only the approved resource URLs, each with its original `If-Match` ETag.
+   Read the complete calendar afterwards and verify that no differences remain.
+
+Only one manual sync/confirmation can run per plugin instance. The plugin does not
+implement a distributed lock across devices; conditional requests provide conflict
+protection. A 409/412 conflict aborts instead of silently overwriting newer data.
+Rerun the command and approve the newly calculated preview to continue.
+
+CalDAV has no transaction covering the whole run. Confirmed changes remain after
+an error, and an in-flight request may have succeeded even if its response was lost.
+An already-issued request cannot be cancelled or rolled back by unloading the plugin.
+The result reports confirmed counts, stops subsequent operations and can be retried
+from a fresh preview without creating duplicate resources. Automatic execution on
+note modification is opt-in (see below); startup/resume checks are not implemented
+yet. There is no outbox, stored preview or sync log.
+Source snapshots remain in memory only. Credentials continue to live in the ignored
+local `data.json`, not in the repository.
+
+### Automatic synchronization: settings and status (automation step 1)
+
+The **Automatisch synchronisieren** option is saved as `caldav.autoSync` and defaults
+to `false`, including when loading older configurations. When enabled with complete
+connection settings and calendar consent, it schedules guarded execution as
+described in automation step 3 below. Manual sync and read-only preview remain available.
+
+Status is available in:
+
+- **Automatik-Status** in the plugin settings;
+- a ribbon icon that opens a live status dialog;
+- the **Kalender-Sync: Status anzeigen** command (also available on mobile if the
+  ribbon icon is hidden);
+- a clickable status bar item on desktop only. Obsidian does not support custom
+  status bar items on mobile, so no unsupported mobile status bar API is used.
+
+The status model distinguishes disabled, setup required, unchecked, pending,
+running, synchronized, error and manual confirmation required. Configuration and
+local changes update the shared status. Manual execution also updates the shared status
+when automatic mode is enabled. No successful synchronization is inferred from saved credentials or a
+previous session. Runtime status is kept in memory, not in `data.json`. UI observers
+are removed on view closure/plugin unload; open status dialogs close on unload.
+
+Remaining automation steps: recheck when Obsidian becomes active, finalize
+retry/error behavior, and verify the complete workflow on mobile.
+Deleting/replacing all existing resources will still require manual confirmation.
+
+### Automatic synchronization: guarded execution (automation step 2)
+
+`createCalendarSync()` now offers an internal `runAutomatic()` entry point alongside
+the existing manual command. Both share one per-plugin-instance lock, which is held
+through preparation, execution and any manual confirmation dialog. Automatic calls
+return a `busy` outcome instead of overlapping a manual or automatic run.
+
+The entry point is called by the coordinator introduced in automation step 3.
+Startup and resume handling remain for step 4.
+
+When invoked by the coordinator, the automatic path:
+
+- Requires explicit automatic opt-in, complete connection settings and dedicated
+  calendar consent before accessing the server.
+- Prepares a local/server snapshot and calls the same guarded `executeSync()` used
+  by the manual command, with full-deletion consent always set to `false`.
+- Refuses the entire plan if it would delete all current resources, even when new
+  local events would replace them. It reports **Bestätigung nötig**, performs no
+  upserts or deletions, and leaves approval to the manual command.
+- Retains exact snapshot revalidation, conditional requests, ETag conflict handling,
+  upserts-before-deletes, source observation and final verification. Even a no-change
+  result is revalidated before reporting **Synchronisiert**.
+- Opens no dialogs and shows no notices. It returns structured outcomes and updates
+  the shared status instead. No raw exception or credentials are exposed.
+- Stops subsequent requests if automatic mode is disabled, settings change or the
+  plugin unloads. Already-issued requests may still finish; the existing partial
+  result and safe-retry behavior is unchanged.
+- Does not retry or queue runs itself. Busy, stale, error and cancellation outcomes
+  are available for the coordinator/error policy in the remaining steps.
+
+### Automatic synchronization: change detection and quiet time (automation step 3)
+
+- After workspace layout readiness, watches weekly-note creation, modification,
+  deletion and renaming, including relevant folder moves. Unrelated notes and
+  migration writes do not trigger sync. Initial vault-loading events are excluded.
+- Serializes local processing for all changed week files, using atomic current-content
+  transforms rather than stale reads. With automatic mode enabled, local processing
+  starts after 500 ms of quiet; without it, the existing ten-second delay remains.
+- Inserts missing IDs and propagates recurring edits to existing later occurrences
+  before allowing sync. Occurrence IDs, exceptions and independently edited later
+  anchors are preserved. In-memory recurrence baselines distinguish payload edits
+  from the plugin's own propagation writes; they are not a persistent sync history.
+- Waits for local processing to settle and five seconds after the last observed
+  calendar change, including internal writes. ID insertion can therefore make the
+  first sync start about 5.5 seconds after the original edit.
+- Preserves new changes during an active sync for a follow-up run. An obsolete
+  success cannot mark newer pending changes as synchronized.
+- Waits for the shared manual/automatic lock without polling. Releasing a manual
+  confirmation wakes pending automatic work. Errors and full-replacement plans
+  do not create retry loops or automatic dialogs.
+- Saving an eligible enabled configuration schedules a quiet-time check. Loading
+  the plugin alone does not yet schedule one. Unloading removes listeners/timers
+  and prevents subsequent processing writes and status updates.
+
+Obsidian must be running for these triggers to work on Mac, iPad and iPhone.
+There is no reliable background execution while iOS suspends the app. Catch-up
+on activation and final mobile live testing remain in automation steps 4–5.
+All existing dates, including past appointments, are synchronized; no date window
+is introduced. Full calendar clearing/replacement still requires manual approval.
+
+### Original architecture proposal (not yet implemented)
 
 Stored in a vault config file (v1):
 
