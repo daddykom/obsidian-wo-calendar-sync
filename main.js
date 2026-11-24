@@ -3705,7 +3705,8 @@ var DEFAULT_SETTINGS = {
     url: "",
     username: "",
     password: "",
-    calendar: ""
+    calendar: "",
+    managedCalendarConfirmed: false
   }
 };
 
@@ -4564,6 +4565,16 @@ var modifyWeekFileEvent = (app, modifyEvents, actualFileChanged$, settings, igno
   })
 ).subscribe();
 
+// src/lib/settings/load-settings.ts
+function mergeSettings(saved = null) {
+  return {
+    paths: { ...DEFAULT_SETTINGS.paths, ...saved?.paths },
+    weekdays: { ...DEFAULT_SETTINGS.weekdays, ...saved?.weekdays },
+    prefixes: { ...DEFAULT_SETTINGS.prefixes, ...saved?.prefixes },
+    caldav: { ...DEFAULT_SETTINGS.caldav, ...saved?.caldav }
+  };
+}
+
 // src/lib/settings/week-calendar-settings-tab.ts
 var import_obsidian9 = require("obsidian");
 var WeekCalendartSettingTab = class extends import_obsidian9.PluginSettingTab {
@@ -4612,24 +4623,51 @@ var WeekCalendartSettingTab = class extends import_obsidian9.PluginSettingTab {
       );
     });
     containerEl.createEl("h2", { text: "CalDAV" });
+    let confirmationToggle;
     new import_obsidian9.Setting(containerEl).setName("URL").addText(
       (text) => text.setValue(this.plugin.settings.caldav.url).onChange(async (val) => {
         this.plugin.settings.caldav.url = val;
+        this.plugin.settings.caldav.managedCalendarConfirmed = false;
+        confirmationToggle?.setValue(false);
         await this.plugin.saveSettings();
       })
     );
     new import_obsidian9.Setting(containerEl).setName("Benutzername").addText(
       (text) => text.setValue(this.plugin.settings.caldav.username).onChange(async (val) => {
         this.plugin.settings.caldav.username = val;
+        this.plugin.settings.caldav.managedCalendarConfirmed = false;
+        confirmationToggle?.setValue(false);
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian9.Setting(containerEl).setName("Passwort").addText(
-      (text) => text.setValue(this.plugin.settings.caldav.password).onChange(async (val) => {
+    new import_obsidian9.Setting(containerEl).setName("Passwort").setDesc(
+      "Wird in der Plugin-Konfiguration unverschl\xFCsselt gespeichert. Bei iCloud ein app-spezifisches Passwort verwenden."
+    ).addText((text) => {
+      text.inputEl.type = "password";
+      text.setValue(this.plugin.settings.caldav.password).onChange(async (val) => {
         this.plugin.settings.caldav.password = val;
         await this.plugin.saveSettings();
+      });
+    });
+    new import_obsidian9.Setting(containerEl).setName("Zielkalender-URL").setDesc(
+      "URL eines ausschliesslich f\xFCr dieses Plugin vorgesehenen Kalenders, nicht die Server-URL. Die Auswahl vom Server folgt im n\xE4chsten Verbindungsschritt."
+    ).addText(
+      (text) => text.setValue(this.plugin.settings.caldav.calendar).onChange(async (val) => {
+        this.plugin.settings.caldav.calendar = val;
+        this.plugin.settings.caldav.managedCalendarConfirmed = false;
+        confirmationToggle?.setValue(false);
+        await this.plugin.saveSettings();
       })
     );
+    new import_obsidian9.Setting(containerEl).setName("Exklusiven Zielkalender freigeben").setDesc(
+      "Dieser Kalender wird ausschliesslich vom Plugin verwaltet. Beim sp\xE4teren Sync d\xFCrfen alle Eintr\xE4ge gel\xF6scht werden, die nicht in den Wochen-Dateien vorkommen. Aktuell erfolgt noch keine Synchronisation."
+    ).addToggle((toggle) => {
+      confirmationToggle = toggle;
+      toggle.setValue(this.plugin.settings.caldav.managedCalendarConfirmed === true).onChange(async (value) => {
+        this.plugin.settings.caldav.managedCalendarConfirmed = value;
+        await this.plugin.saveSettings();
+      });
+    });
   }
 };
 
@@ -4648,7 +4686,7 @@ var WeekCalendartPlugin = class extends import_obsidian10.Plugin {
     super(...arguments);
     this.actualFileChanded$ = fromEvent(this.app.workspace, "active-leaf-change");
     this.subscription = new Subscription();
-    this.settings = DEFAULT_SETTINGS;
+    this.settings = mergeSettings();
     this.migratingFiles = /* @__PURE__ */ new Set();
   }
   async onload() {
@@ -4696,7 +4734,7 @@ var WeekCalendartPlugin = class extends import_obsidian10.Plugin {
     new import_obsidian10.Notice("Week Calendart loaded.");
   }
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    this.settings = mergeSettings(await this.loadData());
   }
   async saveSettings() {
     await this.saveData(this.settings);

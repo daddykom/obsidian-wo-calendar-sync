@@ -99,7 +99,6 @@ export function parseWo(wochenFile: string, settings = DEFAULT_SETTINGS) {
     }
     return acc;
   }, elementStructure(settings));
-  console.log('elements', isolateElements);
   return isolateElements.elements;
 }
 

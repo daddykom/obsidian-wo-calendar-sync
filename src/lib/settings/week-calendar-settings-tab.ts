@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from 'obsidian';
+import { App, PluginSettingTab, Setting, ToggleComponent } from 'obsidian';
 import WeekCalendartPlugin from '../../main';
 
 /**
@@ -86,10 +86,13 @@ export class WeekCalendartSettingTab extends PluginSettingTab {
 
     // --- CalDAV ---
     containerEl.createEl('h2', { text: 'CalDAV' });
+    let confirmationToggle: ToggleComponent | undefined;
 
     new Setting(containerEl).setName('URL').addText((text) =>
       text.setValue(this.plugin.settings.caldav.url).onChange(async (val) => {
         this.plugin.settings.caldav.url = val;
+        this.plugin.settings.caldav.managedCalendarConfirmed = false;
+        confirmationToggle?.setValue(false);
         await this.plugin.saveSettings();
       }),
     );
@@ -97,15 +100,52 @@ export class WeekCalendartSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName('Benutzername').addText((text) =>
       text.setValue(this.plugin.settings.caldav.username).onChange(async (val) => {
         this.plugin.settings.caldav.username = val;
+        this.plugin.settings.caldav.managedCalendarConfirmed = false;
+        confirmationToggle?.setValue(false);
         await this.plugin.saveSettings();
       }),
     );
 
-    new Setting(containerEl).setName('Passwort').addText((text) =>
-      text.setValue(this.plugin.settings.caldav.password).onChange(async (val) => {
-        this.plugin.settings.caldav.password = val;
-        await this.plugin.saveSettings();
-      }),
-    );
+    new Setting(containerEl)
+      .setName('Passwort')
+      .setDesc(
+        'Wird in der Plugin-Konfiguration unverschlüsselt gespeichert. Bei iCloud ein app-spezifisches Passwort verwenden.',
+      )
+      .addText((text) => {
+        text.inputEl.type = 'password';
+        text.setValue(this.plugin.settings.caldav.password).onChange(async (val) => {
+          this.plugin.settings.caldav.password = val;
+          await this.plugin.saveSettings();
+        });
+      });
+
+    new Setting(containerEl)
+      .setName('Zielkalender-URL')
+      .setDesc(
+        'URL eines ausschliesslich für dieses Plugin vorgesehenen Kalenders, nicht die Server-URL. Die Auswahl vom Server folgt im nächsten Verbindungsschritt.',
+      )
+      .addText((text) =>
+        text.setValue(this.plugin.settings.caldav.calendar).onChange(async (val) => {
+          this.plugin.settings.caldav.calendar = val;
+          this.plugin.settings.caldav.managedCalendarConfirmed = false;
+          confirmationToggle?.setValue(false);
+          await this.plugin.saveSettings();
+        }),
+      );
+
+    new Setting(containerEl)
+      .setName('Exklusiven Zielkalender freigeben')
+      .setDesc(
+        'Dieser Kalender wird ausschliesslich vom Plugin verwaltet. Beim späteren Sync dürfen alle Einträge gelöscht werden, die nicht in den Wochen-Dateien vorkommen. Aktuell erfolgt noch keine Synchronisation.',
+      )
+      .addToggle((toggle) => {
+        confirmationToggle = toggle;
+        toggle
+          .setValue(this.plugin.settings.caldav.managedCalendarConfirmed === true)
+          .onChange(async (value) => {
+            this.plugin.settings.caldav.managedCalendarConfirmed = value;
+            await this.plugin.saveSettings();
+          });
+      });
   }
 }

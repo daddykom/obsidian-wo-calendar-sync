@@ -90,6 +90,7 @@ export interface WeekcalendarSettings {
     username: string;
     password: string;
     calendar: string;
+    managedCalendarConfirmed?: boolean;
   };
 }
 

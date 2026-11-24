@@ -201,6 +201,23 @@ ETag conflicts should trigger refetch + retry.
 
 ## Configuration
 
+### Current implementation: CalDAV settings (step 1)
+
+CalDAV settings are saved through Obsidian's plugin settings, not the YAML example below.
+The server URL, username and password are retained. `caldav.calendar` stores the
+target calendar's URL (not its display name). Server-based calendar selection and
+actual synchronization are not implemented yet; this step makes no network requests.
+
+Use a dedicated calendar. The new `caldav.managedCalendarConfirmed` option defaults
+to `false`: enabling it explicitly permits the future sync to remove entries that
+do not exist in the weekly files. Changing the server URL, username or target
+calendar resets this permission. Older settings receive missing defaults on load.
+
+The password input is masked, but credentials are stored **unencrypted** in the
+plugin configuration. For iCloud, use an app-specific password.
+
+### Original architecture proposal (not yet implemented)
+
 Stored in a vault config file (v1):
 
 ```yaml

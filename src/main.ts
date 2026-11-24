@@ -6,14 +6,14 @@ import { migrateAllWeekHeadings } from './lib/commands/migrate-week-headings';
 import { processActiveFile } from './lib/commands/process-active-file';
 import { processAll } from './lib/commands/process-all';
 import { modifyWeekFileEvent } from './lib/event-handling/modify-week-file-event';
-import { DEFAULT_SETTINGS } from './lib/settings/constants';
+import { mergeSettings } from './lib/settings/load-settings';
 import { WeekCalendartSettingTab } from './lib/settings/week-calendar-settings-tab';
 import { checkToSplicedCompatibility } from './lib/utils/check-toSpliced-compatibility';
 
 export default class WeekCalendartPlugin extends Plugin {
   actualFileChanded$ = fromEvent(this.app.workspace, 'active-leaf-change');
   subscription = new Subscription();
-  settings = DEFAULT_SETTINGS;
+  settings = mergeSettings();
   migratingFiles = new Set<string>();
 
   async onload(): Promise<void> {
@@ -69,7 +69,7 @@ export default class WeekCalendartPlugin extends Plugin {
   }
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    this.settings = mergeSettings(await this.loadData());
   }
 
   async saveSettings() {

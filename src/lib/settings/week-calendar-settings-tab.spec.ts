@@ -1,4 +1,5 @@
 type MockTextComponent = {
+  inputEl: { type: string };
   placeholder: string;
   value: string;
   onChangeCallback?: (value: string) => Promise<void> | void;
@@ -7,11 +8,19 @@ type MockTextComponent = {
   onChange: (callback: (value: string) => Promise<void> | void) => MockTextComponent;
 };
 
+type MockToggleComponent = {
+  value: boolean;
+  onChangeCallback?: (value: boolean) => Promise<void> | void;
+  setValue: (value: boolean) => MockToggleComponent;
+  onChange: (callback: (value: boolean) => Promise<void> | void) => MockToggleComponent;
+};
+
 type MockSettingInstance = {
   containerEl: unknown;
   name: string;
   desc: string;
   textComponent?: MockTextComponent;
+  toggleComponent?: MockToggleComponent;
   setName: (value: string) => MockSettingInstance;
   setDesc: (value: string) => MockSettingInstance;
   addText: (callback: (text: MockTextComponent) => unknown) => MockSettingInstance;
@@ -52,6 +61,7 @@ jest.mock(
       name = '';
       desc = '';
       textComponent?: MockTextComponent;
+      toggleComponent?: MockToggleComponent;
 
       constructor(containerEl: unknown) {
         this.containerEl = containerEl;
@@ -70,6 +80,7 @@ jest.mock(
 
       addText(callback: (text: MockTextComponent) => unknown) {
         const text: MockTextComponent = {
+          inputEl: { type: 'text' },
           placeholder: '',
           value: '',
           onChangeCallback: undefined,
@@ -89,6 +100,23 @@ jest.mock(
 
         this.textComponent = text;
         callback(text);
+        return this;
+      }
+
+      addToggle(callback: (toggle: MockToggleComponent) => unknown) {
+        const toggle: MockToggleComponent = {
+          value: false,
+          setValue(value) {
+            this.value = value;
+            return this;
+          },
+          onChange(callback) {
+            this.onChangeCallback = callback;
+            return this;
+          },
+        };
+        this.toggleComponent = toggle;
+        callback(toggle);
         return this;
       }
     }
@@ -135,6 +163,8 @@ describe('WeekCalendartSettingTab', () => {
         url: 'https://example.com/caldav',
         username: 'charley',
         password: 'secret',
+        calendar: 'https://example.com/calendars/obsidian/',
+        managedCalendarConfirmed: false,
       },
     },
     saveSettings: jest.fn().mockResolvedValue(undefined),
@@ -193,6 +223,8 @@ describe('WeekCalendartSettingTab', () => {
       'URL',
       'Benutzername',
       'Passwort',
+      'Zielkalender-URL',
+      'Exklusiven Zielkalender freigeben',
     ]);
   });
 
@@ -324,4 +356,45 @@ describe('WeekCalendartSettingTab', () => {
     expect(plugin.settings.caldav.password).toBe('new-password');
     expect(plugin.saveSettings).toHaveBeenCalledTimes(1);
   });
+
+  it('masks the password input', () => {
+    const plugin = createPlugin();
+    new WeekCalendartSettingTab({} as never, plugin as never).display();
+    const password = getSettingInstances().find((setting) => setting.name === 'Passwort');
+    expect(password?.textComponent?.inputEl.type).toBe('password');
+    expect(password?.desc).toContain('unverschlüsselt');
+  });
+
+  it('requires explicit consent and persists it', async () => {
+    const plugin = createPlugin();
+    new WeekCalendartSettingTab({} as never, plugin as never).display();
+    const confirmation = getSettingInstances().find(
+      (setting) => setting.name === 'Exklusiven Zielkalender freigeben',
+    );
+    expect(confirmation?.toggleComponent?.value).toBe(false);
+    await confirmation?.toggleComponent?.onChangeCallback?.(true);
+    expect(plugin.settings.caldav.managedCalendarConfirmed).toBe(true);
+    expect(plugin.saveSettings).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['URL', 'Benutzername', 'Zielkalender-URL'])(
+    'revokes consent when %s changes',
+    async (name) => {
+      const plugin = createPlugin();
+      plugin.settings.caldav.managedCalendarConfirmed = true;
+      new WeekCalendartSettingTab({} as never, plugin as never).display();
+      const confirmation = getSettingInstances().find(
+        (setting) => setting.name === 'Exklusiven Zielkalender freigeben',
+      );
+      expect(confirmation?.toggleComponent?.value).toBe(true);
+      await getSettingInstances().find((setting) => setting.name === name)
+        ?.textComponent?.onChangeCallback?.('new-value');
+      expect(plugin.settings.caldav.managedCalendarConfirmed).toBe(false);
+      expect(confirmation?.toggleComponent?.value).toBe(false);
+      if (name === 'Zielkalender-URL') {
+        expect(plugin.settings.caldav.calendar).toBe('new-value');
+      }
+      expect(plugin.saveSettings).toHaveBeenCalledTimes(1);
+    },
+  );
 });
