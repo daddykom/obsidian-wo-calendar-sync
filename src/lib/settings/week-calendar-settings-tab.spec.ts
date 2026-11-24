@@ -219,6 +219,7 @@ describe('WeekCalendartSettingTab', () => {
         password: 'secret',
         calendar: 'https://example.com/calendars/obsidian/',
         managedCalendarConfirmed: false,
+        timezone: 'Europe/Zurich',
       },
     },
     saveSettings: jest.fn().mockResolvedValue(undefined),
@@ -278,6 +279,7 @@ describe('WeekCalendartSettingTab', () => {
       'URL',
       'Benutzername',
       'Passwort',
+      'Zeitzone',
       'Zielkalender',
       'Exklusiven Zielkalender freigeben',
     ]);
@@ -418,6 +420,17 @@ describe('WeekCalendartSettingTab', () => {
     const password = getSettingInstances().find((setting) => setting.name === 'Passwort');
     expect(password?.textComponent?.inputEl.type).toBe('password');
     expect(password?.desc).toContain('unverschlüsselt');
+  });
+
+  it('saves an explicit calendar timezone without changing calendar consent', async () => {
+    const plugin = createPlugin();
+    plugin.settings.caldav.managedCalendarConfirmed = true;
+    new WeekCalendartSettingTab({} as never, plugin as never).display();
+    await getSettingInstances().find((setting) => setting.name === 'Zeitzone')!
+      .textComponent!.onChangeCallback!(' UTC ');
+    expect(plugin.settings.caldav.timezone).toBe('UTC');
+    expect(plugin.settings.caldav.managedCalendarConfirmed).toBe(true);
+    expect(plugin.saveSettings).toHaveBeenCalledTimes(1);
   });
 
   it('requires explicit consent and persists it', async () => {

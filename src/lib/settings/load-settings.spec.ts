@@ -16,7 +16,7 @@ describe('mergeSettings', () => {
     expect(result.paths.overviewFileName).toBe(DEFAULT_SETTINGS.paths.overviewFileName);
     expect(result.caldav).toEqual({
       url: 'https://example.com', username: 'user', password: 'secret',
-      calendar: '', managedCalendarConfirmed: false,
+      calendar: '', managedCalendarConfirmed: false, timezone: 'Europe/Zurich',
     });
   });
 

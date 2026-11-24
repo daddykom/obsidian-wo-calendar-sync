@@ -5,6 +5,7 @@ import { gotoCurrentWeek } from './lib/commands/goto-current-week';
 import { migrateAllWeekHeadings } from './lib/commands/migrate-week-headings';
 import { processActiveFile } from './lib/commands/process-active-file';
 import { processAll } from './lib/commands/process-all';
+import { previewCalendarSync } from './lib/commands/preview-calendar-sync';
 import { modifyWeekFileEvent } from './lib/event-handling/modify-week-file-event';
 import { mergeSettings } from './lib/settings/load-settings';
 import { WeekCalendartSettingTab } from './lib/settings/week-calendar-settings-tab';
@@ -23,6 +24,12 @@ export default class WeekCalendartPlugin extends Plugin {
       return;
     }
     await this.loadSettings();
+
+    this.addCommand({
+      id: 'preview-calendar-sync',
+      name: 'Kalender-Synchronisation: Vorschau',
+      callback: previewCalendarSync(this.app, this.settings),
+    });
 
     this.addCommand({
       id: 'process-active-wo-file',

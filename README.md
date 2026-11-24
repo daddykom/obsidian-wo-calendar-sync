@@ -219,8 +219,8 @@ plugin configuration. For iCloud, use an app-specific password.
 ### Local event collection (step 2)
 
 `src/lib/sync/collect-events.ts` provides a read-only collection of all weekly
-appointments, including past years. It does not yet have a command or UI and is
-not connected to CalDAV. No notes or IDs are written by this collector.
+appointments, including past years. It is used by the preview command in step 4.
+No notes or IDs are written by this collector.
 
 Markdown recognition is shared with normal weekly processing:
 `parseWoWithDiagnostics()` in `parse-wo.ts` returns the existing elements plus
@@ -276,6 +276,39 @@ Late responses after credentials change, a view refresh or closing settings are
 ignored. Authentication and network errors are shown without raw server responses
 or credentials. Discovery follows the server's HTTPS CalDAV endpoints; only use a
 server you trust. The underlying native HTTP client handles redirects.
+
+### Read-only comparison and preview (step 4)
+
+Run **Kalender-Synchronisation: Vorschau** after selecting and explicitly approving
+the dedicated calendar. The dialog lists appointments to create, changed fields,
+foreign or obsolete resources to delete, and the unchanged count. It has only a
+close button: **no write or delete operation is implemented in this step**.
+
+- Local validation happens before any server requests. Invalid notes are shown
+  with their file and line instead of producing a partial plan.
+- The selected calendar is rediscovered and must match its saved URL. No fallback
+  to another calendar is allowed.
+- A full `VCALENDAR` REPORT reads all resources without date or filename filters,
+  including foreign tasks and extensionless resource URLs. Incomplete data,
+  missing ETags, DAV errors, duplicate UIDs and out-of-calendar URLs abort the plan.
+- `ical.js` parses ICS folding, escaped text, alarms and embedded timezone data.
+  Text, all-day dates, time instants and reminder durations are compared, not the
+  raw ICS string. Server timestamps and property ordering do not cause updates.
+- The new **Zeitzone** setting defaults to `Europe/Zurich` and uses an explicit
+  IANA name. Local times are compared as UTC instants, independently of the device
+  timezone. Missing or ambiguous DST times must be corrected before continuing.
+- Server recurrences, exception bundles or participants matching a local UID are
+  marked for replacement by the plain local occurrence. Unmatched resources are
+  listed for deletion, including foreign entries.
+- A completely empty local collection or a plan deleting all existing resources
+  gets a prominent warning. The additional confirmation and execution safeguards
+  belong to step 5.
+- This is a snapshot, not an executable approval. The future writer must recheck
+  settings, local files, server content and ETags before applying any changes.
+
+The ICS reader adds one runtime dependency: [ical.js](https://github.com/kewisch/ical.js),
+licensed under [MPL-2.0](https://mozilla.org/MPL/2.0/). It is bundled without upstream
+source modifications; its source and license are available at those links.
 
 ### Original architecture proposal (not yet implemented)
 

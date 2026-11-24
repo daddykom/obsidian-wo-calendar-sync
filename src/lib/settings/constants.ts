@@ -92,6 +92,7 @@ export const DEFAULT_SETTINGS: WeekcalendarSettings = {
     username: '',
     password: '',
     calendar: '',
+    timezone: 'Europe/Zurich',
     managedCalendarConfirmed: false,
   },
 };

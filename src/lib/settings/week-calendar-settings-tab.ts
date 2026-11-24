@@ -180,6 +180,15 @@ export class WeekCalendartSettingTab extends PluginSettingTab {
       });
     });
 
+    new Setting(containerEl)
+      .setName('Zeitzone')
+      .setDesc('IANA-Zeitzone für lokale Terminzeiten, unabhängig von der Gerätezeitzone, z. B. Europe/Zurich.')
+      .addText((text) => text.setValue(this.plugin.settings.caldav.timezone ?? 'Europe/Zurich')
+        .onChange(async (value) => {
+          this.plugin.settings.caldav.timezone = value.trim();
+          await this.plugin.saveSettings();
+        }));
+
     const targetSetting = new Setting(containerEl)
       .setName('Zielkalender')
       .setDesc(`Nur einen ausschliesslich für dieses Plugin vorgesehenen Kalender auswählen. Gespeicherte URL: ${this.plugin.settings.caldav.calendar || '(keine)'}`)

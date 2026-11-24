@@ -25,7 +25,7 @@ export const caldavReadFetch: typeof fetch = async (input, init) => {
   const url = validateServerUrl(request?.url ?? String(input));
   const method = (init?.method ?? request?.method ?? 'GET').toUpperCase();
   if (!['GET', 'HEAD', 'OPTIONS', 'PROPFIND', 'REPORT'].includes(method)) {
-    throw new Error('Schreibzugriffe sind bei der Kalenderauswahl nicht erlaubt.');
+    throw new Error('Schreibzugriffe sind im Lesemodus nicht erlaubt.');
   }
   const headers = new Headers(init?.headers ?? request?.headers);
   const requestHeaders: Record<string, string> = {};
